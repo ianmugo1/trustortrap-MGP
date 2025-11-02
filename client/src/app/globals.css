@@ -3,5 +3,29 @@
 @tailwind utilities;
 
 
-html, body { height: 100%; }
-body { -webkit-font-smoothing: antialiased; }
+/* Base light/dark surface colors */
+:root {
+    --bg: #ffffff;
+    --fg: #0a0a0a;
+    --card: #ffffff;
+    --muted: #6b7280; /* gray-500 */
+  }
+  
+  .dark {
+    --bg: #0b0f14;
+    --fg: #eef2f7;
+    --card: #0f141b;
+    --muted: #9aa4b2; /* gray-ish */
+  }
+  
+  body {
+    background: var(--bg);
+    color: var(--fg);
+  }
+  
+  .card {
+    background: var(--card);
+    border: 1px solid rgba(120, 120, 120, 0.15);
+    border-radius: 0.75rem; /* rounded-xl */
+  }
+  

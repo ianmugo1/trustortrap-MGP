@@ -6,11 +6,11 @@ export const metadata = { title: "TrustOrTrap" };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <AuthProvider>
           <Navbar />
-          {children}
+          <main className="pb-12">{children}</main>
         </AuthProvider>
       </body>
     </html>
