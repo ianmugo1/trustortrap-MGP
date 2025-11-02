@@ -1,70 +1,38 @@
+// src/context/AuthContext.jsx
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
-import { AuthAPI } from "@/src/utils/auth";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { getMe } from "@/src/utils/api";
 
 const AuthCtx = createContext(null);
+export function useAuth() { return useContext(AuthCtx); }
 
 export function AuthProvider({ children }) {
-  // 1) Initialize token from localStorage (no effect needed)
-  const [token, setToken] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("tt_token") : null
-  );
-
   const [user, setUser] = useState(null);
-  // 2) loading is true only if we have a token that needs verification
-  const [loading, setLoading] = useState(Boolean(token));
+  const [loading, setLoading] = useState(true);
 
-  // 3) Verify token when it changes
-  useEffect(() => {
-    if (!token) {
-      // no token → not loading, ensure user is cleared
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await getMe();
+      setUser(me);
+      return me;
+    } catch {
       setUser(null);
-      setLoading(false);
-      return;
+      return null;
     }
+  }, []);
 
-    let cancelled = false;
-    setLoading(true);
+  useEffect(() => {
+    // try to hydrate user on load if cookie/JWT is present
+    refreshUser().finally(() => setLoading(false));
+  }, [refreshUser]);
 
-    (async () => {
-      try {
-        const { user } = await AuthAPI.me(token);
-        if (!cancelled) setUser(user);
-      } catch {
-        // invalid/expired token → clear it
-        if (!cancelled) {
-          localStorage.removeItem("tt_token");
-          setToken(null);
-          setUser(null);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [token]);
-
-  function signIn(newToken, newUser) {
-    localStorage.setItem("tt_token", newToken);
-    setToken(newToken);      // triggers the effect to (re)validate
-    setUser(newUser ?? null);
-  }
-
-  function signOut() {
-    localStorage.removeItem("tt_token");
-    setToken(null);
+  // your existing signIn/signOut – keep as-is; example:
+  async function signOut() {
+    // if you have a backend logout, call it here; otherwise just clear state
     setUser(null);
-    setLoading(false);
+    // optionally redirect to /login
   }
 
-  return (
-    <AuthCtx.Provider value={{ token, user, loading, signIn, signOut }}>
-      {children}
-    </AuthCtx.Provider>
-  );
-}
-
-export function useAuth() {
-  return useContext(AuthCtx);
+  const value = { user, setUser, loading, refreshUser, signOut };
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }

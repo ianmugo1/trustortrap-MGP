@@ -1,16 +1,28 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+// src/utils/api.js
+const BASE = process.env.NEXT_PUBLIC_API_BASE || "";
 
-export async function api(path, { method = "GET", token, data } = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
-    body: data ? JSON.stringify(data) : undefined,
-    cache: "no-store"
+// Helper to unwrap JSON safely
+async function toJson(res) {
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (!res.ok) throw new Error((data && data.message) || `HTTP ${res.status}`);
+  return data;
+}
+
+export async function getMe() {
+  const res = await fetch(`${BASE}/api/users/me`, {
+    method: "GET",
+    credentials: "include",
   });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || "Request failed");
-  return json;
+  return toJson(res);
+}
+
+export async function updateProfile(payload) {
+  const res = await fetch(`${BASE}/api/users/me`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+  return toJson(res);
 }
