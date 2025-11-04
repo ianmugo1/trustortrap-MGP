@@ -1,5 +1,6 @@
 {
   "name": "trustortrap",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "concurrently -n SERVER,CLIENT -c green,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
