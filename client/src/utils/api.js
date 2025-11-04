@@ -29,3 +29,28 @@ export async function api(path, { method = "GET", headers = {}, body } = {}) {
 }
 
 export default api;
+
+// --- Convenience API helpers ---
+export async function getMe() {
+  // Adjust path if your server route differs
+  return api("/api/users/me");
+}
+
+export async function login({ email, password }) {
+  return api("/api/auth/login", {
+    method: "POST",
+    body: { email, password },
+  });
+}
+
+export async function logout() {
+  return api("/api/auth/logout", { method: "POST" });
+}
+
+export async function updateProfile(payload) {
+  return api("/api/users/me", {
+    method: "PUT",
+    body: payload,
+  });
+}
+
