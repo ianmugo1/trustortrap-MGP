@@ -1,3 +1,8 @@
+# ==================================================
+#  TRUSTORTRAP MONOREPO – .gitignore
+# Covers Next.js (client) + Express (server)
+# ==================================================
+
 # --------------------------------------------------
 # Operating System and Editor Files
 # --------------------------------------------------
@@ -5,11 +10,12 @@
 Thumbs.db
 .vscode/
 .idea/
+*.swp
 
 # --------------------------------------------------
 # Logs and Debug Files
 # --------------------------------------------------
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -20,7 +26,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # --------------------------------------------------
 # Runtime and Process Files
 # --------------------------------------------------
-pids
+pids/
 *.pid
 *.seed
 *.pid.lock
@@ -36,11 +42,14 @@ lib-cov/
 .eslintcache
 .stylelintcache
 *.tsbuildinfo
+.vscode-test/
 
 # --------------------------------------------------
 # Dependency Directories
 # --------------------------------------------------
 node_modules/
+client/node_modules/
+server/node_modules/
 bower_components/
 jspm_packages/
 web_modules/
@@ -56,17 +65,19 @@ out/
 .cache/
 .parcel-cache/
 .temp/
+server/dist/
+client/.next/
+client/out/
 
 # --------------------------------------------------
 # Environment and Configuration Files
 # --------------------------------------------------
 .env
-.env.*
-!.env.example
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
 
 # --------------------------------------------------
 # Framework-Generated Files
@@ -93,20 +104,28 @@ out/
 *.tgz
 
 # --------------------------------------------------
-# Miscellaneous Caches
+# Miscellaneous Caches and Temp Files
 # --------------------------------------------------
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .node_repl_history
 .tern-port
+repo_tree.txt
+*.tmp
 
 # --------------------------------------------------
 # Hosting and Deployment
 # --------------------------------------------------
 .vercel/
 .env.production
+*.env.local.backup
 
 # --------------------------------------------------
-# System and Test Files
+# Custom Monorepo Extras
 # --------------------------------------------------
-.vscode-test/
+# Local output or testing dirs
+client/.vercel/
+server/.vercel/
+client/out/
+server/logs/
+tmp/

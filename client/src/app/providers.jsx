@@ -1,13 +1,16 @@
 "use client";
-
-import { AuthProvider } from "@/src/context/AuthContext";
-import { ToastProvider } from "@/src/components/ui/ToastProvider";
-// add other client-side providers here later (e.g. ThemeProvider)
-
+import { useEffect, useState } from "react";
+import { AuthProvider } from "@/src/context/AuthContext"; 
 export default function Providers({ children }) {
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure browser-only rendering happens after hydration
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null; 
   return (
     <AuthProvider>
-      <ToastProvider>{children}</ToastProvider>
+      {children}
     </AuthProvider>
   );
 }
