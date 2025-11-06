@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { SectionTitle } from "@/src/components/ui/SectionTitle";
-import { Button } from "@/src/components/ui/Button";
+import SectionTitle from "@/src/components/ui/SectionTitle";
+import Button from "@/src/components/Button";
 import { useToast } from "@/src/components/ui/ToastProvider";
 
 export default function SettingsPage() {

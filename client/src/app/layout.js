@@ -1,22 +1,33 @@
 import "./globals.css";
-import { AuthProvider } from "@/src/context/AuthContext";
-import Navbar from "@/src/components/Navbar";
-import Footer from "@/src/components/Footer";
-import { ToastProvider } from "@/src/components/ui/ToastProvider";
+import Providers from "./providers";
 
-
-export const metadata = { title: "TrustOrTrap" };
+export const metadata = {
+  title: "TrustOrTrap",
+  description: "Cyber awareness PWA",
+};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+      <head>
+        {/* Preload the saved theme before hydration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  try {
+    var theme = localStorage.getItem('theme');
+    if(theme === 'dark') document.documentElement.classList.add('dark');
+    else if(theme === 'light') document.documentElement.classList.remove('dark');
+  } catch(e){}
+})();
+            `,
+          }}
+        />
+      </head>
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
 }
-
-
