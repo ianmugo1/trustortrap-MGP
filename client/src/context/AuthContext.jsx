@@ -1,7 +1,8 @@
 // src/context/AuthContext.jsx
 "use client";
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { getMe } from "@/src/utils/api";
+import { getMe, login, logout, updateProfile } from "@/src/utils/api";
+
 
 const AuthCtx = createContext(null);
 export function useAuth() { return useContext(AuthCtx); }
