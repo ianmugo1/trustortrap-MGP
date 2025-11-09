@@ -1,23 +1,52 @@
-import Container from "@/src/components/Container";
-import Link from "next/link";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-export default function HomePage() {
+export default function SplashPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push("/login"); // redirect target
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [router]);
+
   return (
-    <Container className="py-10">
-      <section className="card p-8">
-        <h1 className="text-3xl font-semibold mb-2">Welcome to TrustOrTrap</h1>
-        <p className="text-[color:var(--muted)] mb-6">
-          Learn cyber awareness through interactive scenarios. Earn coins, unlock badges, and climb the leaderboard.
-        </p>
-        <div className="flex gap-3">
-          <Link href="/dashboard" className="px-4 py-2 rounded bg-brand-500 text-white hover:opacity-90">
-            Go to Dashboard
-          </Link>
-          <Link href="/games" className="px-4 py-2 rounded border hover:bg-black/5 dark:hover:bg-white/10">
-            Explore Games
-          </Link>
+    <main className="relative flex items-center justify-center h-screen overflow-hidden text-white">
+      {/* Background gradient + dots */}
+      <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 to-blue-400">
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        ></div>
+      </div>
+
+      {/* Center content */}
+      <div className="relative z-10 text-center animate-fadeIn">
+        <div className="mx-auto mb-6 w-[22rem] h-[22rem] drop-shadow-2xl">
+          <Image
+            src="/TrustortrapLOGO.png"
+            alt="TrustOrTrap logo"
+            width={352}
+            height={352}
+            className="mx-auto"
+            priority
+          />
         </div>
-      </section>
-    </Container>
+
+        <h1 className="text-5xl font-extrabold text-slate-900 drop-shadow">
+          TrustOrTrap
+        </h1>
+        <p className="mt-2 text-base font-medium text-slate-800 opacity-80">
+          Cyber Awareness Made Simple
+        </p>
+      </div>
+    </main>
   );
 }
