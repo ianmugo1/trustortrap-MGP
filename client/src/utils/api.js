@@ -1,56 +1,91 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || ""; 
+/**
+ * API Utility
+ * Centralised fetch wrapper for TrustOrTrap frontend
+ */
 
-export async function api(path, { method = "GET", headers = {}, body } = {}) {
-  const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
-  const res = await fetch(url, {
-    method,
-    headers: {
-      ...(body ? { "Content-Type": "application/json" } : {}),
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    credentials: "include", // keep if you use cookies/JWT
-  });
+/** Unified fetch helper with timeout and safe error parsing */
+export async function apiFetch(path, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000); // 10s safety timeout
 
-  const text = await res.text();
-  let data;
   try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: options.method || "GET",
+      credentials: "include", // allows cookie-based sessions
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      ...(options.body ? { body: options.body } : {}),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    // Parse response body
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = { message: text };
+    }
+
+    if (!res.ok) {
+      const msg =
+        data?.message ||
+        `HTTP ${res.status}: ${res.statusText || "Unknown error"}`;
+      throw new Error(msg);
+    }
+
+    return data;
+  } catch (err) {
+    clearTimeout(timeout);
+
+    // Handle network and timeout errors explicitly
+    if (err.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
+    if (err.message.includes("Failed to fetch")) {
+      throw new Error(
+        "Network error — server might be offline or blocked by CORS."
+      );
+    }
+
+    throw err;
   }
-
-  if (!res.ok) {
-    const msg = (data && (data.message || data.error)) || `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-  return data;
 }
 
-export default api;
+/** 🔐 Auth endpoints */
+export const AuthAPI = {
+  /** Register a new user */
+  register: (body) =>
+    apiFetch("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
-// --- Convenience API helpers ---
-export async function getMe() {
-  // Adjust path if your server route differs
-  return api("/api/users/me");
-}
+  /** Login user */
+  login: (body) =>
+    apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
-export async function login({ email, password }) {
-  return api("/api/auth/login", {
-    method: "POST",
-    body: { email, password },
-  });
-}
+  /** Get the currently logged-in user */
+  me: (token) =>
+    apiFetch("/api/users/me", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }),
 
-export async function logout() {
-  return api("/api/auth/logout", { method: "POST" });
-}
+  /** Logout (clears cookie) */
+  logout: () =>
+    apiFetch("/api/auth/logout", {
+      method: "POST",
+    }),
+};
 
-export async function updateProfile(payload) {
-  return api("/api/users/me", {
-    method: "PUT",
-    body: payload,
-  });
-}
-
+/** Shorthand for `AuthAPI.me()` */
+export const getMe = (token) => AuthAPI.me(token);
