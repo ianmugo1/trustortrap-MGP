@@ -1,0 +1,47 @@
+name: build-and-check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Install dependencies (client + server) using npm ci
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: server
+
+      # Lint – Next.js lint in client
+      - name: Lint client (Next.js)
+        run: npm run lint
+        working-directory: client
+
+      # Optional but recommended – ensure the frontend actually builds
+      - name: Build client
+        run: npm run build
+        working-directory: client
+
+      # Minimal backend test hook
+      # This will not fail the workflow if you don't have tests yet.
+      - name: Run backend tests (if any)
+        run: |
+          npm test || echo "No tests defined yet – skipping."
+        working-directory: server

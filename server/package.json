@@ -7,7 +7,9 @@
     "dev": "concurrently -n API,WEB -c green,cyan \"PORT=5050 nodemon --watch server --ext js,json --signal SIGTERM --exec \\\"node --enable-source-maps server/src/server.js\\\"\" \"npm --prefix client run dev\"",
     "api": "PORT=5050 node server/src/server.js",
     "web": "npm --prefix client run dev",
-    "start": "node server/src/server.js"
+    "start": "node server/src/server.js",
+
+    "test": "echo \"No root tests yet\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
