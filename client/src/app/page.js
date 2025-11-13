@@ -8,25 +8,18 @@ export default function SplashPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/login"); // redirect target
+      router.push("/login");
     }, 2500);
     return () => clearTimeout(timer);
   }, [router]);
 
   return (
-    <main className="relative flex items-center justify-center h-screen overflow-hidden text-white">
-      {/* Background gradient + dots */}
-      <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 to-blue-400">
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        ></div>
-      </div>
-
+    <main
+      className="relative flex items-center justify-center h-screen overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, #facc15 0%, #3b82f6 100%)" // yellow -> blue
+      }}
+    >
       {/* Center content */}
       <div className="relative z-10 text-center animate-fadeIn">
         <div className="mx-auto mb-6 w-[22rem] h-[22rem] drop-shadow-2xl">
@@ -40,10 +33,19 @@ export default function SplashPage() {
           />
         </div>
 
-        <h1 className="text-5xl font-extrabold text-slate-900 drop-shadow">
+        <h1
+          className="text-5xl font-extrabold drop-shadow"
+          style={{
+            background: "linear-gradient(to right, #e99f00ff, #151101ff)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent"
+          }}
+        >
           TrustOrTrap
         </h1>
-        <p className="mt-2 text-base font-medium text-slate-800 opacity-80">
+
+        <p className="mt-2 text-base font-medium text-slate-900 opacity-90">
           Cyber Awareness Made Simple
         </p>
       </div>
