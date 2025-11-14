@@ -58,7 +58,7 @@ export async function apiFetch(path, options = {}) {
   }
 }
 
-/** 🔐 Auth endpoints */
+/**  Auth endpoints */
 export const AuthAPI = {
   /** Register a new user */
   register: (body) =>

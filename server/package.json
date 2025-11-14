@@ -8,7 +8,7 @@
     "api": "PORT=5050 node server/src/server.js",
     "web": "npm --prefix client run dev",
     "start": "node server/src/server.js",
-
+    "lint": "npm --prefix client run lint",
     "test": "echo \"No root tests yet\""
   },
   "dependencies": {
