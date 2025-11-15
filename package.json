@@ -4,14 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n API,WEB -c green,cyan \"PORT=5050 nodemon --watch server --ext js,json --signal SIGTERM --exec \\\"node --enable-source-maps server/server.js\\\"\" \"npm --prefix client run dev\"",
-    "api": "PORT=5050 node server/server.js",
-    "web": "npm --prefix client run dev",
+    "dev": "concurrently -n API,WEB -c green,cyan \"npm run api\" \"npm run web\"",
+    "api": "node server/server.js",
+    "web": "cd client && npm run dev -- -p 3001",
     "start": "node server/server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "classnames": "^2.5.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -20,12 +19,10 @@
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "lucide-react": "^0.553.0",
     "mongoose": "^8.6.0",
     "morgan": "^1.10.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "nodemon": "^3.1.0"
+    "concurrently": "^8.2.2"
   }
 }
