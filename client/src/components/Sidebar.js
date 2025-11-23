@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ShieldCheck,
   Gamepad2,
   LayoutDashboard,
   Award,
@@ -28,15 +28,6 @@ export default function Sidebar() {
   const level = user?.level ?? 1;
   const role = user?.role || "Cyber Apprentice";
 
-  const initials = displayName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   const handleSignOut = () => {
     signOut();
     router.replace("/login");
@@ -44,20 +35,31 @@ export default function Sidebar() {
 
   return (
     <aside className="flex w-64 flex-col border-r border-slate-800 bg-slate-950 text-slate-50">
+
+      {/* -------- Top Section With Logo -------- */}
       <div className="flex items-center gap-3 border-b border-slate-800 px-6 py-5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500">
-          <ShieldCheck className="h-5 w-5 text-slate-950" />
+        <div className="h-10 w-10 rounded-2xl overflow-hidden relative">
+          <Image
+            src="/logo.png"
+            alt="TrustOrTrap Logo"
+            fill
+            className="object-cover"
+            sizes="40px"
+          />
         </div>
+
         <div>
-          <h1 className="text-sm font-semibold tracking-tight">TrustOrTrap</h1>
+          <h1 className="text-sm font-semibold tracking-tight">
+            TrustOrTrap
+          </h1>
           <p className="text-xs text-slate-400">Cyber Awareness Hub</p>
         </div>
       </div>
 
+      {/* -------- Navigation -------- */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active =
-            pathname === href || pathname.startsWith(`${href}/`);
+          const active = pathname === href || pathname.startsWith(`${href}/`);
 
           return (
             <Link
@@ -77,12 +79,22 @@ export default function Sidebar() {
         })}
       </nav>
 
+      {/* -------- User Footer -------- */}
       <div className="space-y-3 border-t border-slate-800 px-4 pb-4 pt-3">
         <div className="flex items-center justify-between rounded-xl bg-slate-900 px-3 py-2">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 text-xs font-semibold text-slate-900">
-              {initials}
+
+            {/* User Logo */}
+            <div className="h-8 w-8 rounded-full overflow-hidden relative">
+              <Image
+                src="/logo.png"
+                alt="TrustOrTrap Logo"
+                fill
+                className="object-cover"
+                sizes="32px"
+              />
             </div>
+
             <div className="text-xs">
               <p className="font-medium leading-none truncate max-w-[120px]">
                 {displayName}
@@ -92,6 +104,7 @@ export default function Sidebar() {
               </p>
             </div>
           </div>
+
           <button
             type="button"
             className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"

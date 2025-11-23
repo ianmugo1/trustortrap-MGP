@@ -13,6 +13,7 @@ import {
   Coins,
   BarChart3,
 } from "lucide-react";
+import Image from "next/image";
 
 const DEFAULT_RISK = [
   { label: "Phishing Awareness", value: 0 },
@@ -50,13 +51,6 @@ export default function DashboardPage() {
   const baseName =
     user?.displayName || user?.name || user?.username || user?.email || "Explorer";
   const displayName = baseName;
-  const initials = baseName
-    .trim()
-    .split(/\s+/)
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   const coins = user?.coins ?? 0;
   const xp = user?.xp ?? 0;
@@ -120,11 +114,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* ---------------- HEADER ---------------- */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-300">
-            {initials}
+        <div className="flex items-center gap-4">
+
+          {/* BIGGER LOGO (UPDATED) */}
+          <div className="h-16 w-16 rounded-2xl overflow-hidden relative shadow-md shadow-emerald-500/20">
+            <Image
+              src="/logo.png"
+              alt="TrustOrTrap Logo"
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
           </div>
+
           <div>
             <h1 className="text-2xl font-semibold text-slate-50">
               Welcome back, {displayName} 👋
@@ -151,6 +156,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ---------------- METRICS ---------------- */}
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard
           label="Total sessions"
@@ -186,8 +192,13 @@ export default function DashboardPage() {
         />
       </section>
 
+      {/* ---------------- MAIN GRID ---------------- */}
       <div className="grid gap-6 lg:grid-cols-3">
+
+        {/* LEFT: Activity + Risk */}
         <section className="space-y-4 lg:col-span-2">
+          
+          {/* Recent Activity */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <div>
@@ -216,6 +227,7 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Risk Breakdown */}
           <div
             id="risk-breakdown"
             className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4"
@@ -248,8 +260,10 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+
         </section>
 
+        {/* RIGHT: Next Steps */}
         <section className="space-y-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
             <div className="mb-3 flex items-start gap-3">
@@ -294,7 +308,9 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+
         </section>
+
       </div>
     </div>
   );
