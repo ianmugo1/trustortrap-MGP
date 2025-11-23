@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async rewrites() {
-    return [
-      { source: "/api/:path*", destination: "http://localhost:5000/api/:path*" },
-    ];
-  },
+  /* config options here */
+  reactCompiler: true,
 };
 
 export default nextConfig;

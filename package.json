@@ -4,9 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n API,WEB -c green,cyan \"npm run api\" \"npm run web\"",
+    "dev": "concurrently \"npm run api\" \"npm run web\"",
     "api": "node server/server.js",
-    "web": "cd client && npm run dev -- -p 3001",
+    "web": "npm --prefix client run dev",
     "start": "node server/server.js"
   },
   "dependencies": {

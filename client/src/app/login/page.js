@@ -1,65 +1,107 @@
 "use client";
-import { useState } from "react";
-import { useAuth } from "@/src/context/AuthContext";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import FormInput from "@/src/components/FormInput";
-import Button from "@/src/components/Button";
+import { AuthAPI } from "../../lib/auth";
+import { useAuth } from "../../context/AuthContext";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { signIn, isAuthenticated, loading } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
-  const { signIn } = useAuth();
-  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
 
-  async function onSubmit(e) {
+  useEffect(() => {
+    if (!loading && isAuthenticated) router.replace("/dashboard");
+  }, [loading, isAuthenticated, router]);
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    setSubmitting(true);
     setMsg("");
 
     try {
-      const res = await fetch("http://localhost:5050/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Login failed");
-
-      // Save token in localStorage for now
-      localStorage.setItem("token", data.token);
-
-      // Sign in to your context
-      signIn(data.token, data.user);
-
+      const { token, user } = await AuthAPI.login({ email, password });
+      signIn(token, user);
       router.replace("/dashboard");
     } catch (err) {
-      setMsg(err.message);
+      setMsg(err.message || "Login failed");
+    } finally {
+      setSubmitting(false);
     }
   }
 
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+        <p className="text-slate-300 text-sm">Checking session...</p>
+      </div>
+    );
+
+  if (isAuthenticated) return null;
+
   return (
-    <div className="max-w-md mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Sign in</h1>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <FormInput
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <FormInput
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <Button>Sign in</Button>
-      </form>
-      {msg && <p className="mt-3 text-sm text-red-600">{msg}</p>}
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur px-6 py-8 shadow-xl">
+        <h1 className="text-2xl font-bold text-slate-50">Sign in</h1>
+        <p className="text-sm text-slate-400 mb-6">
+          Access your personalised cyber-awareness dashboard.
+        </p>
+
+        {msg && (
+          <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+            {msg}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500/60"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500/60"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition disabled:opacity-60"
+          >
+            {submitting ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+
+        <p className="mt-4 text-xs text-slate-400">
+          No account yet?{" "}
+          <a href="/register" className="text-emerald-300 hover:text-emerald-200">
+            Create one
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

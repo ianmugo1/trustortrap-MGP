@@ -1,70 +1,71 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 
 dotenv.config();
+
 const app = express();
 
-// Validate required env vars
+// ---------- ENV CHECK ----------
 const REQUIRED = ["MONGODB_URI", "JWT_SECRET"];
 for (const v of REQUIRED) {
   if (!process.env[v]) {
-    console.error(`Missing env var: ${v}`);
+    console.error(` Missing env var: ${v}`);
     process.exit(1);
   }
 }
 
-// CORS setup
-const origins = (process.env.CORS_ORIGIN || "http://localhost:3000,http://127.0.0.1:3000")
-  .split(",")
-  .map((s) => s.trim());
+// ---------- CORS (DEV SAFE + WIDE OPEN) ----------
+app.use(
+  cors({
+    origin: true,            // reflect request origin automatically
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && origins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
+app.options("*", cors());
 
+// ---------- CORE MIDDLEWARE ----------
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
 
-// Routes
+// ---------- ROUTES ----------
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 
-// Not found handler
-app.use((req, res) => res.status(404).json({ message: "Not found" }));
+// ---------- 404 HANDLER ----------
+app.use((req, res) => {
+  return res.status(404).json({ message: "Not found" });
+});
 
-// Error handler
-app.use((err, _req, res, _next) =>
-  res.status(err.status || 500).json({ message: err.message || "Server error" })
-);
+// ---------- ERROR HANDLER ----------
+app.use((err, _req, res, _next) => {
+  console.error(" Server error:", err);
+  return res
+    .status(err.status || 500)
+    .json({ message: err.message || "Server error" });
+});
 
-const PORT = Number(process.env.PORT) || 5050;
+// ---------- STARTUP (HARDCODED PORT) ----------
+const PORT = 5050;  
 
-// Start server with MongoDB connection
 (async () => {
   try {
     await connectDB(process.env.MONGODB_URI);
-    console.log("MongoDB connected");
+    console.log("✓ MongoDB connected");
 
-    app.listen(PORT, () =>
-      console.log(`Server running on http://localhost:${PORT}`)
-    );
+    app.listen(PORT, () => {
+      console.log(` API running on http://localhost:${PORT}`);
+    });
   } catch (e) {
-    console.error("Startup failed:", e.message);
+    console.error(" Startup failed:", e.message);
     process.exit(1);
   }
 })();

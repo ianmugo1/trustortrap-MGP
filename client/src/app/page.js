@@ -1,54 +1,31 @@
-"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-
-export default function SplashPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.push("/login");
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, [router]);
-
+export default function Home() {
   return (
-    <main
-      className="relative flex items-center justify-center h-screen overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #facc15 0%, #3b82f6 100%)" // yellow -> blue
-      }}
-    >
-      {/* Center content */}
-      <div className="relative z-10 text-center animate-fadeIn">
-        <div className="mx-auto mb-6 w-[22rem] h-[22rem] drop-shadow-2xl">
-          <Image
-            src="/TrustortrapLOGO.png"
-            alt="TrustOrTrap logo"
-            width={352}
-            height={352}
-            className="mx-auto"
-            priority
-          />
-        </div>
-
-        <h1
-          className="text-5xl font-extrabold drop-shadow"
-          style={{
-            background: "linear-gradient(to right, #e99f00ff, #151101ff)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent"
-          }}
-        >
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+      <div className="space-y-3">
+        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-slate-50">
           TrustOrTrap
         </h1>
 
-        <p className="mt-2 text-base font-medium text-slate-900 opacity-90">
-          Cyber Awareness Made Simple
+        <p className="text-slate-600 dark:text-slate-400 text-sm">
+          A smarter way to improve your cyber awareness.
         </p>
+
+        <div className="flex items-center justify-center gap-4 pt-2">
+          <a
+            href="/login"
+            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition"
+          >
+            Login
+          </a>
+
+          <a
+            href="/register"
+            className="rounded-lg border border-slate-400 dark:border-slate-600 px-5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
+            Register
+          </a>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

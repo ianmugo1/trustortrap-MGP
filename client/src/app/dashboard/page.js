@@ -1,128 +1,301 @@
 "use client";
-import Protected from "@/src/components/Protected";
-import { useAuth } from "@/src/context/AuthContext";
-import Container from "@/src/components/Container";
-import { Card, CardHeader, CardTitle, CardContent } from "@/src/components/ui/Card";
-import Badge from "@/src/components/ui/Badge";
-import SectionTitle from "@/src/components/ui/SectionTitle";
-import Progress from "@/src/components/ui/Progress";
-import Stat from "@/src/components/ui/Stat";
-import Button from "@/src/components/ui/Button";
-import Avatar from "@/src/components/ui/Avatar";
-import EmptyState from "@/src/components/ui/EmptyState";
-import CardGrid from "@/src/components/ui/CardGrid";
-import { motion } from "framer-motion";
-import { riseIn } from "@/src/components/ui/motion";
-import { Coins, Medal, User2 } from "lucide-react";
-import LeaderboardPreview from "@/src/components/LeaderboardPreview";
+
+import { useRouter } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
+import { ActivityItem } from "../../components/ActivityItem";
+import { NextStepCard } from "../../components/NextStepCard";
+import {
+  ShieldAlert,
+  Target,
+  Sparkles,
+  Activity,
+  Award,
+  Coins,
+  BarChart3,
+} from "lucide-react";
+
+const DEFAULT_RISK = [
+  { label: "Phishing Awareness", value: 0 },
+  { label: "Password Hygiene", value: 0 },
+  { label: "Social Media Safety", value: 0 },
+];
+
+function MetricCard({ label, value, sublabel, Icon }) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-slate-400">
+            {label}
+          </p>
+          <p className="mt-1 text-lg font-semibold text-slate-50">{value}</p>
+          {sublabel && (
+            <p className="mt-0.5 text-[11px] text-slate-500">{sublabel}</p>
+          )}
+        </div>
+        {Icon && (
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10">
+            <Icon className="h-4 w-4 text-emerald-300" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
+
+  const baseName =
+    user?.displayName || user?.name || user?.username || user?.email || "Explorer";
+  const displayName = baseName;
+  const initials = baseName
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   const coins = user?.coins ?? 0;
-  const nextTarget = coins < 100 ? 100 : coins < 250 ? 250 : 500;
-  const badges = user?.badges ?? [];
+  const xp = user?.xp ?? 0;
+  const level = user?.level ?? 1;
+  const role = user?.role || "Cyber Apprentice";
+
+  const badges = Array.isArray(user?.badges) ? user.badges : [];
+  const badgeCount = badges.length;
+
+  const stats = user?.stats ?? {};
+  const totalSessions = stats.totalSessions ?? 0;
+  const averageScore = stats.averageScore ?? 0;
+  const completedThisWeek = stats.completedThisWeek ?? 0;
+  const targetThisWeek = stats.targetThisWeek ?? 3;
+
+  const weeklyCompletion =
+    targetThisWeek > 0
+      ? Math.min(100, Math.round((completedThisWeek / targetThisWeek) * 100))
+      : 0;
+
+  const recentActivity = Array.isArray(user?.recentActivity)
+    ? user.recentActivity
+    : [];
+
+  const riskBreakdown =
+    Array.isArray(user?.riskProfile) && user.riskProfile.length
+      ? user.riskProfile
+      : DEFAULT_RISK;
+
+  const nextSteps = [
+    {
+      title: "Play a new game",
+      description:
+        "Boost your score and earn coins by tackling a fresh cyber awareness challenge.",
+      cta: "Go to games",
+      onClick: () => router.push("/games"),
+    },
+    {
+      title: "Review your weak topics",
+      description:
+        "Focus on areas where your risk score is highest to level up faster.",
+      cta: "View breakdown",
+      onClick: () => {
+        const el = document.getElementById("risk-breakdown");
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      },
+    },
+    {
+      title: "Check your badges",
+      description:
+        "See what you’ve unlocked so far and what’s needed for the next badge.",
+      cta: "View badges",
+      onClick: () => router.push("/badges"),
+    },
+  ];
+
+  const handleSignOut = () => {
+    signOut();
+    router.replace("/login");
+  };
 
   return (
-    <Protected>
-      <Container className="py-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <SectionTitle title="Dashboard" subtitle="Your current progress and profile" />
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={signOut}>Sign out</Button>
-            <Button variant="primary">Play (soon)</Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-semibold text-emerald-300">
+            {initials}
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-50">
+              Welcome back, {displayName} 👋
+            </h1>
+            <p className="mt-1 text-sm text-slate-400">
+              Track your cyber awareness progress at a glance.
+            </p>
           </div>
         </div>
 
-        {/* Profile header */}
-        <motion.div {...riseIn}>
-          <Card>
-            <CardContent className="flex items-center gap-4">
-              <Avatar name={user?.displayName} size={48} />
-              <div className="flex-1">
-                <div className="font-semibold">{user?.displayName}</div>
-                <div className="text-sm text-[color:var(--muted)]">{user?.email}</div>
-              </div>
-              <div className="hidden md:flex items-center gap-3">
-                <Badge><User2 className="h-3.5 w-3.5 mr-1" /> Member</Badge>
-                <Badge><Medal className="h-3.5 w-3.5 mr-1" /> {badges.length} badges</Badge>
-                <Badge><Coins className="h-3.5 w-3.5 mr-1" /> {coins} coins</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <div className="flex items-center gap-4">
+          <div className="hidden text-right text-xs md:block">
+            <p className="font-medium text-slate-200">
+              Level {level} · {role}
+            </p>
+            <p className="text-slate-400">{xp} XP</p>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="rounded-full border border-slate-700 bg-slate-900 px-4 py-1.5 text-xs font-medium text-slate-100 shadow-sm hover:border-slate-500 hover:bg-slate-800"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
 
-        {/* Stats */}
-        <CardGrid>
-          <motion.div {...riseIn}>
-            <Card>
-              <CardHeader><CardTitle>Wallet</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Coins className="h-5 w-5" />
-                  <Stat label="Coins" value={coins} hint={`Next goal: ${nextTarget}`} />
-                </div>
-                <Progress value={coins} max={nextTarget} label="Progress to next goal" />
-              </CardContent>
-            </Card>
-          </motion.div>
+      <section className="grid gap-4 md:grid-cols-4">
+        <MetricCard
+          label="Total sessions"
+          value={totalSessions}
+          sublabel={
+            totalSessions > 0
+              ? "Keep your streak going"
+              : "Play your first game to begin"
+          }
+          Icon={Activity}
+        />
+        <MetricCard
+          label="Average score"
+          value={`${averageScore}%`}
+          sublabel={
+            averageScore > 0 ? "Aim for 80% or higher" : "No results yet"
+          }
+          Icon={BarChart3}
+        />
+        <MetricCard
+          label="Badges earned"
+          value={badgeCount}
+          sublabel={
+            badgeCount > 0 ? "Nice collection so far" : "Your first badge awaits"
+          }
+          Icon={Award}
+        />
+        <MetricCard
+          label="Coins"
+          value={coins}
+          sublabel={coins > 0 ? "Spend or save wisely" : "Earn coins by playing"}
+          Icon={Coins}
+        />
+      </section>
 
-          <motion.div {...riseIn}>
-            <Card>
-              <CardHeader><CardTitle>Badges</CardTitle></CardHeader>
-              <CardContent>
-                {badges.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {badges.map((b, i) => <Badge key={i}>{b}</Badge>)}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="space-y-4 lg:col-span-2">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-50">
+                  Recent activity
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  A quick look at what you&apos;ve been doing recently.
+                </p>
+              </div>
+              <button className="text-[11px] text-emerald-300 hover:text-emerald-200">
+                View full history
+              </button>
+            </div>
+
+            {recentActivity.length === 0 ? (
+              <p className="text-[11px] text-slate-500">
+                No activity yet. Play your first game to see your progress here.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {recentActivity.map((item, idx) => (
+                  <ActivityItem key={item.id ?? idx} {...item} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div
+            id="risk-breakdown"
+            className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-emerald-400" />
+              <div>
+                <h3 className="text-sm font-semibold text-slate-50">
+                  Risk breakdown
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  The lower the bar, the more room you have to improve.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {riskBreakdown.map((item, idx) => (
+                <div key={item.label ?? idx}>
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-slate-300">
+                    <span>{item.label}</span>
+                    <span className="text-slate-400">{item.value}%</span>
                   </div>
-                ) : (
-                  <EmptyState title="No badges yet" subtitle="Complete scenarios to earn badges." />
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
+                      style={{ width: `${item.value}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-          <motion.div {...riseIn}>
-            <Card>
-              <CardHeader><CardTitle>Profile</CardTitle></CardHeader>
-              <CardContent className="space-y-1 text-sm">
-                <div><span className="text-[color:var(--muted)]">Name:</span> {user?.displayName}</div>
-                <div><span className="text-[color:var(--muted)]">Email:</span> {user?.email}</div>
-                <div><span className="text-[color:var(--muted)]">Member since:</span> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "—"}</div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </CardGrid>
+        <section className="space-y-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+            <div className="mb-3 flex items-start gap-3">
+              <div className="rounded-xl bg-emerald-500/15 p-1.5">
+                <Target className="h-4 w-4 text-emerald-300" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-50">
+                  Focus for this week
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Aim to complete at least {targetThisWeek} games and keep your
+                  average score above{" "}
+                  <span className="text-emerald-300">80%</span>.
+                </p>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-300">
+              <div className="flex flex-col">
+                <span>Weekly completion</span>
+                <span className="mt-0.5 text-slate-400">
+                  {completedThisWeek} / {targetThisWeek} games completed
+                </span>
+              </div>
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-[11px] font-semibold text-emerald-300">
+                {weeklyCompletion}%
+                <span className="pointer-events-none absolute inset-0 rounded-full border border-emerald-400/60" />
+              </div>
+            </div>
+          </div>
 
-        {/* Activity & Quick start */}
-        <CardGrid cols={{ base:1, md:1, lg:2 }}>
-          <motion.div {...riseIn}>
-            <Card>
-              <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
-              <CardContent>
-                <EmptyState title="No activity yet" subtitle="Play a scenario to see your history here." />
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <div className="col-span-12 lg:col-span-4">
-  <LeaderboardPreview />
-</div>
-
-          <motion.div {...riseIn}>
-            <Card>
-              <CardHeader><CardTitle>Quick Start</CardTitle></CardHeader>
-              <CardContent className="text-sm space-y-2">
-                <p>Ready to earn coins?</p>
-                <ul className="list-disc ml-5 space-y-1">
-                  <li>Try the Phishing scenario (coming soon)</li>
-                  <li>Invite a teammate to compete</li>
-                  <li>Check the leaderboard</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </CardGrid>
-      </Container>
-    </Protected>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-cyan-300" />
+              <h3 className="text-sm font-semibold text-slate-50">
+                Smart next steps
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {nextSteps.map((step) => (
+                <NextStepCard key={step.title} {...step} />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
