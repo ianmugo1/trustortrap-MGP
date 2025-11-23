@@ -1,12 +1,13 @@
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
 
+// Unified response handler
 async function handle(res) {
   let data = null;
   try {
     data = await res.json();
   } catch {
-    // ignore
+    // ignore JSON errors (e.g., empty responses)
   }
 
   if (!res.ok) {
@@ -22,9 +23,13 @@ export const AuthAPI = {
     const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({
+        displayName: name.trim(),
+        email: email.trim(),
+        password: password.trim(),
+      }),
     });
-    // Expect something like: { token, user }
+
     return handle(res);
   },
 
@@ -32,9 +37,12 @@ export const AuthAPI = {
     const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email: email.trim(),
+        password: password.trim(),
+      }),
     });
-    // Expect something like: { token, user }
+
     return handle(res);
   },
 };
