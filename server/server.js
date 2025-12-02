@@ -3,8 +3,11 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
+
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import phishingRoutes from "./routes/phishingGame.js";
+
 
 dotenv.config();
 
@@ -19,10 +22,10 @@ for (const v of REQUIRED) {
   }
 }
 
-// ---------- CORS (DEV SAFE + WIDE OPEN) ----------
+// ---------- CORS ----------
 app.use(
   cors({
-    origin: true,            // reflect request origin automatically
+    origin: true, // allow localhost:3000
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -37,8 +40,10 @@ app.use(cookieParser());
 
 // ---------- ROUTES ----------
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/phishing", phishingRoutes);   // ✅ MUST COME BEFORE 404 HANDLER
 
 // ---------- 404 HANDLER ----------
 app.use((req, res) => {
@@ -53,8 +58,8 @@ app.use((err, _req, res, _next) => {
     .json({ message: err.message || "Server error" });
 });
 
-// ---------- STARTUP (HARDCODED PORT) ----------
-const PORT = 5050;  
+// ---------- STARTUP ----------
+const PORT = 5050;
 
 (async () => {
   try {
