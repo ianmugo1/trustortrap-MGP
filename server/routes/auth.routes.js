@@ -6,6 +6,7 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
+// ---------------- REGISTER ----------------
 router.post("/register", async (req, res) => {
   try {
     const { displayName, email, password } = req.body || {};
@@ -16,27 +17,27 @@ router.post("/register", async (req, res) => {
         .json({ message: "Display name, email and password are required" });
     }
 
-    // check if user already exists
+    // Check if user exists
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(409).json({ message: "Email is already in use" });
     }
 
-    // hash password
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // create user
+    // Create user
     const user = await User.create({
       displayName,
       email,
       password: hashedPassword,
     });
 
-    // sign JWT
+    // Sign JWT (UPDATED: 7d)
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }  // ⬅️ UPDATED
     );
 
     return res.status(201).json({
@@ -53,6 +54,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// ---------------- LOGIN ----------------
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -66,10 +68,11 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(400).json({ message: "Invalid credentials" });
 
+    // Sign JWT (UPDATED: 7d)
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }  // ⬅️ UPDATED
     );
 
     return res.json({
