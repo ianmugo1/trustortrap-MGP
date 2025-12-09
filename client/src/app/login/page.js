@@ -25,7 +25,14 @@ export default function LoginPage() {
 
     try {
       const { token, user } = await AuthAPI.login({ email, password });
+
+      if (!token || !user) {
+        throw new Error("Invalid response from server");
+      }
+
+      // ✅ FIX: save both token + user exactly as AuthContext expects
       signIn(token, user);
+
       router.replace("/dashboard");
     } catch (err) {
       setMsg(err.message || "Login failed");
