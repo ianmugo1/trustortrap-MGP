@@ -3,6 +3,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -17,27 +18,23 @@ router.post("/register", async (req, res) => {
         .json({ message: "Display name, email and password are required" });
     }
 
-    // Check if user exists
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(409).json({ message: "Email is already in use" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await User.create({
       displayName,
       email,
       password: hashedPassword,
     });
 
-    // Sign JWT (UPDATED: 7d)
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }  // ⬅️ UPDATED
+      { expiresIn: "7d" }
     );
 
     return res.status(201).json({
@@ -46,11 +43,15 @@ router.post("/register", async (req, res) => {
         id: user._id,
         displayName: user.displayName,
         email: user.email,
+        coins: user.coins || 0,
+        phishingStats: user.phishingStats || {},
       },
     });
   } catch (err) {
     console.error("Register error:", err);
-    return res.status(500).json({ message: "Server error during registration" });
+    return res
+      .status(500)
+      .json({ message: "Server error during registration" });
   }
 });
 
@@ -68,11 +69,10 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Sign JWT (UPDATED: 7d)
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }  // ⬅️ UPDATED
+      { expiresIn: "7d" }
     );
 
     return res.json({
@@ -81,11 +81,50 @@ router.post("/login", async (req, res) => {
         id: user._id,
         displayName: user.displayName,
         email: user.email,
+        coins: user.coins || 0,
+        phishingStats: user.phishingStats || {},
       },
     });
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ message: "Server error during login" });
+  }
+});
+
+// ---------------- ME ----------------
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        displayName: user.displayName,
+        email: user.email,
+        coins: user.coins || 0,
+        phishingStats: user.phishingStats || {
+          totalGames: 0,
+          totalQuestionsAnswered: 0,
+          totalCorrect: 0,
+          bestScore: 0,
+          lastScore: 0,
+          lastCompletedAt: null,
+        },
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    });
+  } catch (err) {
+    console.error("Get me error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error" });
   }
 });
 

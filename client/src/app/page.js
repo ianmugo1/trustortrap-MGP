@@ -1,31 +1,51 @@
+"use client";
+
+import Image from "next/image";
+
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
-      <div className="space-y-3">
-        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-slate-50">
-          TrustOrTrap
-        </h1>
+    <main className="h-[100dvh] overflow-hidden bg-slate-950 px-4">
+      <div className="h-full flex flex-col items-center justify-center text-center">
+        <div className="w-full max-w-md space-y-5">
 
-        <p className="text-slate-600 dark:text-slate-400 text-sm">
-          A smarter way to improve your cyber awareness.
-        </p>
+          {/* LOGO */}
+          <div className="mx-auto relative h-24 w-24 md:h-28 md:w-28">
+            <Image
+              src="/logo.png"
+              alt="TrustOrTrap Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
 
-        <div className="flex items-center justify-center gap-4 pt-2">
-          <a
-            href="/login"
-            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition"
-          >
-            Login
-          </a>
+          {/* TITLE */}
+          <h1 className="text-4xl font-extrabold text-white">TrustOrTrap</h1>
 
-          <a
-            href="/register"
-            className="rounded-lg border border-slate-400 dark:border-slate-600 px-5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          >
-            Register
-          </a>
+          {/* SUBTITLE */}
+          <p className="text-slate-300 text-sm">
+            A smarter way to improve your cyber awareness.
+          </p>
+
+          {/* ACTIONS */}
+          <div className="flex items-center justify-center gap-4 pt-2">
+            <a
+              href="/login"
+              className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-medium text-white shadow hover:bg-emerald-700 transition"
+            >
+              Login
+            </a>
+
+            <a
+              href="/register"
+              className="rounded-lg border border-slate-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-800 transition"
+            >
+              Register
+            </a>
+          </div>
+
         </div>
       </div>
-    </div>
+    </main>
   );
 }

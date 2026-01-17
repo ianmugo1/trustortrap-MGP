@@ -9,12 +9,14 @@ import {
   Award,
   Settings,
   LogOut,
+  TicketCheck,
+  ListCheckIcon,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/games", label: "Games", icon: Gamepad2 },
+  { href: "/games", label: "Training", icon: ListCheckIcon },
   { href: "/badges", label: "Badges", icon: Award },
 ];
 
@@ -26,7 +28,7 @@ export default function Sidebar() {
   const displayName =
     user?.displayName || user?.name || user?.username || "Explorer";
   const level = user?.level ?? 1;
-  const role = user?.role || "Cyber Apprentice";
+  const role = user?.role || "Cyber Scout";
 
   const handleSignOut = () => {
     signOut();

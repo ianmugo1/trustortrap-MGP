@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthAPI } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
+import Image from "next/image";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,7 +32,7 @@ export default function LoginPage() {
         throw new Error("Invalid response from server");
       }
 
-      // ✅ FIX: save both token + user exactly as AuthContext expects
+     
       signIn(token, user);
 
       router.replace("/dashboard");
@@ -41,21 +43,37 @@ export default function LoginPage() {
     }
   }
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-        <p className="text-slate-300 text-sm">Checking session...</p>
+if (loading)
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4 gap-4">
+      
+      {/* LOGO */}
+      <div className="relative h-90 w-200">
+        <Image
+          src="/logo.png"
+          alt="TrustOrTrap Logo"
+          fill
+          className="object-contain"
+          priority
+        />
       </div>
-    );
+
+      <p className="text-slate-300 text-sm">
+        Checking session...
+      </p>
+
+    </div>
+  );
+
 
   if (isAuthenticated) return null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur px-6 py-8 shadow-xl">
-        <h1 className="text-2xl font-bold text-slate-50">Sign in</h1>
+        <h1 className="text-2xl font-bold text-slate-50">Please sign in</h1>
         <p className="text-sm text-slate-400 mb-6">
-          Access your personalised cyber-awareness dashboard.
+          Access your personalised cyber awareness dashboard.
         </p>
 
         {msg && (

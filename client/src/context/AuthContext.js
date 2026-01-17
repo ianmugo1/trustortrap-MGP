@@ -1,9 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 
 const AuthContext = createContext(null);
-
 const STORAGE_KEY = "tt_auth";
 
 export function AuthProvider({ children }) {
@@ -30,7 +29,10 @@ export function AuthProvider({ children }) {
   function signIn(newToken, newUser) {
     setUser(newUser);
     setToken(newToken);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: newToken, user: newUser }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ token: newToken, user: newUser })
+    );
   }
 
   function signOut() {
@@ -39,6 +41,38 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(STORAGE_KEY);
   }
 
+  // ✅ Fetch latest user from backend and update context + localStorage
+  const refreshUser = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      const res = await fetch("http://localhost:5050/api/users/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.error("refreshUser failed:", res.status);
+        return;
+      }
+
+      const data = await res.json();
+
+      // Support both response shapes: { user: {...} } or direct user object
+      const freshUser = data.user ?? data;
+
+      setUser(freshUser);
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ token, user: freshUser })
+      );
+    } catch (err) {
+      console.error("Failed to refresh user", err);
+    }
+  }, [token]);
+
   const value = {
     user,
     token,
@@ -46,6 +80,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user && !!token,
     signIn,
     signOut,
+    refreshUser, // ✅ NOW dashboard can call it
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
