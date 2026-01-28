@@ -23,7 +23,23 @@ router.post("/submit", authenticateUser, async (req, res) => {
     if (!q)
       return res.status(404).json({ success: false, message: "Question not found" });
 
-    const isCorrect = q.correct === answerGiven;
+    let isCorrect = false;
+
+    if (q.imageLeft && q.imageRight) {
+      if (!q.phishingSide) {
+        return res
+          .status(422)
+          .json({ success: false, message: "Question is missing phishingSide" });
+      }
+      isCorrect = answerGiven === q.phishingSide;
+    } else {
+      if (answerGiven !== "Phishing" && answerGiven !== "Safe") {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid answer format" });
+      }
+      isCorrect = q.isPhishing ? answerGiven === "Phishing" : answerGiven === "Safe";
+    }
 
     await PhishingResult.create({
       userId: req.user.id,

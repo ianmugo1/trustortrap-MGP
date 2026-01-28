@@ -33,11 +33,11 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
     });
 
-    // Sign JWT (UPDATED: 7d)
+    // Sign JWT (UPDATED: 30d)
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }  // ⬅️ UPDATED
+      { expiresIn: "30d" }  // ⬅️ UPDATED
     );
 
     return res.status(201).json({
@@ -68,11 +68,11 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Sign JWT (UPDATED: 7d)
+    // Sign JWT (UPDATED: 30d)
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }  // ⬅️ UPDATED
+      { expiresIn: "30d" }  // ⬅️ UPDATED
     );
 
     return res.json({

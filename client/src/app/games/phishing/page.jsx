@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { authFetch } from "@/lib/api";
 
 export default function PhishingPage() {
   const { token } = useAuth();
   const [questions, setQuestions] = useState([]);
   const [step, setStep] = useState(0);
   const [answer, setAnswer] = useState(null);
+  const [feedback, setFeedback] = useState(null);
 
   // Load questions from backend
   useEffect(() => {
@@ -89,28 +91,43 @@ export default function PhishingPage() {
   const isSingleImage = q.image && !isDualImage;
 
   async function submitAnswer(choice) {
+    if (answer) return;
     setAnswer(choice);
+    setFeedback(null);
 
     try {
-      await fetch("http://localhost:5050/api/phishing/submit", {
+      const res = await authFetch("/api/phishing/submit", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           questionId: q._id,
           answerGiven: choice,
         }),
-      });
+      }, token);
+      const data = await res.json();
+      if (data?.success) {
+        setFeedback({
+          isCorrect: data.isCorrect,
+          explanation: q.explanation || "",
+        });
+      } else {
+        setFeedback({
+          isCorrect: false,
+          explanation: data?.message || "Submission failed.",
+        });
+      }
     } catch (err) {
       console.error("Submission error:", err);
+      setFeedback({
+        isCorrect: false,
+        explanation: "Network error. Please try again.",
+      });
     }
 
     setTimeout(() => {
       setAnswer(null);
+      setFeedback(null);
       setStep((s) => s + 1);
-    }, 600);
+    }, 1200);
   }
 
   return (
@@ -201,17 +218,19 @@ export default function PhishingPage() {
         </section>
 
         {/* Answer buttons */}
-        <footer className="mt-2 flex justify-center">
+        <footer className="mt-2 flex flex-col items-center gap-3">
           {isDualImage ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-xl">
               <button
                 onClick={() => submitAnswer("left")}
+                disabled={!!answer}
                 className="w-full px-4 py-3 rounded-2xl border border-slate-700 bg-slate-900/70 hover:bg-slate-800 text-slate-100 font-semibold text-base md:text-lg transition"
               >
                 Left is phishing
               </button>
               <button
                 onClick={() => submitAnswer("right")}
+                disabled={!!answer}
                 className="w-full px-4 py-3 rounded-2xl border border-slate-700 bg-slate-900/70 hover:bg-slate-800 text-slate-100 font-semibold text-base md:text-lg transition"
               >
                 Right is phishing
@@ -221,16 +240,37 @@ export default function PhishingPage() {
             <div className="grid grid-cols-2 gap-4 w-full max-w-xl">
               <button
                 onClick={() => submitAnswer("Safe")}
+                disabled={!!answer}
                 className="w-full px-4 py-3 rounded-2xl border border-emerald-500/60 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-semibold text-base md:text-lg transition"
               >
                 Safe
               </button>
               <button
                 onClick={() => submitAnswer("Phishing")}
+                disabled={!!answer}
                 className="w-full px-4 py-3 rounded-2xl border border-rose-500/70 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-semibold text-base md:text-lg transition"
               >
                 Phishing
               </button>
+            </div>
+          )}
+
+          {feedback && (
+            <div
+              className={`w-full max-w-xl rounded-2xl border px-4 py-3 text-sm ${
+                feedback.isCorrect
+                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                  : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+              }`}
+            >
+              <p className="font-semibold">
+                {feedback.isCorrect ? "Correct!" : "Not quite."}
+              </p>
+              {feedback.explanation && (
+                <p className="mt-1 text-xs text-slate-200/80">
+                  {feedback.explanation}
+                </p>
+              )}
             </div>
           )}
         </footer>

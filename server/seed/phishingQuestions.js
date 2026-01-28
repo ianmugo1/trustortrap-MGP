@@ -7,19 +7,19 @@ dotenv.config();
 const questions = [
   {
     text: "Your bank emails you: 'Unusual login detected. Click here to secure your account.'",
-    correct: "Phishing",
+    isPhishing: true,
   },
   {
     text: "Your university emails you about scheduled password maintenance.",
-    correct: "Safe",
+    isPhishing: false,
   },
   {
     text: "PayPal: 'Your account will be closed unless you verify now.'",
-    correct: "Phishing",
+    isPhishing: true,
   },
   {
     text: "Google prompts you to review a new sign-in from Dublin.",
-    correct: "Safe",
+    isPhishing: false,
   },
 ];
 

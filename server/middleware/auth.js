@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-// Middleware to verify JWT tokens in the Authorization header
+// Middleware to verify JWT tokens in the Authorizasion header
 export const authenticateUser = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
