@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { ActivityItem } from "../../components/ActivityItem";
 import { NextStepCard } from "../../components/NextStepCard";
@@ -16,9 +17,9 @@ import {
 import Image from "next/image";
 
 const DEFAULT_RISK = [
-  { label: "Phishing Awareness", value: 0 },
-  { label: "Password Hygiene", value: 0 },
-  { label: "Social Media Safety", value: 0 },
+  { label: "Phishing Awareness", value: 100 },
+  { label: "Protect cyber pet", value: 60 },
+  { label: "Social Media Safety", value: 10 },
 ];
 
 function MetricCard({ label, value, sublabel, Icon }) {
@@ -46,25 +47,40 @@ function MetricCard({ label, value, sublabel, Icon }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshUser } = useAuth();
 
-  const baseName =
-    user?.displayName || user?.name || user?.username || user?.email || "Explorer";
-  const displayName = baseName;
+  // REFRESH WHEN DASHBOARD LOADS
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
-  const coins = user?.coins ?? 0;
-  const xp = user?.xp ?? 0;
+  const displayName =
+    user?.displayName || user?.email || "Explorer";
+
+  const coins = user?.coins ?? 10;
+  const xp = user?.xp ?? 60;
   const level = user?.level ?? 1;
   const role = user?.role || "Cyber Apprentice";
 
   const badges = Array.isArray(user?.badges) ? user.badges : [];
   const badgeCount = badges.length;
 
-  const stats = user?.stats ?? {};
-  const totalSessions = stats.totalSessions ?? 0;
-  const averageScore = stats.averageScore ?? 0;
-  const completedThisWeek = stats.completedThisWeek ?? 0;
-  const targetThisWeek = stats.targetThisWeek ?? 3;
+  /* ===== LIVE PHISHING STATS ===== */
+  const phishingStats = user?.phishingStats ?? {};
+
+  const totalSessions = phishingStats.totalGames ?? 5;
+
+  const totalAnswered = phishingStats.totalQuestionsAnswered ?? 10;
+  const totalCorrect = phishingStats.totalCorrect ?? 0;
+
+  const averageScore =
+    totalAnswered > 0
+      ? Math.round((totalCorrect / totalAnswered) * 100)
+      : 0;
+
+  // Simple weekly target (prototype)
+  const completedThisWeek = phishingStats.totalGames ?? 0;
+  const targetThisWeek = 3;
 
   const weeklyCompletion =
     targetThisWeek > 0
@@ -85,7 +101,7 @@ export default function DashboardPage() {
       title: "Play a new game",
       description:
         "Boost your score and earn coins by tackling a fresh cyber awareness challenge.",
-      cta: "Go to games",
+      cta: "Go to Training scenario",
       onClick: () => router.push("/games"),
     },
     {
@@ -115,11 +131,9 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* ---------------- HEADER ---------------- */}
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-
-          {/* BIGGER LOGO (UPDATED) */}
           <div className="h-16 w-16 rounded-2xl overflow-hidden relative shadow-md shadow-emerald-500/20">
             <Image
               src="/logo.png"
@@ -129,7 +143,6 @@ export default function DashboardPage() {
               sizes="64px"
             />
           </div>
-
           <div>
             <h1 className="text-2xl font-semibold text-slate-50">
               Welcome back, {displayName} 👋
@@ -156,7 +169,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ---------------- METRICS ---------------- */}
+      {/* METRICS */}
       <section className="grid gap-4 md:grid-cols-4">
         <MetricCard
           label="Total sessions"
@@ -164,7 +177,7 @@ export default function DashboardPage() {
           sublabel={
             totalSessions > 0
               ? "Keep your streak going"
-              : "Play your first game to begin"
+              : "Pick your first topic to begin"
           }
           Icon={Activity}
         />
@@ -192,123 +205,72 @@ export default function DashboardPage() {
         />
       </section>
 
-      {/* ---------------- MAIN GRID ---------------- */}
+      {/* MAIN GRID */}
       <div className="grid gap-6 lg:grid-cols-3">
 
-        {/* LEFT: Activity + Risk */}
+        {/* LEFT */}
         <section className="space-y-4 lg:col-span-2">
-          
-          {/* Recent Activity */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-50">
-                  Recent activity
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  A quick look at what you&apos;ve been doing recently.
-                </p>
-              </div>
-              <button className="text-[11px] text-emerald-300 hover:text-emerald-200">
-                View full history
-              </button>
-            </div>
-
+            <h3 className="text-sm font-semibold text-slate-50 mb-2">
+              Recent activity
+            </h3>
             {recentActivity.length === 0 ? (
               <p className="text-[11px] text-slate-500">
-                No activity yet. Play your first game to see your progress here.
+                No activity yet. Pick your first topic to see your progress here.
               </p>
             ) : (
-              <div className="space-y-2">
-                {recentActivity.map((item, idx) => (
-                  <ActivityItem key={item.id ?? idx} {...item} />
-                ))}
-              </div>
+              recentActivity.map((item, idx) => (
+                <ActivityItem key={item.id ?? idx} {...item} />
+              ))
             )}
           </div>
 
-          {/* Risk Breakdown */}
           <div
             id="risk-breakdown"
             className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4"
           >
-            <div className="mb-4 flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4 text-emerald-400" />
-              <div>
-                <h3 className="text-sm font-semibold text-slate-50">
-                  Risk breakdown
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  The lower the bar, the more room you have to improve.
-                </p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {riskBreakdown.map((item, idx) => (
-                <div key={item.label ?? idx}>
-                  <div className="mb-1 flex items-center justify-between text-[11px] text-slate-300">
-                    <span>{item.label}</span>
-                    <span className="text-slate-400">{item.value}%</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-500"
-                      style={{ width: `${item.value}%` }}
-                    />
-                  </div>
+            <h3 className="text-sm font-semibold text-slate-50 mb-3">
+              Risk breakdown
+            </h3>
+            {riskBreakdown.map((item, idx) => (
+              <div key={item.label ?? idx} className="mb-3">
+                <div className="flex justify-between text-[11px]">
+                  <span>{item.label}</span>
+                  <span>{item.value}%</span>
                 </div>
-              ))}
-            </div>
+                <div className="h-2 bg-slate-800 rounded-full">
+                  <div
+                    className="h-full rounded-full bg-emerald-400"
+                    style={{ width: `${item.value}%` }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-
         </section>
 
-        {/* RIGHT: Next Steps */}
+        {/* RIGHT */}
         <section className="space-y-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-            <div className="mb-3 flex items-start gap-3">
-              <div className="rounded-xl bg-emerald-500/15 p-1.5">
-                <Target className="h-4 w-4 text-emerald-300" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-50">
-                  Focus for this week
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  Aim to complete at least {targetThisWeek} games and keep your
-                  average score above{" "}
-                  <span className="text-emerald-300">80%</span>.
-                </p>
-              </div>
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-300">
-              <div className="flex flex-col">
-                <span>Weekly completion</span>
-                <span className="mt-0.5 text-slate-400">
-                  {completedThisWeek} / {targetThisWeek} games completed
-                </span>
-              </div>
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-[11px] font-semibold text-emerald-300">
-                {weeklyCompletion}%
-                <span className="pointer-events-none absolute inset-0 rounded-full border border-emerald-400/60" />
-              </div>
+            <h3 className="text-sm font-semibold text-slate-50 mb-2">
+              Focus for this week
+            </h3>
+            <p className="text-[11px] text-slate-400 mb-2">
+              {completedThisWeek} / {targetThisWeek} topics completed
+            </p>
+            <div className="text-emerald-300 font-semibold">
+              {weeklyCompletion}%
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-cyan-300" />
-              <h3 className="text-sm font-semibold text-slate-50">
-                Smart next steps
-              </h3>
-            </div>
-            <div className="space-y-3">
-              {nextSteps.map((step) => (
-                <NextStepCard key={step.title} {...step} />
-              ))}
-            </div>
+            <h3 className="text-sm font-semibold text-slate-50 mb-3">
+              Smart next steps
+            </h3>
+            {nextSteps.map((step) => (
+              <NextStepCard key={step.title} {...step} />
+            ))}
           </div>
-
         </section>
 
       </div>

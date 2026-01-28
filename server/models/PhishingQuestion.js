@@ -61,15 +61,18 @@ const PhishingQuestionSchema = new Schema(
       default: "email",
       trim: true,
     },
+
+    // Optional topic label used by some UI
+    topic: {
+      type: String,
+      default: "",
+      trim: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const PhishingQuestion = mongoose.model(
-  "PhishingQuestion",
-  PhishingQuestionSchema
-);
-
-export default PhishingQuestion;
+export default mongoose.models.PhishingQuestion ||
+  mongoose.model("PhishingQuestion", PhishingQuestionSchema);

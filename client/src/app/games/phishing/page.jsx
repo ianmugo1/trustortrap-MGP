@@ -1,80 +1,256 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
 
 export default function PhishingPage() {
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
+
   const [questions, setQuestions] = useState([]);
   const [step, setStep] = useState(0);
+  const [score, setScore] = useState(0);
   const [answer, setAnswer] = useState(null);
   const [feedback, setFeedback] = useState(null);
 
-  // Load questions from backend
-  useEffect(() => {
-    async function loadQuestions() {
-      if (!token) return;
+  const [completionInfo, setCompletionInfo] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-      try {
-        const res = await fetch("http://localhost:5050/api/phishing/questions", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        const data = await res.json();
-        if (data.success) setQuestions(data.questions);
-      } catch (err) {
-        console.error("Fetch error:", err);
-      }
-    }
-    loadQuestions();
-  }, [token]);
-
-  // No token – gate the page
-  if (!token) {
-    return (
-      <main className="h-screen flex items-center justify-center bg-slate-950 text-slate-100">
-        <p className="px-4 py-2 rounded-md bg-slate-800/70 border border-slate-700">
-          Please log in to play the game.
-        </p>
-      </main>
-    );
-  }
-
-  // Still loading
-  if (questions.length === 0) {
-    return (
-      <main className="h-screen flex items-center justify-center bg-slate-950 text-slate-100">
-        <p className="px-4 py-2 rounded-md bg-slate-800/70 border border-slate-700">
-          Loading questions...
-        </p>
-      </main>
-    );
-  }
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const total = questions.length;
+  const isFinished = total > 0 && step >= total;
 
-  // End of game guard BEFORE we read questions[step]
-  if (step >= total) {
+  const resetLocal = useCallback(() => {
+    setStep(0);
+    setScore(0);
+    setAnswer(null);
+    setFeedback(null);
+    setCompletionInfo(null);
+    setSubmitting(false);
+    setLoadError("");
+  }, []);
+
+  const loadQuestions = useCallback(async () => {
+    if (!token) return;
+
+    setLoading(true);
+    setLoadError("");
+
+    try {
+      const res = await authFetch("/api/phishing/questions", {}, token);
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data?.success) {
+        setQuestions([]);
+        setLoadError(data?.message || "Failed to load questions");
+        return;
+      }
+
+      const list = Array.isArray(data.questions) ? data.questions : [];
+      setQuestions(list);
+      setStep(0);
+      setScore(0);
+      setAnswer(null);
+      setFeedback(null);
+      setCompletionInfo(null);
+    } catch (err) {
+      console.error(err);
+      setQuestions([]);
+      setLoadError("Could not reach the API. Is the server running?");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  // Initial load
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
+
+  // Complete game once
+  useEffect(() => {
+    if (!token) return;
+    if (!isFinished) return;
+    if (completionInfo) return;
+
+    (async () => {
+      try {
+        const res = await authFetch(
+          "/api/phishing/complete",
+          {
+            method: "POST",
+            body: JSON.stringify({ scoreForThisRun: score }),
+          },
+          token
+        );
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data?.success) {
+          setCompletionInfo(data);
+
+          if (typeof refreshUser === "function") {
+            await refreshUser();
+          }
+        } else {
+          setCompletionInfo({
+            success: false,
+            message: data?.message || "Failed to complete run",
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        setCompletionInfo({
+          success: false,
+          message: "Could not complete game (API unreachable)",
+        });
+      }
+    })();
+  }, [completionInfo, isFinished, refreshUser, score, token]);
+
+  const submitAnswer = useCallback(
+    async (choice) => {
+      if (submitting || answer !== null) return;
+
+      const q = questions[step];
+      if (!q?._id) {
+        setStep((s) => s + 1);
+        return;
+      }
+
+      setSubmitting(true);
+      setAnswer(choice);
+      setFeedback(null);
+
+      try {
+        const res = await authFetch(
+          "/api/phishing/submit",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              questionId: q._id,
+              answerGiven: choice,
+            }),
+          },
+          token
+        );
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data?.success) {
+          if (data.correct) {
+            setScore((prev) => prev + (data.pointsAwarded || 0));
+          }
+          setFeedback({
+            isCorrect: !!data.correct,
+            explanation: q.explanation || "",
+          });
+        } else {
+          setFeedback({
+            isCorrect: false,
+            explanation: data?.message || "Submission failed.",
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        setFeedback({
+          isCorrect: false,
+          explanation: "Network error. Please try again.",
+        });
+      } finally {
+        // move on
+        setTimeout(() => {
+          setStep((s) => s + 1);
+          setAnswer(null);
+          setFeedback(null);
+          setSubmitting(false);
+        }, 1200);
+      }
+    },
+    [answer, questions, step, submitting, token]
+  );
+
+  // ====== UI states ======
+
+  if (!token) {
     return (
-      <main className="h-screen flex items-center justify-center bg-slate-950 text-slate-100">
-        <div className="max-w-md w-full mx-4 rounded-2xl bg-slate-900/80 border border-slate-700 shadow-xl p-8 text-center backdrop-blur">
-          <h1 className="text-3xl font-semibold mb-4">Training complete</h1>
-          <p className="mb-4 text-slate-300">
-            You’ve finished all phishing scenarios.
-          </p>
-          <p className="mb-6 text-sm text-slate-400">
-            CONGRADULATIONS ON COMPLETING THE GAME.
-          </p>
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <p>Please log in to play.</p>
+      </main>
+    );
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <p className="text-slate-300 text-sm">Loading questions...</p>
+      </main>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <div className="max-w-md w-full rounded-2xl border border-slate-700 bg-slate-900 p-6 text-center">
+          <h1 className="text-xl font-semibold mb-2">Couldn’t load the game</h1>
+          <p className="text-slate-300 text-sm mb-4">{loadError}</p>
           <button
             onClick={() => {
-              setStep(0);
-              setAnswer(null);
+              resetLocal();
+              loadQuestions();
             }}
-            className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold transition"
+            className="px-5 py-2 rounded-lg bg-emerald-500 text-black font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (!questions.length) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <p className="text-slate-300 text-sm">No questions found.</p>
+      </main>
+    );
+  }
+
+  if (isFinished) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <div className="bg-slate-900 p-8 rounded-2xl text-center border border-slate-700 max-w-md w-full">
+          <h1 className="text-3xl font-bold mb-3">Training Complete</h1>
+
+          <p className="mb-2 text-slate-200">Score: {score}</p>
+
+          {completionInfo?.success ? (
+            <>
+              <p className="text-emerald-400 font-semibold">
+                +{completionInfo.completionBonus} coins
+              </p>
+              <p className="text-slate-300 mb-6">
+                Total coins: {completionInfo.totalCoins}
+              </p>
+            </>
+          ) : (
+            <p className="text-slate-400 mb-6">Finalising rewards…</p>
+          )}
+
+          {completionInfo?.success === false && completionInfo?.message && (
+            <p className="text-rose-300 text-sm mb-4">
+              {completionInfo.message}
+            </p>
+          )}
+
+          <button
+            onClick={() => {
+              resetLocal();
+              loadQuestions();
+            }}
+            className="px-6 py-3 bg-emerald-500 text-black rounded-lg font-medium"
           >
             Play again
           </button>
@@ -83,198 +259,137 @@ export default function PhishingPage() {
     );
   }
 
-  // Safe to read current question now
+  // ====== Game render ======
   const q = questions[step];
-  const progress = ((step + 1) / total) * 100;
+  const isDual = Boolean(q?.imageLeft && q?.imageRight);
+  const progress = total ? Math.round(((step + 1) / total) * 100) : 0;
 
-  const isDualImage = q.imageLeft && q.imageRight;
-  const isSingleImage = q.image && !isDualImage;
-
-  async function submitAnswer(choice) {
-    if (answer) return;
-    setAnswer(choice);
-    setFeedback(null);
-
-    try {
-      const res = await authFetch("/api/phishing/submit", {
-        method: "POST",
-        body: JSON.stringify({
-          questionId: q._id,
-          answerGiven: choice,
-        }),
-      }, token);
-      const data = await res.json();
-      if (data?.success) {
-        setFeedback({
-          isCorrect: data.isCorrect,
-          explanation: q.explanation || "",
-        });
-      } else {
-        setFeedback({
-          isCorrect: false,
-          explanation: data?.message || "Submission failed.",
-        });
-      }
-    } catch (err) {
-      console.error("Submission error:", err);
-      setFeedback({
-        isCorrect: false,
-        explanation: "Network error. Please try again.",
-      });
-    }
-
-    setTimeout(() => {
-      setAnswer(null);
-      setFeedback(null);
-      setStep((s) => s + 1);
-    }, 1200);
-  }
+  const isLocked = submitting || answer !== null;
 
   return (
-    <main className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-6xl rounded-3xl bg-slate-900/80 border border-slate-700 shadow-2xl backdrop-blur flex flex-col gap-6 p-6 md:p-8 lg:p-10">
-        {/* Top bar: title + progress */}
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-semibold">
-              Phishing Awareness Game
-            </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Decide which messages are safe and which ones are traps.
-            </p>
-          </div>
+  <main className="h-[100dvh] bg-slate-950 text-white p-3 md:p-4 overflow-hidden">
+    <div className="mx-auto h-full w-full max-w-6xl bg-slate-900 rounded-2xl border border-slate-700 p-4 md:p-6 flex flex-col min-h-0">
 
-          <div className="w-full md:w-64">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs uppercase tracking-wide text-slate-400">
-                Progress
-              </span>
-              <span className="text-xs text-slate-300">
-                Question {step + 1} of {total}
-              </span>
+      {/* Header (fixed height) */}
+      <div className="shrink-0 mb-3">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-xl md:text-2xl font-bold">Phishing Awareness</h1>
+          <p className="text-xs text-slate-400">
+            {step + 1} / {total}
+          </p>
+        </div>
+
+        <div className="w-full h-2 bg-slate-800 rounded mt-2 overflow-hidden">
+          <div
+            className="h-full bg-emerald-500 rounded"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Question (fixed-ish) */}
+      <div className="shrink-0 mb-3 bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+        <p className="text-sm md:text-base line-clamp-2">{q?.text}</p>
+      </div>
+
+      {/* Images (takes remaining height, no page scroll) */}
+      <div className="flex-1 min-h-0 mb-3">
+        {isDual ? (
+          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center overflow-hidden">
+              <img
+                src={q.imageLeft}
+                alt="Version A"
+                className="max-h-full max-w-full object-contain"
+                draggable={false}
+              />
             </div>
-            <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 transition-[width] duration-300"
-                style={{ width: `${progress}%` }}
+
+            <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center overflow-hidden">
+              <img
+                src={q.imageRight}
+                alt="Version B"
+                className="max-h-full max-w-full object-contain"
+                draggable={false}
               />
             </div>
           </div>
-        </header>
-
-        {/* Question text */}
-        <section className="rounded-2xl bg-slate-900/70 border border-slate-800 px-4 py-3 md:px-6 md:py-4">
-          <p className="text-base md:text-lg text-slate-100">{q.text}</p>
-        </section>
-
-        {/* Image area */}
-        <section className="flex-1 flex flex-col md:flex-row items-center justify-center gap-6">
-          {isDualImage && (
-            <div className="flex flex-col md:flex-row gap-6 w-full">
-              {/* Left */}
-              <div className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full h-[240px] md:h-[320px] lg:h-[380px] rounded-2xl bg-slate-900 border border-slate-800 shadow-inner flex items-center justify-center overflow-hidden">
-                  <img
-                    src={q.imageLeft}
-                    alt="Left version"
-                    className="max-h-full max-w-full object-contain"
-                  />
-                </div>
-                <span className="text-xs uppercase tracking-wide text-slate-400">
-                  Left
-                </span>
-              </div>
-
-              {/* Right */}
-              <div className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full h-[240px] md:h-[320px] lg:h-[380px] rounded-2xl bg-slate-900 border border-slate-800 shadow-inner flex items-center justify-center overflow-hidden">
-                  <img
-                    src={q.imageRight}
-                    alt="Right version"
-                    className="max-h-full max-w-full object-contain"
-                  />
-                </div>
-                <span className="text-xs uppercase tracking-wide text-slate-400">
-                  Right
-                </span>
-              </div>
-            </div>
-          )}
-
-          {isSingleImage && (
-            <div className="w-full md:w-3/4 lg:w-2/3 flex flex-col items-center gap-2">
-              <div className="w-full h-[260px] md:h-[360px] lg:h-[420px] rounded-2xl bg-slate-900 border border-slate-800 shadow-inner flex items-center justify-center overflow-hidden">
-                <img
-                  src={q.image}
-                  alt="Scenario"
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-              <span className="text-xs uppercase tracking-wide text-slate-400">
-                Scenario
-              </span>
-            </div>
-          )}
-        </section>
-
-        {/* Answer buttons */}
-        <footer className="mt-2 flex flex-col items-center gap-3">
-          {isDualImage ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-xl">
-              <button
-                onClick={() => submitAnswer("left")}
-                disabled={!!answer}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-700 bg-slate-900/70 hover:bg-slate-800 text-slate-100 font-semibold text-base md:text-lg transition"
-              >
-                Left is phishing
-              </button>
-              <button
-                onClick={() => submitAnswer("right")}
-                disabled={!!answer}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-700 bg-slate-900/70 hover:bg-slate-800 text-slate-100 font-semibold text-base md:text-lg transition"
-              >
-                Right is phishing
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 w-full max-w-xl">
-              <button
-                onClick={() => submitAnswer("Safe")}
-                disabled={!!answer}
-                className="w-full px-4 py-3 rounded-2xl border border-emerald-500/60 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-semibold text-base md:text-lg transition"
-              >
-                Safe
-              </button>
-              <button
-                onClick={() => submitAnswer("Phishing")}
-                disabled={!!answer}
-                className="w-full px-4 py-3 rounded-2xl border border-rose-500/70 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-semibold text-base md:text-lg transition"
-              >
-                Phishing
-              </button>
-            </div>
-          )}
-
-          {feedback && (
-            <div
-              className={`w-full max-w-xl rounded-2xl border px-4 py-3 text-sm ${
-                feedback.isCorrect
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                  : "border-rose-500/40 bg-rose-500/10 text-rose-200"
-              }`}
-            >
-              <p className="font-semibold">
-                {feedback.isCorrect ? "Correct!" : "Not quite."}
-              </p>
-              {feedback.explanation && (
-                <p className="mt-1 text-xs text-slate-200/80">
-                  {feedback.explanation}
-                </p>
-              )}
-            </div>
-          )}
-        </footer>
+        ) : q?.image ? (
+          <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center overflow-hidden">
+            <img
+              src={q.image}
+              alt="Email example"
+              className="max-h-full max-w-full object-contain"
+              draggable={false}
+            />
+          </div>
+        ) : (
+          <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center text-slate-400 text-sm">
+            No image provided
+          </div>
+        )}
       </div>
-    </main>
-  );
+
+      {/* Buttons (fixed height) */}
+      <div className="shrink-0 grid grid-cols-2 gap-3">
+        {isDual ? (
+          <>
+            <button
+              disabled={isLocked}
+              onClick={() => submitAnswer("left")}
+              className="py-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-50"
+            >
+              Version A is phishing
+            </button>
+            <button
+              disabled={isLocked}
+              onClick={() => submitAnswer("right")}
+              className="py-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-50"
+            >
+              Version B is phishing
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              disabled={isLocked}
+              onClick={() => submitAnswer("Safe")}
+              className="py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-black font-medium disabled:opacity-50"
+            >
+              Safe
+            </button>
+            <button
+              disabled={isLocked}
+              onClick={() => submitAnswer("Phishing")}
+              className="py-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium disabled:opacity-50"
+            >
+              Phishing
+            </button>
+          </>
+        )}
+      </div>
+
+      {feedback && (
+        <div
+          className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${
+            feedback.isCorrect
+              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+              : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+          }`}
+        >
+          <p className="font-semibold">
+            {feedback.isCorrect ? "Correct!" : "Not quite."}
+          </p>
+          {feedback.explanation && (
+            <p className="mt-1 text-xs text-slate-200/80">
+              {feedback.explanation}
+            </p>
+          )}
+        </div>
+      )}
+
+    </div>
+  </main>
+);
+
 }

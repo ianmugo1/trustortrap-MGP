@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { authFetch } from "@/lib/api";
 
 const AuthContext = createContext(null);
-
 const STORAGE_KEY = "tt_auth";
 const EXPIRED_KEY = "tt_session_expired";
 
@@ -62,11 +62,24 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  useEffect(() => {
+    const handleExpired = () => {
+      setUser(null);
+      setToken(null);
+      setSessionExpired(true);
+    };
+    window.addEventListener("tt:session-expired", handleExpired);
+    return () => window.removeEventListener("tt:session-expired", handleExpired);
+  }, []);
+
   function signIn(newToken, newUser) {
     setUser(newUser);
     setToken(newToken);
     setSessionExpired(false);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: newToken, user: newUser }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ token: newToken, user: newUser })
+    );
   }
 
   function signOut() {
@@ -74,6 +87,39 @@ export function AuthProvider({ children }) {
     setToken(null);
     localStorage.removeItem(STORAGE_KEY);
   }
+
+  // ✅ Fetch latest user from backend and update context + localStorage
+  const refreshUser = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      const res = await authFetch("/api/users/me", {}, token);
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setUser(null);
+          setToken(null);
+          setSessionExpired(true);
+        }
+        console.error("refreshUser failed:", res.status);
+        return;
+      }
+
+      const data = await res.json();
+
+      // Support both response shapes: { user: {...} } or direct user object
+      const freshUser = data.user ?? data;
+
+      setUser(freshUser);
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ token, user: freshUser })
+      );
+    } catch (err) {
+      console.error("Failed to refresh user", err);
+    }
+  }, [token]);
 
   const value = {
     user,
@@ -84,6 +130,7 @@ export function AuthProvider({ children }) {
     signIn,
     signOut,
     clearSessionExpired: () => setSessionExpired(false),
+    refreshUser, // ✅ NOW dashboard can call it
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -45,7 +45,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur px-6 py-8 shadow-xl">
         <h1 className="text-2xl font-bold text-slate-50">Create an account</h1>
         <p className="text-sm text-slate-400 mb-6">
-          Join TrustOrTrap and start building your cyber-awareness score.
+          Join TrustOrTrap and start building your cyber awareness journey.
         </p>
 
         {msg && (
