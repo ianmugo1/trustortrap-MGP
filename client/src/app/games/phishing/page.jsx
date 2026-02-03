@@ -261,135 +261,83 @@ export default function PhishingPage() {
 
   // ====== Game render ======
   const q = questions[step];
-  const isDual = Boolean(q?.imageLeft && q?.imageRight);
   const progress = total ? Math.round(((step + 1) / total) * 100) : 0;
+  const options = q?.options || [];
+  const optionLabels = ["A", "B", "C", "D"];
 
   const isLocked = submitting || answer !== null;
 
   return (
-  <main className="h-[100dvh] bg-slate-950 text-white p-3 md:p-4 overflow-hidden">
-    <div className="mx-auto h-full w-full max-w-6xl bg-slate-900 rounded-2xl border border-slate-700 p-4 md:p-6 flex flex-col min-h-0">
+    <main className="min-h-screen bg-slate-950 text-white p-4 md:p-6">
+      <div className="mx-auto w-full max-w-2xl bg-slate-900 rounded-2xl border border-slate-700 p-6 md:p-8">
 
-      {/* Header (fixed height) */}
-      <div className="shrink-0 mb-3">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl md:text-2xl font-bold">Phishing Awareness</h1>
-          <p className="text-xs text-slate-400">
-            {step + 1} / {total}
-          </p>
-        </div>
-
-        <div className="w-full h-2 bg-slate-800 rounded mt-2 overflow-hidden">
-          <div
-            className="h-full bg-emerald-500 rounded"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Question (fixed-ish) */}
-      <div className="shrink-0 mb-3 bg-slate-800/60 p-3 rounded-xl border border-slate-700">
-        <p className="text-sm md:text-base line-clamp-2">{q?.text}</p>
-      </div>
-
-      {/* Images (takes remaining height, no page scroll) */}
-      <div className="flex-1 min-h-0 mb-3">
-        {isDual ? (
-          <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center overflow-hidden">
-              <img
-                src={q.imageLeft}
-                alt="Version A"
-                className="max-h-full max-w-full object-contain"
-                draggable={false}
-              />
-            </div>
-
-            <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center overflow-hidden">
-              <img
-                src={q.imageRight}
-                alt="Version B"
-                className="max-h-full max-w-full object-contain"
-                draggable={false}
-              />
-            </div>
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <h1 className="text-xl md:text-2xl font-bold">Phishing Awareness</h1>
+            <p className="text-sm text-slate-400">
+              {step + 1} / {total}
+            </p>
           </div>
-        ) : q?.image ? (
-          <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center overflow-hidden">
-            <img
-              src={q.image}
-              alt="Email example"
-              className="max-h-full max-w-full object-contain"
-              draggable={false}
+
+          <div className="w-full h-2 bg-slate-800 rounded overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded transition-all duration-300"
+              style={{ width: `${progress}%` }}
             />
           </div>
-        ) : (
-          <div className="h-full bg-slate-950/40 rounded-xl border border-slate-700 p-2 flex items-center justify-center text-slate-400 text-sm">
-            No image provided
+        </div>
+
+        {/* Question */}
+        <div className="mb-6 bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+          <p className="text-base md:text-lg">{q?.text}</p>
+        </div>
+
+        {/* Multiple Choice Options */}
+        <div className="space-y-3 mb-4">
+          {options.map((option, index) => (
+            <button
+              key={index}
+              disabled={isLocked}
+              onClick={() => submitAnswer(index)}
+              className={`w-full text-left p-4 rounded-xl border transition-all duration-200
+                ${answer === index
+                  ? "border-emerald-500 bg-emerald-500/20"
+                  : "border-slate-700 bg-slate-800 hover:bg-slate-700 hover:border-slate-600"
+                }
+                disabled:opacity-50 disabled:cursor-not-allowed
+              `}
+            >
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 text-sm font-bold mr-3">
+                {optionLabels[index]}
+              </span>
+              <span className="text-sm md:text-base">{option}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Feedback */}
+        {feedback && (
+          <div
+            className={`rounded-2xl border px-4 py-3 text-sm ${
+              feedback.isCorrect
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+            }`}
+          >
+            <p className="font-semibold">
+              {feedback.isCorrect ? "Correct!" : "Not quite."}
+            </p>
+            {feedback.explanation && (
+              <p className="mt-1 text-xs text-slate-200/80">
+                {feedback.explanation}
+              </p>
+            )}
           </div>
         )}
+
       </div>
-
-      {/* Buttons (fixed height) */}
-      <div className="shrink-0 grid grid-cols-2 gap-3">
-        {isDual ? (
-          <>
-            <button
-              disabled={isLocked}
-              onClick={() => submitAnswer("left")}
-              className="py-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-50"
-            >
-              Version A is phishing
-            </button>
-            <button
-              disabled={isLocked}
-              onClick={() => submitAnswer("right")}
-              className="py-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-50"
-            >
-              Version B is phishing
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              disabled={isLocked}
-              onClick={() => submitAnswer("Safe")}
-              className="py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-black font-medium disabled:opacity-50"
-            >
-              Safe
-            </button>
-            <button
-              disabled={isLocked}
-              onClick={() => submitAnswer("Phishing")}
-              className="py-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium disabled:opacity-50"
-            >
-              Phishing
-            </button>
-          </>
-        )}
-      </div>
-
-      {feedback && (
-        <div
-          className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${
-            feedback.isCorrect
-              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-              : "border-rose-500/40 bg-rose-500/10 text-rose-200"
-          }`}
-        >
-          <p className="font-semibold">
-            {feedback.isCorrect ? "Correct!" : "Not quite."}
-          </p>
-          {feedback.explanation && (
-            <p className="mt-1 text-xs text-slate-200/80">
-              {feedback.explanation}
-            </p>
-          )}
-        </div>
-      )}
-
-    </div>
-  </main>
-);
+    </main>
+  );
 
 }

@@ -68,6 +68,20 @@ const PhishingQuestionSchema = new Schema(
       default: "",
       trim: true,
     },
+
+    // Multiple choice options (A, B, C, D)
+    options: {
+      type: [String],
+      default: [],
+    },
+
+    // Index of the correct option (0-3)
+    correctOption: {
+      type: Number,
+      min: 0,
+      max: 3,
+      default: null,
+    },
   },
   {
     timestamps: true,

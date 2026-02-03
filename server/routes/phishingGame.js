@@ -53,9 +53,20 @@ router.post("/submit", authMiddleware, async (req, res) => {
     }
 
     let isCorrect = false;
+    const hasOptions = Array.isArray(question.options) && question.options.length > 0;
     const isDual = Boolean(question.imageLeft && question.imageRight);
 
-    if (isDual) {
+    if (hasOptions) {
+      // Multiple choice question - answerGiven should be the option index (0-3)
+      const selectedIndex = Number(answerGiven);
+      if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex > 3) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid answer format - expected option index 0-3",
+        });
+      }
+      isCorrect = selectedIndex === question.correctOption;
+    } else if (isDual) {
       if (!question.phishingSide) {
         return res.status(422).json({
           success: false,
