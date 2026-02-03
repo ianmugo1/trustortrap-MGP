@@ -12,7 +12,10 @@ const router = express.Router();
  */
 router.get("/questions", authMiddleware, async (req, res) => {
   try {
-    const questions = await PhishingQuestion.find().lean();
+    // Only return MCQ questions (ones with options array that has at least 1 item)
+    const questions = await PhishingQuestion.find({
+      "options.0": { $exists: true },
+    }).lean();
 
     return res.json({
       success: true,
@@ -59,13 +62,23 @@ router.post("/submit", authMiddleware, async (req, res) => {
     if (hasOptions) {
       // Multiple choice question - answerGiven should be the option index (0-3)
       const selectedIndex = Number(answerGiven);
-      if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex > 3) {
+      if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= question.options.length) {
         return res.status(400).json({
           success: false,
-          message: "Invalid answer format - expected option index 0-3",
+          message: "Invalid answer format - expected valid option index",
         });
       }
-      isCorrect = selectedIndex === question.correctOption;
+
+      // Support both correctOption (index) and correct (text) fields
+      if (typeof question.correctOption === "number") {
+        isCorrect = selectedIndex === question.correctOption;
+      } else if (question.correct) {
+        // Find which option matches the correct answer text
+        const correctIndex = question.options.findIndex(
+          (opt) => opt === question.correct || opt.toLowerCase().includes(question.correct.toLowerCase().substring(0, 20))
+        );
+        isCorrect = selectedIndex === correctIndex;
+      }
     } else if (isDual) {
       if (!question.phishingSide) {
         return res.status(422).json({

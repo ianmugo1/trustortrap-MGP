@@ -18,6 +18,7 @@ export default function PhishingPage() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [gameStarted, setGameStarted] = useState(false);
 
   const total = questions.length;
   const isFinished = total > 0 && step >= total;
@@ -30,6 +31,7 @@ export default function PhishingPage() {
     setCompletionInfo(null);
     setSubmitting(false);
     setLoadError("");
+    setGameStarted(false);
   }, []);
 
   const loadQuestions = useCallback(async () => {
@@ -218,6 +220,31 @@ export default function PhishingPage() {
     );
   }
 
+  if (!gameStarted) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <div className="max-w-md w-full rounded-2xl border border-slate-700 bg-slate-900 p-8 text-center">
+          <h1 className="text-3xl font-bold mb-4">Phishing Awareness</h1>
+          <p className="text-slate-300 mb-6">
+            Test your ability to spot phishing attempts. You'll be presented with {total} scenarios
+            and asked to identify the safest response.
+          </p>
+          <div className="text-slate-400 text-sm mb-6">
+            <p>{total} questions</p>
+            <p>+10 coins per correct answer</p>
+            <p>+20 bonus coins on completion</p>
+          </div>
+          <button
+            onClick={() => setGameStarted(true)}
+            className="px-8 py-3 bg-emerald-500 text-black rounded-lg font-semibold text-lg"
+          >
+            Start
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   if (isFinished) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
@@ -293,28 +320,47 @@ export default function PhishingPage() {
           <p className="text-base md:text-lg">{q?.text}</p>
         </div>
 
-        {/* Multiple Choice Options */}
-        <div className="space-y-3 mb-4">
-          {options.map((option, index) => (
+        {/* Answer Options */}
+        {options.length > 0 ? (
+          <div className="space-y-3 mb-4">
+            {options.map((option, index) => (
+              <button
+                key={index}
+                disabled={isLocked}
+                onClick={() => submitAnswer(index)}
+                className={`w-full text-left p-4 rounded-xl border transition-all duration-200
+                  ${answer === index
+                    ? "border-emerald-500 bg-emerald-500/20"
+                    : "border-slate-700 bg-slate-800 hover:bg-slate-700 hover:border-slate-600"
+                  }
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+              >
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 text-sm font-bold mr-3">
+                  {optionLabels[index]}
+                </span>
+                <span className="text-sm md:text-base">{option}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 mb-4">
             <button
-              key={index}
               disabled={isLocked}
-              onClick={() => submitAnswer(index)}
-              className={`w-full text-left p-4 rounded-xl border transition-all duration-200
-                ${answer === index
-                  ? "border-emerald-500 bg-emerald-500/20"
-                  : "border-slate-700 bg-slate-800 hover:bg-slate-700 hover:border-slate-600"
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed
-              `}
+              onClick={() => submitAnswer("Safe")}
+              className="py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-black font-semibold text-lg disabled:opacity-50"
             >
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 text-sm font-bold mr-3">
-                {optionLabels[index]}
-              </span>
-              <span className="text-sm md:text-base">{option}</span>
+              Safe
             </button>
-          ))}
-        </div>
+            <button
+              disabled={isLocked}
+              onClick={() => submitAnswer("Phishing")}
+              className="py-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-lg disabled:opacity-50"
+            >
+              Phishing
+            </button>
+          </div>
+        )}
 
         {/* Feedback */}
         {feedback && (

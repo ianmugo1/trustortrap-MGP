@@ -75,12 +75,19 @@ const PhishingQuestionSchema = new Schema(
       default: [],
     },
 
-    // Index of the correct option (0-3)
+    // Index of the correct option (0-3) - new format
     correctOption: {
       type: Number,
       min: 0,
       max: 3,
       default: null,
+    },
+
+    // Correct answer text - existing format from DB
+    correct: {
+      type: String,
+      default: "",
+      trim: true,
     },
   },
   {
