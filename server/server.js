@@ -7,6 +7,7 @@ import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import phishingRoutes from "./routes/phishingGame.js";
+import cyberPetRoutes from "./routes/cyberpet.js";
 
 
 dotenv.config();
@@ -44,6 +45,7 @@ app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/phishing", phishingRoutes);   // ✅ MUST COME BEFORE 404 HANDLER
+app.use("/api/cyberpet", cyberPetRoutes);
 
 // ---------- 404 HANDLER ----------
 app.use((req, res) => {

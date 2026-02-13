@@ -27,7 +27,7 @@ export default function GamesPage() {
 
         {/* Password */}
         <Link
-          href="/games/password/page.jsx"
+          href="/games/cyberpet"
           className="block bg-white p-6 rounded-xl border shadow hover:shadow-lg transition cursor-pointer text-center"
         >
           <div className="flex flex-col items-center">
