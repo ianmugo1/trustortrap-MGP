@@ -3,12 +3,157 @@ import authMiddleware from "../middleware/auth.js";
 import CyberPet from "../models/CyberPet.js";
 import CyberPetQuestion from "../models/CyberPetQuestion.js";
 import cyberPetQuestions from "../data/cyberPetQuestions.js";
+import passwordIncidents from "../data/passwordIncidents.js";
 
 const router = express.Router();
 const DAILY_QUESTION_COUNT = 5;
+const INCIDENT_TRIGGER_CAP = 0.85;
 
 function clamp(value) {
   return Math.max(0, Math.min(100, Number(value) || 0));
+}
+
+function getRiskLevel(score) {
+  if (score >= 70) return "high";
+  if (score >= 40) return "medium";
+  return "low";
+}
+
+function calculateRisk(posture = {}) {
+  const strengthScore = clamp(posture.strengthScore ?? 45);
+  const reusedPassword = Boolean(posture.reusedPassword);
+  const twoFactorEnabled = Boolean(posture.twoFactorEnabled);
+  const breachMonitoringEnabled = Boolean(posture.breachMonitoringEnabled);
+
+  let score = 25;
+  score += Math.round((100 - strengthScore) * 0.45);
+  if (reusedPassword) score += 20;
+  if (!twoFactorEnabled) score += 20;
+  if (!breachMonitoringEnabled) score += 10;
+
+  const normalizedScore = clamp(score);
+  return {
+    score: normalizedScore,
+    level: getRiskLevel(normalizedScore),
+  };
+}
+
+function resolveIncidentSeverity(riskScore, severityRules = {}) {
+  const score = clamp(riskScore);
+  const levels = ["low", "medium", "high"];
+
+  for (const level of levels) {
+    const maxRisk = Number(severityRules?.[level]?.maxRisk);
+    if (Number.isFinite(maxRisk) && score <= maxRisk) {
+      return level;
+    }
+  }
+
+  return "high";
+}
+
+function calculateIncidentProbability(incident, posture = {}, riskScore = 0) {
+  const modifiers = incident?.postureModifiers || {};
+  const strengthScore = clamp(posture.strengthScore ?? 45);
+  const reusedPassword = Boolean(posture.reusedPassword);
+  const twoFactorEnabled = Boolean(posture.twoFactorEnabled);
+  const breachMonitoringEnabled = Boolean(posture.breachMonitoringEnabled);
+
+  let probability = Number(incident?.baseProbability) || 0;
+
+  if (reusedPassword && Number.isFinite(modifiers.reusedPassword)) {
+    probability += modifiers.reusedPassword;
+  }
+
+  if (
+    Number.isFinite(modifiers.weakStrengthThreshold) &&
+    Number.isFinite(modifiers.weakStrengthPenalty) &&
+    strengthScore < modifiers.weakStrengthThreshold
+  ) {
+    probability += modifiers.weakStrengthPenalty;
+  }
+
+  if (twoFactorEnabled && Number.isFinite(modifiers.twoFactorEnabled)) {
+    probability += modifiers.twoFactorEnabled;
+  }
+
+  if (
+    breachMonitoringEnabled &&
+    Number.isFinite(modifiers.breachMonitoringEnabled)
+  ) {
+    probability += modifiers.breachMonitoringEnabled;
+  }
+
+  if (
+    !breachMonitoringEnabled &&
+    Number.isFinite(modifiers.monitoringOffDelayedPenalty)
+  ) {
+    probability += modifiers.monitoringOffDelayedPenalty;
+  }
+
+  if (
+    Number.isFinite(modifiers.highRiskThreshold) &&
+    Number.isFinite(modifiers.highRiskPenalty) &&
+    riskScore >= modifiers.highRiskThreshold
+  ) {
+    probability += modifiers.highRiskPenalty;
+  }
+
+  return Math.max(0, Math.min(INCIDENT_TRIGGER_CAP, probability));
+}
+
+function rollIncident(riskState = {}, posture = {}, incidentDeck = passwordIncidents) {
+  const incidents = Array.isArray(incidentDeck) ? incidentDeck : [];
+  if (!incidents.length) return null;
+
+  const riskScore = clamp(riskState.score ?? 0);
+
+  const weightedCandidates = incidents
+    .map((incident) => {
+      const probability = calculateIncidentProbability(incident, posture, riskScore);
+      return { incident, probability };
+    })
+    .filter((entry) => entry.probability > 0);
+
+  if (!weightedCandidates.length) return null;
+
+  const roll = Math.random();
+  let running = 0;
+
+  for (const entry of weightedCandidates) {
+    running += entry.probability;
+    if (roll <= running) {
+      const severity = resolveIncidentSeverity(
+        riskScore,
+        entry.incident?.severityRules
+      );
+
+      return {
+        type: entry.incident.id,
+        label: entry.incident.label,
+        severity,
+        status: "active",
+        createdAt: new Date(),
+      };
+    }
+  }
+
+  return null;
+}
+
+function applyDailyDecay(petDoc) {
+  if (!petDoc) return petDoc;
+
+  if (petDoc.pet && typeof petDoc.pet === "object") {
+    petDoc.pet.energy = clamp((petDoc.pet.energy ?? 70) - 10);
+    petDoc.pet.mood = clamp((petDoc.pet.mood ?? 70) - 6);
+    petDoc.pet.health = clamp((petDoc.pet.health ?? 75) - 4);
+  } else {
+    petDoc.health = clamp((petDoc.health ?? 75) - 4);
+    petDoc.happiness = clamp((petDoc.happiness ?? 70) - 6);
+  }
+
+  return petDoc;
 }
 
 function getDateKey(date = new Date()) {
