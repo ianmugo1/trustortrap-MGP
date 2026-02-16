@@ -160,6 +160,12 @@ function getDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
+function getYesterdayDateKey(date = new Date()) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return getDateKey(d);
+}
+
 async function ensureQuestionBank() {
   const count = await CyberPetQuestion.countDocuments();
 
@@ -234,6 +240,78 @@ router.get("/", authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error("Get cyber pet error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.post("/tick", authMiddleware, async (req, res) => {
+  try {
+    const pet = await getOrCreatePet(req.user.id);
+    const now = new Date();
+    const todayKey = getDateKey(now);
+    const yesterdayKey = getYesterdayDateKey(now);
+
+    if (pet.daily?.dateKey === todayKey && pet.daily?.tickApplied) {
+      return res.json({
+        success: true,
+        alreadyApplied: true,
+        incidentTriggered: false,
+        pet,
+      });
+    }
+
+    if (!pet.daily || pet.daily.dateKey !== todayKey) {
+      pet.daily = {
+        dateKey: todayKey,
+        actionsUsed: 0,
+        maxActions: pet.daily?.maxActions || 3,
+        tickApplied: false,
+      };
+    } else {
+      pet.daily.actionsUsed = pet.daily.actionsUsed || 0;
+      pet.daily.maxActions = pet.daily.maxActions || 3;
+    }
+
+    applyDailyDecay(pet);
+
+    const riskState = calculateRisk(pet.posture || {});
+    pet.risk = riskState;
+
+    const hasActiveIncident = pet.activeIncident?.status === "active";
+    let rolledIncident = null;
+
+    if (!hasActiveIncident) {
+      rolledIncident = rollIncident(riskState, pet.posture || {});
+      if (rolledIncident) {
+        pet.activeIncident = rolledIncident;
+      }
+    }
+
+    const lastCheckIn = pet.streak?.lastCheckInDateKey || "";
+    if (lastCheckIn !== todayKey) {
+      if (lastCheckIn === yesterdayKey) {
+        pet.streak.current = (pet.streak?.current || 0) + 1;
+      } else {
+        pet.streak.current = 1;
+      }
+    }
+
+    pet.streak.best = Math.max(pet.streak?.best || 0, pet.streak?.current || 0);
+    pet.streak.lastCheckInDateKey = todayKey;
+
+    pet.daily.tickApplied = true;
+    pet.lastUpdated = now;
+
+    await pet.save();
+
+    return res.json({
+      success: true,
+      alreadyApplied: false,
+      incidentTriggered: Boolean(rolledIncident),
+      pet,
+    });
+  } catch (err) {
+    console.error("Tick cyber pet error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
