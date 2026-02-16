@@ -22,6 +22,89 @@ const dailyProgressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const postureSchema = new mongoose.Schema(
+  {
+    strengthScore: { type: Number, default: 45, min: 0, max: 100 },
+    reusedPassword: { type: Boolean, default: true },
+    twoFactorEnabled: { type: Boolean, default: false },
+    breachMonitoringEnabled: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const riskSchema = new mongoose.Schema(
+  {
+    score: { type: Number, default: 70, min: 0, max: 100 },
+    level: {
+      type: String,
+      enum: ["low", "medium", "high"],
+      default: "high",
+    },
+  },
+  { _id: false }
+);
+
+const petStatusSchema = new mongoose.Schema(
+  {
+    mood: { type: Number, default: 70, min: 0, max: 100 },
+    health: { type: Number, default: 75, min: 0, max: 100 },
+    energy: { type: Number, default: 70, min: 0, max: 100 },
+  },
+  { _id: false }
+);
+
+const dailyStateSchema = new mongoose.Schema(
+  {
+    dateKey: { type: String, default: "" },
+    actionsUsed: { type: Number, default: 0, min: 0 },
+    maxActions: { type: Number, default: 3, min: 1 },
+    tickApplied: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const activeIncidentSchema = new mongoose.Schema(
+  {
+    type: { type: String, default: "" },
+    severity: {
+      type: String,
+      enum: ["", "low", "medium", "high"],
+      default: "",
+    },
+    status: {
+      type: String,
+      enum: ["", "active", "resolved", "ignored"],
+      default: "",
+    },
+    createdAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
+const incidentHistorySchema = new mongoose.Schema(
+  {
+    type: { type: String, required: true },
+    severity: {
+      type: String,
+      enum: ["low", "medium", "high"],
+      required: true,
+    },
+    outcome: { type: String, default: "" },
+    createdAt: { type: Date, required: true },
+    resolvedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
+const streakSchema = new mongoose.Schema(
+  {
+    current: { type: Number, default: 0, min: 0 },
+    best: { type: Number, default: 0, min: 0 },
+    lastCheckInDateKey: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const cyberPetSchema = new mongoose.Schema(
   {
     userId: {
@@ -56,6 +139,34 @@ const cyberPetSchema = new mongoose.Schema(
     },
     dailyProgress: {
       type: dailyProgressSchema,
+      default: () => ({}),
+    },
+    posture: {
+      type: postureSchema,
+      default: () => ({}),
+    },
+    risk: {
+      type: riskSchema,
+      default: () => ({}),
+    },
+    pet: {
+      type: petStatusSchema,
+      default: () => ({}),
+    },
+    daily: {
+      type: dailyStateSchema,
+      default: () => ({}),
+    },
+    activeIncident: {
+      type: activeIncidentSchema,
+      default: () => ({}),
+    },
+    incidentHistory: {
+      type: [incidentHistorySchema],
+      default: [],
+    },
+    streak: {
+      type: streakSchema,
       default: () => ({}),
     },
   },
