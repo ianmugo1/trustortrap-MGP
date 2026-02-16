@@ -2,12 +2,20 @@ import express from "express";
 import authMiddleware from "../middleware/auth.js";
 import CyberPet from "../models/CyberPet.js";
 import CyberPetQuestion from "../models/CyberPetQuestion.js";
+import User from "../models/User.js";
 import cyberPetQuestions from "../data/cyberPetQuestions.js";
 import passwordIncidents from "../data/passwordIncidents.js";
 
 const router = express.Router();
 const DAILY_QUESTION_COUNT = 5;
 const INCIDENT_TRIGGER_CAP = 0.85;
+const ACTIONS_PER_DAY_DEFAULT = 3;
+const ALLOWED_ACTIONS = new Set([
+  "changePassword",
+  "enable2FA",
+  "turnOnMonitoring",
+  "lockDownSessions",
+]);
 
 function clamp(value) {
   return Math.max(0, Math.min(100, Number(value) || 0));
@@ -156,6 +164,145 @@ function applyDailyDecay(petDoc) {
   return petDoc;
 }
 
+function ensurePetStatusDefaults(petDoc) {
+  if (!petDoc.pet || typeof petDoc.pet !== "object") {
+    petDoc.pet = { mood: 70, health: 75, energy: 70 };
+  }
+
+  petDoc.pet.mood = clamp(petDoc.pet.mood ?? 70);
+  petDoc.pet.health = clamp(petDoc.pet.health ?? 75);
+  petDoc.pet.energy = clamp(petDoc.pet.energy ?? 70);
+}
+
+function applyAction(petDoc, actionType, payload = {}) {
+  ensurePetStatusDefaults(petDoc);
+
+  const posture = petDoc.posture || {};
+  const result = { actionType, notes: [] };
+
+  switch (actionType) {
+    case "changePassword": {
+      const requestedStrength = Number(payload.strengthScore);
+      const fallbackStrength = clamp((posture.strengthScore ?? 45) + 20);
+      posture.strengthScore = Number.isFinite(requestedStrength)
+        ? clamp(requestedStrength)
+        : fallbackStrength;
+      posture.reusedPassword = false;
+      petDoc.pet.energy = clamp(petDoc.pet.energy - 15);
+      petDoc.pet.mood = clamp(petDoc.pet.mood + 4);
+      result.notes.push("Password updated and reuse removed.");
+      break;
+    }
+    case "enable2FA": {
+      posture.twoFactorEnabled = true;
+      petDoc.pet.energy = clamp(petDoc.pet.energy - 8);
+      petDoc.pet.health = clamp(petDoc.pet.health + 3);
+      result.notes.push("2FA enabled for stronger login protection.");
+      break;
+    }
+    case "turnOnMonitoring": {
+      posture.breachMonitoringEnabled = true;
+      petDoc.pet.energy = clamp(petDoc.pet.energy - 6);
+      petDoc.pet.mood = clamp(petDoc.pet.mood + 2);
+      result.notes.push("Breach monitoring enabled for earlier alerts.");
+      break;
+    }
+    case "lockDownSessions": {
+      petDoc.pet.energy = clamp(petDoc.pet.energy - 10);
+      petDoc.pet.health = clamp(petDoc.pet.health + 2);
+      result.notes.push("Suspicious sessions logged out.");
+      break;
+    }
+    default:
+      return null;
+  }
+
+  petDoc.posture = posture;
+  petDoc.risk = calculateRisk(posture);
+
+  return result;
+}
+
+function findIncidentDefinition(type) {
+  return passwordIncidents.find((incident) => incident.id === type) || null;
+}
+
+function applyIncidentResponse(petDoc, responseId) {
+  const activeIncident = petDoc.activeIncident || {};
+  if (activeIncident.status !== "active" || !activeIncident.type) {
+    return { ok: false, message: "No active incident to resolve" };
+  }
+
+  const incidentDef = findIncidentDefinition(activeIncident.type);
+  if (!incidentDef) {
+    return { ok: false, message: "Incident definition not found" };
+  }
+
+  const responseDef = (incidentDef.responses || []).find(
+    (response) => response.id === responseId
+  );
+  if (!responseDef) {
+    return { ok: false, message: "Invalid response option" };
+  }
+
+  ensurePetStatusDefaults(petDoc);
+  const posture = petDoc.posture || {};
+  const effects = responseDef.effects || {};
+
+  petDoc.risk = {
+    score: clamp((petDoc.risk?.score ?? 0) + Number(effects.riskDelta || 0)),
+    level: getRiskLevel(clamp((petDoc.risk?.score ?? 0) + Number(effects.riskDelta || 0))),
+  };
+
+  petDoc.pet.mood = clamp((petDoc.pet.mood ?? 70) + Number(effects.moodDelta || 0));
+  petDoc.pet.health = clamp(
+    (petDoc.pet.health ?? 75) + Number(effects.healthDelta || 0)
+  );
+  petDoc.pet.energy = clamp(
+    (petDoc.pet.energy ?? 70) - Number(responseDef.costs?.energy || 0)
+  );
+
+  const coinCost = Number(responseDef.costs?.coins || 0);
+
+  const resolvedAt = new Date();
+  const historyEntry = {
+    type: activeIncident.type,
+    severity: activeIncident.severity || "medium",
+    outcome: responseDef.label,
+    createdAt: activeIncident.createdAt || resolvedAt,
+    resolvedAt,
+  };
+
+  petDoc.incidentHistory = Array.isArray(petDoc.incidentHistory)
+    ? [...petDoc.incidentHistory, historyEntry]
+    : [historyEntry];
+
+  petDoc.activeIncident = {
+    type: "",
+    severity: "",
+    status: "",
+    createdAt: null,
+  };
+
+  // Recalculate final risk level from posture baseline + incident response delta.
+  const baselineRisk = calculateRisk(posture);
+  const adjustedScore = clamp(
+    baselineRisk.score + Number(effects.riskDelta || 0)
+  );
+  petDoc.risk = {
+    score: adjustedScore,
+    level: getRiskLevel(adjustedScore),
+  };
+
+  return {
+    ok: true,
+    incidentType: incidentDef.id,
+    responseId: responseDef.id,
+    responseLabel: responseDef.label,
+    coinCost,
+  };
+}
+
 function getDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
@@ -164,6 +311,42 @@ function getYesterdayDateKey(date = new Date()) {
   const d = new Date(date);
   d.setUTCDate(d.getUTCDate() - 1);
   return getDateKey(d);
+}
+
+async function getUserWithCyberPetStats(userId) {
+  const user = await User.findById(userId);
+  if (!user) return null;
+
+  if (!user.cyberPetStats) {
+    user.cyberPetStats = {};
+  }
+
+  return user;
+}
+
+function updateAverageRisk(stats, riskScore) {
+  const currentAvg = Number(stats.avgRiskScore) || 0;
+  const currentSamples = Number(stats.riskSamples) || 0;
+  const nextSamples = currentSamples + 1;
+  const nextAvg = Math.round(
+    (currentAvg * currentSamples + (Number(riskScore) || 0)) / nextSamples
+  );
+
+  stats.riskSamples = nextSamples;
+  stats.avgRiskScore = nextAvg;
+}
+
+function syncAdoptionDates(stats, posture, now = new Date()) {
+  if (posture?.twoFactorEnabled && !stats.twoFactorAdoptionDate) {
+    stats.twoFactorAdoptionDate = now;
+  }
+
+  if (
+    posture?.breachMonitoringEnabled &&
+    !stats.breachMonitoringAdoptionDate
+  ) {
+    stats.breachMonitoringAdoptionDate = now;
+  }
 }
 
 async function ensureQuestionBank() {
@@ -304,6 +487,17 @@ router.post("/tick", authMiddleware, async (req, res) => {
 
     await pet.save();
 
+    const user = await getUserWithCyberPetStats(req.user.id);
+    if (user) {
+      const stats = user.cyberPetStats;
+      if (rolledIncident) {
+        stats.totalIncidents = (Number(stats.totalIncidents) || 0) + 1;
+      }
+      updateAverageRisk(stats, pet.risk?.score || 0);
+      syncAdoptionDates(stats, pet.posture, now);
+      await user.save();
+    }
+
     return res.json({
       success: true,
       alreadyApplied: false,
@@ -312,6 +506,111 @@ router.post("/tick", authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error("Tick cyber pet error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.post("/action", authMiddleware, async (req, res) => {
+  try {
+    const { actionType, payload } = req.body || {};
+    if (!ALLOWED_ACTIONS.has(actionType)) {
+      return res.status(400).json({ success: false, message: "Invalid actionType" });
+    }
+
+    const pet = await getOrCreatePet(req.user.id);
+    const todayKey = getDateKey();
+
+    if (pet.daily?.dateKey !== todayKey || !pet.daily?.tickApplied) {
+      return res.status(409).json({
+        success: false,
+        message: "Daily tick required before taking actions",
+      });
+    }
+
+    pet.daily.actionsUsed = Number(pet.daily.actionsUsed) || 0;
+    pet.daily.maxActions = Number(pet.daily.maxActions) || ACTIONS_PER_DAY_DEFAULT;
+
+    if (pet.daily.actionsUsed >= pet.daily.maxActions) {
+      return res.status(400).json({
+        success: false,
+        message: "No actions left for today",
+      });
+    }
+
+    const actionResult = applyAction(pet, actionType, payload || {});
+    if (!actionResult) {
+      return res.status(400).json({ success: false, message: "Failed to apply action" });
+    }
+
+    pet.daily.actionsUsed += 1;
+    const now = new Date();
+    pet.lastUpdated = now;
+
+    await pet.save();
+
+    const user = await getUserWithCyberPetStats(req.user.id);
+    if (user) {
+      const stats = user.cyberPetStats;
+      updateAverageRisk(stats, pet.risk?.score || 0);
+      syncAdoptionDates(stats, pet.posture, now);
+      await user.save();
+    }
+
+    return res.json({
+      success: true,
+      actionResult,
+      remainingActions: Math.max(0, pet.daily.maxActions - pet.daily.actionsUsed),
+      pet,
+    });
+  } catch (err) {
+    console.error("Action cyber pet error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.post("/incident/respond", authMiddleware, async (req, res) => {
+  try {
+    const { responseId } = req.body || {};
+    if (!responseId || typeof responseId !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "responseId is required",
+      });
+    }
+
+    const pet = await getOrCreatePet(req.user.id);
+    const result = applyIncidentResponse(pet, responseId);
+    if (!result.ok) {
+      return res.status(400).json({ success: false, message: result.message });
+    }
+
+    const now = new Date();
+    pet.lastUpdated = now;
+    await pet.save();
+
+    const user = await getUserWithCyberPetStats(req.user.id);
+    if (user) {
+      const stats = user.cyberPetStats;
+      stats.resolvedIncidents = (Number(stats.resolvedIncidents) || 0) + 1;
+      if (
+        result.incidentType === "account_takeover" &&
+        result.responseId !== "minimal_response"
+      ) {
+        stats.takeoversPrevented =
+          (Number(stats.takeoversPrevented) || 0) + 1;
+      }
+      updateAverageRisk(stats, pet.risk?.score || 0);
+      syncAdoptionDates(stats, pet.posture, now);
+      await user.save();
+    }
+
+    return res.json({
+      success: true,
+      result,
+      pet,
+    });
+  } catch (err) {
+    console.error("Respond cyber pet incident error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
