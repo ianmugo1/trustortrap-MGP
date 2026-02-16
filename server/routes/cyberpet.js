@@ -5,6 +5,7 @@ import CyberPetQuestion from "../models/CyberPetQuestion.js";
 import User from "../models/User.js";
 import cyberPetQuestions from "../data/cyberPetQuestions.js";
 import passwordIncidents from "../data/passwordIncidents.js";
+import cyberPetMiniGames from "../data/cyberPetMiniGames.js";
 
 const router = express.Router();
 const DAILY_QUESTION_COUNT = 5;
@@ -349,6 +350,73 @@ function syncAdoptionDates(stats, posture, now = new Date()) {
   }
 }
 
+function isValidMiniGameType(type) {
+  return Object.prototype.hasOwnProperty.call(cyberPetMiniGames, type);
+}
+
+function getMiniGameConfig(type) {
+  if (!isValidMiniGameType(type)) return null;
+  return cyberPetMiniGames[type];
+}
+
+function hashStringToIndex(seed, length) {
+  if (!length) return 0;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return hash % length;
+}
+
+function ensureMiniGamesState(petDoc) {
+  if (!petDoc.miniGames || typeof petDoc.miniGames !== "object") {
+    petDoc.miniGames = {};
+  }
+
+  const types = ["trueFalse", "passwordStrengthener", "fillBlanks"];
+  for (const type of types) {
+    if (!petDoc.miniGames[type] || typeof petDoc.miniGames[type] !== "object") {
+      petDoc.miniGames[type] = {};
+    }
+
+    const state = petDoc.miniGames[type];
+    if (typeof state.dateKey !== "string") state.dateKey = "";
+    if (typeof state.currentQuestionId !== "string") state.currentQuestionId = "";
+    if (typeof state.answered !== "boolean") state.answered = false;
+    if (typeof state.attempts !== "number") state.attempts = 0;
+    if (state.correct !== true && state.correct !== false) state.correct = null;
+    if (!state.lastPlayedAt) state.lastPlayedAt = null;
+  }
+}
+
+function pickMiniGameQuestion(type, userId, dateKey) {
+  const config = getMiniGameConfig(type);
+  if (!config) return null;
+
+  const questions = Array.isArray(config.questions) ? config.questions : [];
+  if (!questions.length) return null;
+
+  const index = hashStringToIndex(`${userId}:${type}:${dateKey}`, questions.length);
+  return questions[index] || null;
+}
+
+function applyMiniGameReward(petDoc, reward = {}) {
+  ensurePetStatusDefaults(petDoc);
+
+  const baseline = calculateRisk(petDoc.posture || {});
+  const nextRiskScore = clamp((baseline.score ?? 0) + Number(reward.riskDelta || 0));
+
+  petDoc.risk = {
+    score: nextRiskScore,
+    level: getRiskLevel(nextRiskScore),
+  };
+
+  petDoc.pet.mood = clamp((petDoc.pet.mood ?? 70) + Number(reward.moodDelta || 0));
+  petDoc.pet.health = clamp(
+    (petDoc.pet.health ?? 75) + Number(reward.healthDelta || 0)
+  );
+}
+
 async function ensureQuestionBank() {
   const count = await CyberPetQuestion.countDocuments();
 
@@ -611,6 +679,163 @@ router.post("/incident/respond", authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error("Respond cyber pet incident error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.get("/minigame/:type", authMiddleware, async (req, res) => {
+  try {
+    const { type } = req.params;
+    if (!isValidMiniGameType(type)) {
+      return res.status(400).json({ success: false, message: "Invalid mini-game type" });
+    }
+
+    const config = getMiniGameConfig(type);
+    if (!config || !Array.isArray(config.questions) || !config.questions.length) {
+      return res.status(501).json({
+        success: false,
+        message: `${type} is not implemented yet`,
+      });
+    }
+
+    const pet = await getOrCreatePet(req.user.id);
+    const todayKey = getDateKey();
+    ensureMiniGamesState(pet);
+
+    const state = pet.miniGames[type];
+    if (state.dateKey !== todayKey) {
+      const nextQuestion = pickMiniGameQuestion(type, String(req.user.id), todayKey);
+      state.dateKey = todayKey;
+      state.currentQuestionId = nextQuestion?.id || "";
+      state.answered = false;
+      state.correct = null;
+      state.attempts = 0;
+      state.lastPlayedAt = null;
+      await pet.save();
+    }
+
+    const question = (config.questions || []).find(
+      (q) => q.id === state.currentQuestionId
+    );
+
+    return res.json({
+      success: true,
+      miniGame: {
+        type,
+        label: config.label,
+        answered: state.answered,
+        attempts: state.attempts,
+      },
+      question: question
+        ? {
+            id: question.id,
+            prompt: question.prompt,
+            kind: type === "trueFalse" ? "boolean" : "custom",
+          }
+        : null,
+    });
+  } catch (err) {
+    console.error("Get cyber pet mini-game error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.post("/minigame/:type/submit", authMiddleware, async (req, res) => {
+  try {
+    const { type } = req.params;
+    if (!isValidMiniGameType(type)) {
+      return res.status(400).json({ success: false, message: "Invalid mini-game type" });
+    }
+
+    const config = getMiniGameConfig(type);
+    if (!config || !Array.isArray(config.questions) || !config.questions.length) {
+      return res.status(501).json({
+        success: false,
+        message: `${type} is not implemented yet`,
+      });
+    }
+
+    const pet = await getOrCreatePet(req.user.id);
+    const todayKey = getDateKey();
+    ensureMiniGamesState(pet);
+    const state = pet.miniGames[type];
+
+    if (state.dateKey !== todayKey || !state.currentQuestionId) {
+      const nextQuestion = pickMiniGameQuestion(type, String(req.user.id), todayKey);
+      state.dateKey = todayKey;
+      state.currentQuestionId = nextQuestion?.id || "";
+      state.answered = false;
+      state.correct = null;
+      state.attempts = 0;
+      state.lastPlayedAt = null;
+    }
+
+    if (state.answered) {
+      return res.status(400).json({
+        success: false,
+        message: "You already completed this mini-game today",
+      });
+    }
+
+    const question = (config.questions || []).find(
+      (q) => q.id === state.currentQuestionId
+    );
+    if (!question) {
+      return res.status(404).json({ success: false, message: "Question not found" });
+    }
+
+    let userAnswer;
+    if (type === "trueFalse") {
+      if (typeof req.body?.answer !== "boolean") {
+        return res.status(400).json({
+          success: false,
+          message: "answer must be boolean for trueFalse",
+        });
+      }
+      userAnswer = req.body.answer;
+    } else {
+      return res.status(501).json({
+        success: false,
+        message: `${type} submit flow is not implemented yet`,
+      });
+    }
+
+    const isCorrect = userAnswer === question.answer;
+    const reward = isCorrect ? config.reward?.correct : config.reward?.incorrect;
+
+    applyMiniGameReward(pet, reward || {});
+
+    state.answered = true;
+    state.correct = isCorrect;
+    state.attempts = (Number(state.attempts) || 0) + 1;
+    state.lastPlayedAt = new Date();
+    pet.lastUpdated = new Date();
+
+    await pet.save();
+
+    const user = await getUserWithCyberPetStats(req.user.id);
+    if (user) {
+      const stats = user.cyberPetStats;
+      updateAverageRisk(stats, pet.risk?.score || 0);
+      syncAdoptionDates(stats, pet.posture, new Date());
+      await user.save();
+    }
+
+    return res.json({
+      success: true,
+      result: {
+        isCorrect,
+        explanation: question.explanation || "",
+      },
+      miniGame: {
+        type,
+        answered: state.answered,
+        attempts: state.attempts,
+      },
+      pet,
+    });
+  } catch (err) {
+    console.error("Submit cyber pet mini-game error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
