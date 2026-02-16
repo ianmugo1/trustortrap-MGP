@@ -46,6 +46,10 @@ export default function CyberPetPage() {
   const [busy, setBusy] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
   const [incidentMessage, setIncidentMessage] = useState("");
+  const [miniGame, setMiniGame] = useState(null);
+  const [miniGameQuestion, setMiniGameQuestion] = useState(null);
+  const [miniGameMessage, setMiniGameMessage] = useState("");
+  const [miniGameError, setMiniGameError] = useState("");
 
   const petStatus = pet?.pet || {};
   const posture = pet?.posture || {};
@@ -83,17 +87,39 @@ export default function CyberPetPage() {
     return data.pet;
   }, [token]);
 
+  const loadTrueFalseMiniGame = useCallback(async () => {
+    const res = await authFetch("/api/cyberpet/minigame/trueFalse", {}, token);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.message || "Failed to load mini-game");
+    }
+    return data;
+  }, [token]);
+
   const loadAndSync = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setLoadError("");
     setActionMessage("");
     setIncidentMessage("");
+    setMiniGameMessage("");
+    setMiniGameError("");
 
     try {
       await loadPetSnapshot();
       const ticked = await runTick();
       setPet(ticked);
+
+      try {
+        const gameData = await loadTrueFalseMiniGame();
+        setMiniGame(gameData?.miniGame || null);
+        setMiniGameQuestion(gameData?.question || null);
+      } catch (gameErr) {
+        console.error(gameErr);
+        setMiniGame(null);
+        setMiniGameQuestion(null);
+        setMiniGameError(gameErr?.message || "Mini-game unavailable");
+      }
     } catch (err) {
       console.error(err);
       setPet(null);
@@ -101,7 +127,7 @@ export default function CyberPetPage() {
     } finally {
       setLoading(false);
     }
-  }, [loadPetSnapshot, runTick, token]);
+  }, [loadPetSnapshot, runTick, loadTrueFalseMiniGame, token]);
 
   useEffect(() => {
     loadAndSync();
@@ -173,6 +199,51 @@ export default function CyberPetPage() {
       }
     },
     [busy, token]
+  );
+
+  const handleTrueFalseSubmit = useCallback(
+    async (answer) => {
+      if (!token || busy || miniGame?.answered) return;
+      setBusy(true);
+      setMiniGameMessage("");
+      setMiniGameError("");
+      setActionMessage("");
+      setIncidentMessage("");
+
+      try {
+        const res = await authFetch(
+          "/api/cyberpet/minigame/trueFalse/submit",
+          {
+            method: "POST",
+            body: JSON.stringify({ answer }),
+          },
+          token
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.success) {
+          setMiniGameError(data?.message || "Could not submit mini-game");
+          return;
+        }
+
+        setPet(data.pet);
+        setMiniGame((prev) => ({
+          ...(prev || {}),
+          ...(data?.miniGame || {}),
+        }));
+
+        const correct = Boolean(data?.result?.isCorrect);
+        const explanation = data?.result?.explanation || "";
+        setMiniGameMessage(
+          `${correct ? "Correct" : "Incorrect"}${explanation ? `: ${explanation}` : ""}`
+        );
+      } catch (err) {
+        console.error(err);
+        setMiniGameError("Network error while submitting mini-game.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, miniGame?.answered, token]
   );
 
   if (!token) {
@@ -362,6 +433,68 @@ export default function CyberPetPage() {
               Run Daily Check-In
             </button>
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h2 className="text-xl font-semibold">Mini Games</h2>
+            <p className="text-xs text-slate-400">Daily learning boosts</p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3 mb-4">
+            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3">
+              <p className="text-sm font-semibold text-emerald-200">True/False</p>
+              <p className="text-xs text-slate-300 mt-1">Implemented</p>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800 p-3">
+              <p className="text-sm font-semibold text-slate-200">Password Strengthener</p>
+              <p className="text-xs text-slate-400 mt-1">Placeholder for teammate</p>
+            </div>
+            <div className="rounded-lg border border-slate-700 bg-slate-800 p-3">
+              <p className="text-sm font-semibold text-slate-200">Fill in the Blanks</p>
+              <p className="text-xs text-slate-400 mt-1">Placeholder for teammate</p>
+            </div>
+          </div>
+
+          {miniGameError ? (
+            <p className="text-sm text-rose-300">{miniGameError}</p>
+          ) : miniGameQuestion ? (
+            <div className="rounded-xl border border-slate-700 bg-slate-800 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+                True / False Challenge
+              </p>
+              <p className="text-sm md:text-base">{miniGameQuestion.prompt}</p>
+
+              {!miniGame?.answered ? (
+                <div className="mt-4 grid gap-2 md:grid-cols-2">
+                  <button
+                    onClick={() => handleTrueFalseSubmit(true)}
+                    disabled={busy}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm hover:bg-slate-700 disabled:opacity-60"
+                  >
+                    True
+                  </button>
+                  <button
+                    onClick={() => handleTrueFalseSubmit(false)}
+                    disabled={busy}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm hover:bg-slate-700 disabled:opacity-60"
+                  >
+                    False
+                  </button>
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-emerald-300">
+                  Completed for today. Come back tomorrow for a new prompt.
+                </p>
+              )}
+
+              {miniGameMessage ? (
+                <p className="mt-3 text-xs text-cyan-300">{miniGameMessage}</p>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">No mini-game question available today.</p>
+          )}
         </section>
 
         <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
