@@ -381,23 +381,40 @@ function ensureMiniGamesState(petDoc) {
 
     const state = petDoc.miniGames[type];
     if (typeof state.dateKey !== "string") state.dateKey = "";
-    if (typeof state.currentQuestionId !== "string") state.currentQuestionId = "";
-    if (typeof state.answered !== "boolean") state.answered = false;
-    if (typeof state.attempts !== "number") state.attempts = 0;
-    if (state.correct !== true && state.correct !== false) state.correct = null;
+    if (!Array.isArray(state.dailyQuestionIds)) state.dailyQuestionIds = [];
+    if (!Array.isArray(state.answeredIds)) state.answeredIds = [];
+    if (!Array.isArray(state.correctIds)) state.correctIds = [];
     if (!state.lastPlayedAt) state.lastPlayedAt = null;
   }
 }
 
-function pickMiniGameQuestion(type, userId, dateKey) {
+// Pick N random questions for today using a seeded shuffle
+function pickDailyMiniGameQuestions(type, userId, dateKey) {
   const config = getMiniGameConfig(type);
-  if (!config) return null;
+  if (!config) return [];
 
   const questions = Array.isArray(config.questions) ? config.questions : [];
-  if (!questions.length) return null;
+  if (!questions.length) return [];
 
-  const index = hashStringToIndex(`${userId}:${type}:${dateKey}`, questions.length);
-  return questions[index] || null;
+  const count = config.dailyCount || 7;
+
+  // Seeded shuffle so the same user gets the same set each day
+  const seed = `${userId}:${type}:${dateKey}`;
+  const indices = questions.map((_, i) => i);
+
+  // Fisher-Yates shuffle with seeded hash
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+
+  for (let i = indices.length - 1; i > 0; i -= 1) {
+    hash = (hash * 1103515245 + 12345) >>> 0;
+    const j = hash % (i + 1);
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+
+  return indices.slice(0, Math.min(count, questions.length)).map((i) => questions[i].id);
 }
 
 function applyMiniGameReward(petDoc, reward = {}) {
@@ -703,36 +720,48 @@ router.get("/minigame/:type", authMiddleware, async (req, res) => {
     ensureMiniGamesState(pet);
 
     const state = pet.miniGames[type];
+
+    // Pick fresh daily questions if it's a new day
     if (state.dateKey !== todayKey) {
-      const nextQuestion = pickMiniGameQuestion(type, String(req.user.id), todayKey);
+      const questionIds = pickDailyMiniGameQuestions(type, String(req.user.id), todayKey);
       state.dateKey = todayKey;
-      state.currentQuestionId = nextQuestion?.id || "";
-      state.answered = false;
-      state.correct = null;
-      state.attempts = 0;
+      state.dailyQuestionIds = questionIds;
+      state.answeredIds = [];
+      state.correctIds = [];
       state.lastPlayedAt = null;
+      // Tell Mongoose nested subdoc changed
+      pet.markModified("miniGames");
       await pet.save();
     }
 
-    const question = (config.questions || []).find(
-      (q) => q.id === state.currentQuestionId
-    );
+    // Build the list of questions to send to the frontend
+    // Include prompt + options (for fillBlanks) but not the answer
+    const allQuestions = config.questions || [];
+    const dailyQuestions = state.dailyQuestionIds.map((qId) => {
+      const q = allQuestions.find((item) => item.id === qId);
+      if (!q) return null;
+
+      const base = { id: q.id, prompt: q.prompt };
+
+      // Include options for fillBlanks
+      if (type === "fillBlanks" && Array.isArray(q.options)) {
+        base.options = q.options;
+      }
+
+      return base;
+    }).filter(Boolean);
 
     return res.json({
       success: true,
       miniGame: {
         type,
         label: config.label,
-        answered: state.answered,
-        attempts: state.attempts,
+        totalCount: dailyQuestions.length,
+        answeredCount: state.answeredIds.length,
+        correctCount: state.correctIds.length,
+        answeredIds: state.answeredIds,
       },
-      question: question
-        ? {
-            id: question.id,
-            prompt: question.prompt,
-            kind: type === "trueFalse" ? "boolean" : "custom",
-          }
-        : null,
+      questions: dailyQuestions,
     });
   } catch (err) {
     console.error("Get cyber pet mini-game error:", err);
@@ -755,49 +784,56 @@ router.post("/minigame/:type/submit", authMiddleware, async (req, res) => {
       });
     }
 
+    const { questionId, answer: userAnswer } = req.body || {};
+
+    if (!questionId || typeof questionId !== "string") {
+      return res.status(400).json({ success: false, message: "questionId is required" });
+    }
+
     const pet = await getOrCreatePet(req.user.id);
     const todayKey = getDateKey();
     ensureMiniGamesState(pet);
     const state = pet.miniGames[type];
 
-    if (state.dateKey !== todayKey || !state.currentQuestionId) {
-      const nextQuestion = pickMiniGameQuestion(type, String(req.user.id), todayKey);
+    // Reset if it's a new day
+    if (state.dateKey !== todayKey || !state.dailyQuestionIds.length) {
+      const questionIds = pickDailyMiniGameQuestions(type, String(req.user.id), todayKey);
       state.dateKey = todayKey;
-      state.currentQuestionId = nextQuestion?.id || "";
-      state.answered = false;
-      state.correct = null;
-      state.attempts = 0;
+      state.dailyQuestionIds = questionIds;
+      state.answeredIds = [];
+      state.correctIds = [];
       state.lastPlayedAt = null;
     }
 
-    if (state.answered) {
-      return res.status(400).json({
-        success: false,
-        message: "You already completed this mini-game today",
-      });
+    // Check the question is part of today's set
+    if (!state.dailyQuestionIds.includes(questionId)) {
+      return res.status(400).json({ success: false, message: "Question not in today's set" });
     }
 
-    const question = (config.questions || []).find(
-      (q) => q.id === state.currentQuestionId
-    );
+    // Check it hasn't been answered already
+    if (state.answeredIds.includes(questionId)) {
+      return res.status(400).json({ success: false, message: "Question already answered" });
+    }
+
+    const question = (config.questions || []).find((q) => q.id === questionId);
     if (!question) {
       return res.status(404).json({ success: false, message: "Question not found" });
     }
 
-    let userAnswer;
+    // Validate answer format per game type
     if (type === "trueFalse") {
-      if (typeof req.body?.answer !== "boolean") {
-        return res.status(400).json({
-          success: false,
-          message: "answer must be boolean for trueFalse",
-        });
+      if (typeof userAnswer !== "boolean") {
+        return res.status(400).json({ success: false, message: "answer must be boolean for trueFalse" });
       }
-      userAnswer = req.body.answer;
-    } else {
-      return res.status(501).json({
-        success: false,
-        message: `${type} submit flow is not implemented yet`,
-      });
+    } else if (type === "passwordStrengthener") {
+      if (!Number.isInteger(userAnswer) || userAnswer < 0 || userAnswer > 2) {
+        return res.status(400).json({ success: false, message: "answer must be 0 (Weak), 1 (OK), or 2 (Strong)" });
+      }
+    } else if (type === "fillBlanks") {
+      const maxIndex = Array.isArray(question.options) ? question.options.length - 1 : 0;
+      if (!Number.isInteger(userAnswer) || userAnswer < 0 || userAnswer > maxIndex) {
+        return res.status(400).json({ success: false, message: "answer must be a valid option index" });
+      }
     }
 
     const isCorrect = userAnswer === question.answer;
@@ -805,12 +841,16 @@ router.post("/minigame/:type/submit", authMiddleware, async (req, res) => {
 
     applyMiniGameReward(pet, reward || {});
 
-    state.answered = true;
-    state.correct = isCorrect;
-    state.attempts = (Number(state.attempts) || 0) + 1;
+    // Track this answer
+    state.answeredIds.push(questionId);
+    if (isCorrect) {
+      state.correctIds.push(questionId);
+    }
     state.lastPlayedAt = new Date();
     pet.lastUpdated = new Date();
 
+    // Tell Mongoose nested subdoc changed
+    pet.markModified("miniGames");
     await pet.save();
 
     const user = await getUserWithCyberPetStats(req.user.id);
@@ -829,8 +869,10 @@ router.post("/minigame/:type/submit", authMiddleware, async (req, res) => {
       },
       miniGame: {
         type,
-        answered: state.answered,
-        attempts: state.attempts,
+        totalCount: state.dailyQuestionIds.length,
+        answeredCount: state.answeredIds.length,
+        correctCount: state.correctIds.length,
+        answeredIds: state.answeredIds,
       },
       pet,
     });
@@ -896,6 +938,32 @@ router.post("/answer", authMiddleware, async (req, res) => {
     });
   } catch (err) {
     console.error("Answer cyber pet question error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Rename the pet
+router.post("/name", authMiddleware, async (req, res) => {
+  try {
+    const { name } = req.body || {};
+
+    if (!name || typeof name !== "string") {
+      return res.status(400).json({ success: false, message: "Name is required" });
+    }
+
+    const trimmed = name.trim();
+    if (trimmed.length === 0 || trimmed.length > 20) {
+      return res.status(400).json({ success: false, message: "Name must be 1-20 characters" });
+    }
+
+    const pet = await getOrCreatePet(req.user.id);
+    pet.name = trimmed;
+    pet.lastUpdated = new Date();
+    await pet.save();
+
+    return res.json({ success: true, pet });
+  } catch (err) {
+    console.error("Rename cyber pet error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });

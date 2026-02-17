@@ -108,10 +108,11 @@ const streakSchema = new mongoose.Schema(
 const miniGameProgressSchema = new mongoose.Schema(
   {
     dateKey: { type: String, default: "" },
-    currentQuestionId: { type: String, default: "" },
-    answered: { type: Boolean, default: false },
-    correct: { type: Boolean, default: null },
-    attempts: { type: Number, default: 0, min: 0 },
+    // 7 question IDs picked for today
+    dailyQuestionIds: { type: [String], default: [] },
+    // Track which ones the user answered and got right
+    answeredIds: { type: [String], default: [] },
+    correctIds: { type: [String], default: [] },
     lastPlayedAt: { type: Date, default: null },
   },
   { _id: false }
@@ -133,6 +134,12 @@ const cyberPetSchema = new mongoose.Schema(
       ref: "User",
       required: true,
       unique: true,
+    },
+    name: {
+      type: String,
+      default: "Byte",
+      trim: true,
+      maxlength: 20,
     },
     health: {
       type: Number,
