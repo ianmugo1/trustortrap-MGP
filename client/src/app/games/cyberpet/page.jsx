@@ -93,9 +93,9 @@ export default function CyberPetPage() {
     const res = await authFetch("/api/cyberpet", {}, token);
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data?.success) {
-      throw new Error(data?.message || "Failed to load cyber pet");
+      return { ok: false, message: data?.message || "Failed to load cyber pet", pet: null };
     }
-    return data.pet;
+    return { ok: true, message: "", pet: data.pet };
   }, [token]);
 
   const runTick = useCallback(async () => {
@@ -106,9 +106,9 @@ export default function CyberPetPage() {
     );
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data?.success) {
-      throw new Error(data?.message || "Failed to run daily tick");
+      return { ok: false, message: data?.message || "Failed to run daily tick", pet: null };
     }
-    return data.pet;
+    return { ok: true, message: "", pet: data.pet };
   }, [token]);
 
   // Load all 3 mini-games one at a time (avoids DB race conditions)
@@ -138,9 +138,22 @@ export default function CyberPetPage() {
     setMgFeedback(null);
 
     try {
-      await loadPetSnapshot();
+      const initial = await loadPetSnapshot();
+      if (!initial?.ok) {
+        setPet(null);
+        setLoadError(initial?.message || "Failed to load cyber pet");
+        return;
+      }
+
       const ticked = await runTick();
-      setPet(ticked);
+      if (!ticked?.ok) {
+        // keep last good snapshot if tick endpoint fails
+        setPet(initial.pet);
+        setLoadError(ticked?.message || "Failed to run daily tick");
+        return;
+      }
+
+      setPet(ticked.pet);
 
       const games = await loadAllMiniGames();
       setMiniGames(games);
