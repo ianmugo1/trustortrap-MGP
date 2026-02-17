@@ -8,33 +8,66 @@ function toPercent(value) {
   return `${Math.max(0, Math.min(100, Number(value) || 0))}%`;
 }
 
-const INCIDENT_RESPONSES = {
-  credential_stuffing: [
-    { id: "reset_password", label: "Reset password" },
-    { id: "enable_2fa_now", label: "Enable 2FA now" },
-    { id: "ignore", label: "Ignore for now" },
-  ],
-  breach_alert: [
-    { id: "rotate_passwords", label: "Rotate passwords" },
-    { id: "lock_sessions", label: "Log out sessions" },
-    { id: "delay_action", label: "Delay until tomorrow" },
-  ],
-  brute_force_attempt: [
-    { id: "strengthen_password", label: "Strengthen password" },
-    { id: "activate_2fa", label: "Add 2FA" },
-    { id: "do_nothing", label: "Do nothing" },
-  ],
-  account_takeover: [
-    { id: "full_lockdown", label: "Full lockdown" },
-    { id: "recover_and_rotate", label: "Recover + rotate credentials" },
-    { id: "minimal_response", label: "Minimal response" },
-  ],
+// Mood tiers decide the robot's colour + face
+function getMoodTier(mood) {
+  const m = Number(mood) || 0;
+  if (m >= 60) return "happy";
+  if (m >= 30) return "neutral";
+  return "sad";
+}
+
+const MOOD_COLOURS = {
+  happy: { body: "#34d399", eye: "#064e3b", mouth: "#064e3b" },   // emerald
+  neutral: { body: "#fbbf24", eye: "#78350f", mouth: "#78350f" }, // amber
+  sad: { body: "#f87171", eye: "#7f1d1d", mouth: "#7f1d1d" },    // rose
 };
 
-function riskBadgeClass(level) {
-  if (level === "low") return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
-  if (level === "medium") return "bg-amber-500/15 text-amber-200 border-amber-500/30";
-  return "bg-rose-500/15 text-rose-200 border-rose-500/30";
+// Simple inline SVG robot pet
+function PetCharacter({ mood }) {
+  const tier = getMoodTier(mood);
+  const c = MOOD_COLOURS[tier];
+
+  return (
+    <svg viewBox="0 0 120 140" width="120" height="140" aria-label="Cyber pet robot">
+      {/* Antenna */}
+      <line x1="60" y1="8" x2="60" y2="28" stroke={c.body} strokeWidth="4" strokeLinecap="round" />
+      <circle cx="60" cy="6" r="5" fill={c.body} />
+
+      {/* Head */}
+      <rect x="25" y="28" width="70" height="52" rx="14" fill={c.body} />
+
+      {/* Eyes */}
+      <circle cx="44" cy="52" r="8" fill="white" />
+      <circle cx="76" cy="52" r="8" fill="white" />
+      <circle cx={tier === "sad" ? "42" : "46"} cy={tier === "sad" ? "54" : "52"} r="4" fill={c.eye} />
+      <circle cx={tier === "sad" ? "74" : "78"} cy={tier === "sad" ? "54" : "52"} r="4" fill={c.eye} />
+
+      {/* Mouth */}
+      {tier === "happy" && (
+        <path d="M44 66 Q60 78 76 66" fill="none" stroke={c.mouth} strokeWidth="3" strokeLinecap="round" />
+      )}
+      {tier === "neutral" && (
+        <line x1="46" y1="68" x2="74" y2="68" stroke={c.mouth} strokeWidth="3" strokeLinecap="round" />
+      )}
+      {tier === "sad" && (
+        <path d="M44 72 Q60 62 76 72" fill="none" stroke={c.mouth} strokeWidth="3" strokeLinecap="round" />
+      )}
+
+      {/* Body */}
+      <rect x="30" y="86" width="60" height="36" rx="10" fill={c.body} />
+
+      {/* Chest light */}
+      <circle cx="60" cy="104" r="6" fill="white" opacity="0.6" />
+
+      {/* Arms */}
+      <rect x="10" y="90" width="16" height="8" rx="4" fill={c.body} />
+      <rect x="94" y="90" width="16" height="8" rx="4" fill={c.body} />
+
+      {/* Feet */}
+      <rect x="34" y="122" width="18" height="10" rx="5" fill={c.body} />
+      <rect x="68" y="122" width="18" height="10" rx="5" fill={c.body} />
+    </svg>
+  );
 }
 
 export default function CyberPetPage() {
@@ -44,25 +77,16 @@ export default function CyberPetPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [actionMessage, setActionMessage] = useState("");
-  const [incidentMessage, setIncidentMessage] = useState("");
-  const [miniGame, setMiniGame] = useState(null);
-  const [miniGameQuestion, setMiniGameQuestion] = useState(null);
-  const [miniGameMessage, setMiniGameMessage] = useState("");
-  const [miniGameError, setMiniGameError] = useState("");
+  // Mini-games: { trueFalse: { info, questions }, passwordStrengthener: ..., fillBlanks: ... }
+  const [miniGames, setMiniGames] = useState({});
+  const [activeGame, setActiveGame] = useState("trueFalse");
+  const [mgFeedback, setMgFeedback] = useState(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const petStatus = pet?.pet || {};
-  const posture = pet?.posture || {};
-  const daily = pet?.daily || {};
-  const risk = pet?.risk || {};
-  const activeIncident = pet?.activeIncident || null;
-  const incidentHistory = Array.isArray(pet?.incidentHistory) ? pet.incidentHistory : [];
-
-  const remainingActions = Math.max(
-    0,
-    (Number(daily.maxActions) || 0) - (Number(daily.actionsUsed) || 0)
-  );
-  const hasActiveIncident = activeIncident?.status === "active" && !!activeIncident?.type;
+  const petName = pet?.name || "Byte";
 
   const loadPetSnapshot = useCallback(async () => {
     if (!token) return;
@@ -87,39 +111,39 @@ export default function CyberPetPage() {
     return data.pet;
   }, [token]);
 
-  const loadTrueFalseMiniGame = useCallback(async () => {
-    const res = await authFetch("/api/cyberpet/minigame/trueFalse", {}, token);
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.success) {
-      throw new Error(data?.message || "Failed to load mini-game");
+  // Load all 3 mini-games one at a time (avoids DB race conditions)
+  const loadAllMiniGames = useCallback(async () => {
+    const types = ["trueFalse", "passwordStrengthener", "fillBlanks"];
+    const results = {};
+
+    for (const type of types) {
+      try {
+        const res = await authFetch(`/api/cyberpet/minigame/${type}`, {}, token);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.success) {
+          results[type] = { info: data.miniGame, questions: data.questions || [] };
+        }
+      } catch (err) {
+        console.error(`Failed to load ${type}:`, err);
+      }
     }
-    return data;
+
+    return results;
   }, [token]);
 
   const loadAndSync = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setLoadError("");
-    setActionMessage("");
-    setIncidentMessage("");
-    setMiniGameMessage("");
-    setMiniGameError("");
+    setMgFeedback(null);
 
     try {
       await loadPetSnapshot();
       const ticked = await runTick();
       setPet(ticked);
 
-      try {
-        const gameData = await loadTrueFalseMiniGame();
-        setMiniGame(gameData?.miniGame || null);
-        setMiniGameQuestion(gameData?.question || null);
-      } catch (gameErr) {
-        console.error(gameErr);
-        setMiniGame(null);
-        setMiniGameQuestion(null);
-        setMiniGameError(gameErr?.message || "Mini-game unavailable");
-      }
+      const games = await loadAllMiniGames();
+      setMiniGames(games);
     } catch (err) {
       console.error(err);
       setPet(null);
@@ -127,40 +151,40 @@ export default function CyberPetPage() {
     } finally {
       setLoading(false);
     }
-  }, [loadPetSnapshot, runTick, loadTrueFalseMiniGame, token]);
+  }, [loadPetSnapshot, runTick, loadAllMiniGames, token]);
 
   useEffect(() => {
     loadAndSync();
   }, [loadAndSync]);
 
-  const handleAction = useCallback(
-    async (actionType, payload = {}) => {
+  // Save a new pet name
+  const handleRenamePet = useCallback(
+    async (newName) => {
       if (!token || busy) return;
-      setBusy(true);
-      setActionMessage("");
-      setIncidentMessage("");
+      const trimmed = (newName || "").trim();
+      if (!trimmed || trimmed.length > 20) {
+        setNameError("Name must be 1-20 characters");
+        return;
+      }
 
+      setBusy(true);
+      setNameError("");
       try {
         const res = await authFetch(
-          "/api/cyberpet/action",
-          {
-            method: "POST",
-            body: JSON.stringify({ actionType, payload }),
-          },
+          "/api/cyberpet/name",
+          { method: "POST", body: JSON.stringify({ name: trimmed }) },
           token
         );
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data?.success) {
-          setActionMessage(data?.message || "Action failed");
-          return;
+        if (res.ok && data?.success) {
+          setPet(data.pet);
+          setEditingName(false);
+        } else {
+          setNameError(data?.message || "Failed to save name");
         }
-        setPet(data.pet);
-        setActionMessage(
-          `${actionType} applied. ${data.remainingActions} actions left today.`
-        );
       } catch (err) {
-        console.error(err);
-        setActionMessage("Network error while applying action.");
+        console.error("Rename error:", err);
+        setNameError("Network error — is the server running?");
       } finally {
         setBusy(false);
       }
@@ -168,82 +192,55 @@ export default function CyberPetPage() {
     [busy, token]
   );
 
-  const handleIncidentResponse = useCallback(
-    async (responseId) => {
+  // Generic submit handler for all mini-game types
+  const handleMiniGameSubmit = useCallback(
+    async (gameType, questionId, answer) => {
       if (!token || busy) return;
       setBusy(true);
-      setIncidentMessage("");
-      setActionMessage("");
+      setMgFeedback(null);
 
       try {
         const res = await authFetch(
-          "/api/cyberpet/incident/respond",
+          `/api/cyberpet/minigame/${gameType}/submit`,
           {
             method: "POST",
-            body: JSON.stringify({ responseId }),
+            body: JSON.stringify({ questionId, answer }),
           },
           token
         );
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data?.success) {
-          setIncidentMessage(data?.message || "Could not resolve incident");
+          setMgFeedback({ isCorrect: false, explanation: data?.message || "Submit failed", isError: true });
           return;
         }
+
         setPet(data.pet);
-        setIncidentMessage(`Resolved: ${data?.result?.responseLabel || "Incident handled"}`);
-      } catch (err) {
-        console.error(err);
-        setIncidentMessage("Network error while resolving incident.");
-      } finally {
-        setBusy(false);
-      }
-    },
-    [busy, token]
-  );
 
-  const handleTrueFalseSubmit = useCallback(
-    async (answer) => {
-      if (!token || busy || miniGame?.answered) return;
-      setBusy(true);
-      setMiniGameMessage("");
-      setMiniGameError("");
-      setActionMessage("");
-      setIncidentMessage("");
-
-      try {
-        const res = await authFetch(
-          "/api/cyberpet/minigame/trueFalse/submit",
-          {
-            method: "POST",
-            body: JSON.stringify({ answer }),
+        // Update the mini-game info with new progress from server
+        setMiniGames((prev) => ({
+          ...prev,
+          [gameType]: {
+            ...prev[gameType],
+            info: data.miniGame || prev[gameType]?.info,
           },
-          token
-        );
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data?.success) {
-          setMiniGameError(data?.message || "Could not submit mini-game");
-          return;
-        }
-
-        setPet(data.pet);
-        setMiniGame((prev) => ({
-          ...(prev || {}),
-          ...(data?.miniGame || {}),
         }));
 
-        const correct = Boolean(data?.result?.isCorrect);
-        const explanation = data?.result?.explanation || "";
-        setMiniGameMessage(
-          `${correct ? "Correct" : "Incorrect"}${explanation ? `: ${explanation}` : ""}`
-        );
+        setMgFeedback({
+          isCorrect: !!data.result?.isCorrect,
+          explanation: data.result?.explanation || "",
+          isError: false,
+        });
+
+        // Auto-clear feedback after 1.5s so next question appears
+        setTimeout(() => setMgFeedback(null), 1500);
       } catch (err) {
         console.error(err);
-        setMiniGameError("Network error while submitting mini-game.");
+        setMgFeedback({ isCorrect: false, explanation: "Network error.", isError: true });
       } finally {
         setBusy(false);
       }
     },
-    [busy, miniGame?.answered, token]
+    [busy, token]
   );
 
   if (!token) {
@@ -287,26 +284,69 @@ export default function CyberPetPage() {
     );
   }
 
-  const incidentOptions = hasActiveIncident
-    ? INCIDENT_RESPONSES[activeIncident.type] || []
-    : [];
-
   return (
     <main className="min-h-screen bg-slate-950 text-white p-4 md:p-6">
-      <div className="mx-auto w-full max-w-3xl space-y-5">
-        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
-          <p className="text-sm uppercase tracking-wide text-emerald-300">Cyber Pet Security Sim</p>
-          <h1 className="mt-1 text-3xl font-bold">Byte</h1>
+      <div className="mx-auto w-full max-w-6xl space-y-5">
 
-          <div className="mt-3 flex items-center gap-2">
-            <span
-              className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wide ${riskBadgeClass(
-                risk.level
-              )}`}
-            >
-              Risk: {risk.level || "high"}
-            </span>
-            <span className="text-xs text-slate-400">Score: {risk.score ?? 0}/100</span>
+        {/* Pet status */}
+        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+          <p className="text-sm uppercase tracking-wide text-emerald-300">Cyber Pet</p>
+
+          {/* Pet character + name */}
+          <div className="mt-3 flex items-center gap-5">
+            <PetCharacter mood={petStatus.mood} />
+
+            <div>
+              {editingName ? (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); handleRenamePet(nameInput); }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    autoFocus
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Escape") setEditingName(false); }}
+                    maxLength={20}
+                    className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-xl font-bold text-white outline-none focus:border-emerald-500 w-40"
+                  />
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="text-emerald-400 hover:text-emerald-300 text-sm font-medium disabled:opacity-60"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingName(false)}
+                    className="text-slate-400 hover:text-slate-300 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </form>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-bold">{petName}</h1>
+                  <button
+                    onClick={() => { setNameInput(petName); setNameError(""); setEditingName(true); }}
+                    className="text-slate-500 hover:text-slate-300 transition-colors"
+                    title="Rename pet"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+              {nameError && (
+                <p className="text-xs text-rose-400 mt-1">{nameError}</p>
+              )}
+              <p className="text-sm text-slate-400 mt-1">
+                {getMoodTier(petStatus.mood) === "happy" ? "Feeling great!" :
+                 getMoodTier(petStatus.mood) === "neutral" ? "Doing okay" : "Needs attention"}
+              </p>
+            </div>
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-3">
@@ -342,206 +382,200 @@ export default function CyberPetPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
-          <div className="flex items-center justify-between gap-3 mb-5">
-            <h2 className="text-xl font-semibold">Password Security Posture</h2>
-            <p className="text-xs text-slate-400">Actions left: {remainingActions}</p>
-          </div>
-
-          <div className="rounded-xl border border-slate-700 bg-slate-800 p-4 mb-4">
-            <div className="flex items-center justify-between text-sm text-slate-300">
-              <p>Password Strength</p>
-              <p>{posture.strengthScore ?? 0}/100</p>
-            </div>
-            <div className="mt-2 h-2 rounded-full bg-slate-700 overflow-hidden">
-              <div className="h-full bg-emerald-400" style={{ width: toPercent(posture.strengthScore) }} />
-            </div>
-            <div className="mt-3 grid gap-2 text-xs text-slate-300 md:grid-cols-2">
-              <p>
-                Password reuse:{" "}
-                <span className={posture.reusedPassword ? "text-rose-300" : "text-emerald-300"}>
-                  {posture.reusedPassword ? "Reused" : "Unique"}
-                </span>
-              </p>
-              <p>
-                2FA:{" "}
-                <span className={posture.twoFactorEnabled ? "text-emerald-300" : "text-amber-300"}>
-                  {posture.twoFactorEnabled ? "Enabled" : "Off"}
-                </span>
-              </p>
-              <p className="md:col-span-2">
-                Breach monitoring:{" "}
-                <span
-                  className={
-                    posture.breachMonitoringEnabled ? "text-emerald-300" : "text-amber-300"
-                  }
-                >
-                  {posture.breachMonitoringEnabled ? "Enabled" : "Off"}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <button
-              onClick={() =>
-                handleAction("changePassword", {
-                  strengthScore: Math.min(100, (Number(posture.strengthScore) || 45) + 20),
-                })
-              }
-              disabled={busy || remainingActions <= 0}
-              className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700 disabled:opacity-60"
-            >
-              Change Password
-            </button>
-            <button
-              onClick={() => handleAction("enable2FA")}
-              disabled={busy || remainingActions <= 0}
-              className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700 disabled:opacity-60"
-            >
-              Enable 2FA
-            </button>
-            <button
-              onClick={() => handleAction("turnOnMonitoring")}
-              disabled={busy || remainingActions <= 0}
-              className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700 disabled:opacity-60"
-            >
-              Turn on Breach Monitoring
-            </button>
-            <button
-              onClick={() => handleAction("lockDownSessions")}
-              disabled={busy || remainingActions <= 0}
-              className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700 disabled:opacity-60"
-            >
-              Lock Down Sessions
-            </button>
-          </div>
-
-          {actionMessage ? (
-            <p className="mt-4 text-xs text-emerald-300">{actionMessage}</p>
-          ) : null}
-          {incidentMessage ? (
-            <p className="mt-2 text-xs text-cyan-300">{incidentMessage}</p>
-          ) : null}
-
-          <div className="mt-5">
-            <button
-              onClick={loadAndSync}
-              disabled={busy}
-              className="rounded-lg bg-emerald-500 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
-            >
-              Run Daily Check-In
-            </button>
-          </div>
-        </section>
-
+        {/* Mini Games */}
         <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="text-xl font-semibold">Mini Games</h2>
-            <p className="text-xs text-slate-400">Daily learning boosts</p>
+            <p className="text-xs text-slate-400">7 questions each · daily</p>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3 mb-4">
-            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3">
-              <p className="text-sm font-semibold text-emerald-200">True/False</p>
-              <p className="text-xs text-slate-300 mt-1">Implemented</p>
-            </div>
-            <div className="rounded-lg border border-slate-700 bg-slate-800 p-3">
-              <p className="text-sm font-semibold text-slate-200">Password Strengthener</p>
-              <p className="text-xs text-slate-400 mt-1">Placeholder for teammate</p>
-            </div>
-            <div className="rounded-lg border border-slate-700 bg-slate-800 p-3">
-              <p className="text-sm font-semibold text-slate-200">Fill in the Blanks</p>
-              <p className="text-xs text-slate-400 mt-1">Placeholder for teammate</p>
-            </div>
+          {/* Game type tabs */}
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            {[
+              { key: "trueFalse", label: "True / False", active: "border-emerald-500/50 bg-emerald-500/10", activeText: "text-emerald-200" },
+              { key: "passwordStrengthener", label: "Password Rater", active: "border-amber-500/50 bg-amber-500/10", activeText: "text-amber-200" },
+              { key: "fillBlanks", label: "Fill the Blank", active: "border-cyan-500/50 bg-cyan-500/10", activeText: "text-cyan-200" },
+            ].map((tab) => {
+              const isActive = activeGame === tab.key;
+              const info = miniGames[tab.key]?.info;
+              const done = info ? info.answeredCount >= info.totalCount : false;
+              const progress = info ? `${info.answeredCount || 0}/${info.totalCount || 7}` : "–";
+
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => { setActiveGame(tab.key); setMgFeedback(null); }}
+                  className={`rounded-xl border p-3 text-left transition-all ${
+                    isActive ? tab.active : "border-slate-700 bg-slate-800 hover:bg-slate-700/80"
+                  }`}
+                >
+                  <p className={`text-sm font-semibold ${isActive ? tab.activeText : "text-slate-200"}`}>
+                    {tab.label}
+                  </p>
+                  <p className={`text-xs mt-1 ${done ? "text-emerald-400" : "text-slate-400"}`}>
+                    {done ? "Complete" : progress}
+                  </p>
+                </button>
+              );
+            })}
           </div>
 
-          {miniGameError ? (
-            <p className="text-sm text-rose-300">{miniGameError}</p>
-          ) : miniGameQuestion ? (
-            <div className="rounded-xl border border-slate-700 bg-slate-800 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">
-                True / False Challenge
-              </p>
-              <p className="text-sm md:text-base">{miniGameQuestion.prompt}</p>
+          {/* Active mini-game questions */}
+          {(() => {
+            const game = miniGames[activeGame];
+            if (!game || !game.questions?.length) {
+              return <p className="text-sm text-slate-400">Loading questions...</p>;
+            }
 
-              {!miniGame?.answered ? (
-                <div className="mt-4 grid gap-2 md:grid-cols-2">
-                  <button
-                    onClick={() => handleTrueFalseSubmit(true)}
-                    disabled={busy}
-                    className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm hover:bg-slate-700 disabled:opacity-60"
-                  >
-                    True
-                  </button>
-                  <button
-                    onClick={() => handleTrueFalseSubmit(false)}
-                    disabled={busy}
-                    className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm hover:bg-slate-700 disabled:opacity-60"
-                  >
-                    False
-                  </button>
+            const info = game.info || {};
+            const answeredIds = info.answeredIds || [];
+            const totalCount = info.totalCount || game.questions.length;
+            const answeredCount = info.answeredCount || 0;
+            const correctCount = info.correctCount || 0;
+            const allDone = answeredCount >= totalCount;
+
+            // Find the first unanswered question
+            const currentQ = game.questions.find((q) => !answeredIds.includes(q.id));
+
+            if (allDone) {
+              return (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
+                  <p className="text-lg font-semibold text-emerald-200">All done for today!</p>
+                  <p className="text-sm text-slate-300 mt-1">
+                    Score: {correctCount}/{totalCount} correct
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">Come back tomorrow for new questions.</p>
                 </div>
-              ) : (
-                <p className="mt-3 text-xs text-emerald-300">
-                  Completed for today. Come back tomorrow for a new prompt.
-                </p>
-              )}
+              );
+            }
 
-              {miniGameMessage ? (
-                <p className="mt-3 text-xs text-cyan-300">{miniGameMessage}</p>
-              ) : null}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400">No mini-game question available today.</p>
-          )}
-        </section>
+            if (!currentQ) {
+              return <p className="text-sm text-slate-400">No questions available.</p>;
+            }
 
-        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
-          <h2 className="text-xl font-semibold mb-4">Incident Center</h2>
-          {hasActiveIncident ? (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-              <p className="text-sm text-amber-200 uppercase tracking-wide">{activeIncident.severity} risk incident</p>
-              <h3 className="mt-1 text-lg font-semibold">{activeIncident.label || activeIncident.type}</h3>
-              <div className="mt-4 grid gap-2 md:grid-cols-2">
-                {incidentOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => handleIncidentResponse(option.id)}
-                    disabled={busy}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-left text-sm hover:bg-slate-700 disabled:opacity-60"
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400">No active incident right now.</p>
-          )}
-        </section>
-
-        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
-          <h2 className="text-xl font-semibold mb-4">Security Timeline</h2>
-          {incidentHistory.length ? (
-            <div className="space-y-2">
-              {incidentHistory
-                .slice()
-                .reverse()
-                .slice(0, 8)
-                .map((entry, idx) => (
-                  <div key={`${entry.type}-${entry.createdAt}-${idx}`} className="rounded-lg border border-slate-700 bg-slate-800 p-3">
-                    <p className="text-sm font-medium">{entry.type}</p>
-                    <p className="text-xs text-slate-400">
-                      Severity: {entry.severity} · Outcome: {entry.outcome || "N/A"}
-                    </p>
+            return (
+              <div className="space-y-4">
+                {/* Progress bar */}
+                <div>
+                  <div className="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Q{answeredCount + 1} of {totalCount}</span>
+                    <span>{correctCount} correct</span>
                   </div>
-                ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400">No incidents logged yet.</p>
-          )}
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                      style={{ width: `${(answeredCount / totalCount) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Question prompt */}
+                <div className="rounded-xl border border-slate-700 bg-slate-800/70 p-4">
+                  {activeGame === "passwordStrengthener" ? (
+                    <>
+                      <p className="text-sm text-slate-400 mb-2">How strong is this password?</p>
+                      <div className="rounded-lg bg-slate-900 border border-slate-600 px-4 py-3 text-center">
+                        <p className="font-mono text-xl text-yellow-300 tracking-wide">{currentQ.prompt}</p>
+                      </div>
+                    </>
+                  ) : activeGame === "fillBlanks" ? (
+                    <p className="text-base md:text-lg">
+                      {currentQ.prompt.split("_____").map((part, i, arr) => (
+                        <span key={i}>
+                          {part}
+                          {i < arr.length - 1 && (
+                            <span className="inline-block mx-1 px-3 py-0.5 rounded bg-yellow-400/20 border border-yellow-400/40 text-yellow-300 font-semibold text-sm">
+                              ?????
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </p>
+                  ) : (
+                    <p className="text-base md:text-lg">{currentQ.prompt}</p>
+                  )}
+                </div>
+
+                {/* Answer buttons per game type */}
+                {activeGame === "trueFalse" ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleMiniGameSubmit("trueFalse", currentQ.id, true)}
+                      disabled={busy}
+                      className="py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      True
+                    </button>
+                    <button
+                      onClick={() => handleMiniGameSubmit("trueFalse", currentQ.id, false)}
+                      disabled={busy}
+                      className="py-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      False
+                    </button>
+                  </div>
+                ) : activeGame === "passwordStrengthener" ? (
+                  <div className="grid grid-cols-3 gap-3">
+                    {["Weak", "OK", "Strong"].map((label, idx) => {
+                      const colors = [
+                        "bg-rose-600 hover:bg-rose-500 text-white",
+                        "bg-amber-500 hover:bg-amber-400 text-slate-900",
+                        "bg-emerald-600 hover:bg-emerald-500 text-white",
+                      ];
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleMiniGameSubmit("passwordStrengthener", currentQ.id, idx)}
+                          disabled={busy}
+                          className={`py-4 rounded-xl font-bold text-base transition-all ${colors[idx]} disabled:opacity-60 disabled:cursor-not-allowed`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {(currentQ.options || []).map((option, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleMiniGameSubmit("fillBlanks", currentQ.id, idx)}
+                        disabled={busy}
+                        className="w-full text-left rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm hover:bg-slate-700/80 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-cyan-600 text-white text-xs font-bold mr-3">
+                          {String.fromCharCode(65 + idx)}
+                        </span>
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Feedback after answering */}
+                {mgFeedback && (
+                  <div
+                    className={`rounded-xl border px-4 py-3 text-sm ${
+                      mgFeedback.isError
+                        ? "border-rose-500/40 bg-rose-500/10 text-rose-200"
+                        : mgFeedback.isCorrect
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                        : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+                    }`}
+                  >
+                    <p className="font-semibold">
+                      {mgFeedback.isError ? "Error" : mgFeedback.isCorrect ? "Correct!" : "Incorrect!"}
+                    </p>
+                    {mgFeedback.explanation && (
+                      <p className="mt-1 text-xs opacity-80">{mgFeedback.explanation}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </section>
+
       </div>
     </main>
   );
