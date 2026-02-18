@@ -27,10 +27,8 @@ export default function RootLayout({ children }) {
                   <Topbar />
 
                   {/* Only this area scrolls (if needed) */}
-                  <main className="flex-1 min-h-0 overflow-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 md:px-8 py-4">
-                    <div className="mx-auto w-full max-w-6xl">
-                      {children}
-                    </div>
+                  <main className="flex-1 min-h-0 overflow-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+                    {children}
                   </main>
                 </div>
               </div>
