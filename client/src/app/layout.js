@@ -27,7 +27,17 @@ export default function RootLayout({ children }) {
                   <Topbar />
 
                   {/* Only this area scrolls (if needed) */}
-                  <main className="flex-1 min-h-0 overflow-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+                  <main className="relative flex-1 min-h-0 overflow-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+                    {/* yellow and blue polkadot background overlay */}
+                    <div
+                      className="fixed inset-0 pointer-events-none opacity-[0.07]"
+                      style={{
+                        backgroundImage:
+                          "radial-gradient(circle, #facc15 8px, transparent 8px), radial-gradient(circle, #3b82f6 8px, transparent 8px)",
+                        backgroundSize: "60px 60px",
+                        backgroundPosition: "0 0, 30px 30px",
+                      }}
+                    />
                     {children}
                   </main>
                 </div>

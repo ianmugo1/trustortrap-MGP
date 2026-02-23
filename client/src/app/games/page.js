@@ -36,18 +36,7 @@ const games = [
 
 export default function GamesPage() {
   return (
-    <main className="relative min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6 py-12 overflow-hidden">
-      {/* yellow and blue polkadot background overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, #facc15 8px, transparent 8px), radial-gradient(circle, #3b82f6 8px, transparent 8px)",
-          backgroundSize: "60px 60px",
-          backgroundPosition: "0 0, 30px 30px",
-        }}
-      />
-
+    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6 py-12">
       {/* page heading */}
       <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 text-center">
         Choose a Training Scenario
