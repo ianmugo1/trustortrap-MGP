@@ -398,7 +398,7 @@ export default function CyberPetPage() {
         {/* Mini Games */}
         <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
           <div className="flex items-center justify-between gap-3 mb-4">
-            <h2 className="text-xl font-semibold">Mini Games</h2>
+            <h2 className="text-xl font-semibold">Daily Mini Scenario</h2>
             <p className="text-xs text-slate-400">7 questions each · daily</p>
           </div>
 
