@@ -10,7 +10,7 @@ const router = express.Router();
 // ---------------- REGISTER ----------------
 router.post("/register", async (req, res) => {
   try {
-    const { displayName, email, password } = req.body || {};
+    const { displayName, email, password, learningInterest } = req.body || {};
 
     if (!displayName || !email || !password) {
       return res
@@ -29,6 +29,7 @@ router.post("/register", async (req, res) => {
       displayName,
       email,
       password: hashedPassword,
+      learningInterest: learningInterest || "",
     });
 
     // Sign JWT (30d)

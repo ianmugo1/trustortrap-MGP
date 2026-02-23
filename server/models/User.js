@@ -35,6 +35,9 @@ const userSchema = new mongoose.Schema(
     // Coins for rewards / gamification
     coins: { type: Number, default: 0 },
 
+    // Learning interest picked during registration
+    learningInterest: { type: String, default: "" },
+
     // stats for the phishing game
     phishingStats: {
       type: phishingStatsSchema,

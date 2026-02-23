@@ -14,7 +14,7 @@ async function handle(res) {
 }
 
 export const AuthAPI = {
-  async register({ name, email, password }) {
+  async register({ name, email, password, learningInterest }) {
     const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -23,6 +23,7 @@ export const AuthAPI = {
         displayName: name.trim(),
         email: email.trim(),
         password: password.trim(),
+        learningInterest: learningInterest || "",
       }),
     });
     return handle(res);
