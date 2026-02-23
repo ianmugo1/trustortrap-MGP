@@ -4,12 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Gamepad2,
   LayoutDashboard,
   Award,
   Settings,
   LogOut,
-  TicketCheck,
   ListCheckIcon,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -107,13 +105,13 @@ export default function Sidebar() {
             </div>
           </div>
 
-          <button
-            type="button"
+          <Link
+            href="/settings"
             className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
             aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
-          </button>
+          </Link>
         </div>
 
         <button

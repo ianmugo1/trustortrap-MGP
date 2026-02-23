@@ -26,6 +26,29 @@ const cyberPetStatsSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const userSettingsSchema = new mongoose.Schema(
+  {
+    notifications: {
+      app: { type: Boolean, default: true },
+      email: { type: Boolean, default: true },
+    },
+    app: {
+      theme: {
+        type: String,
+        enum: ["light", "dark", "system"],
+        default: "system",
+      },
+      language: { type: String, default: "en" },
+      soundEffects: { type: Boolean, default: true },
+    },
+    system: {
+      biometrics: { type: Boolean, default: false },
+      autoLockMinutes: { type: Number, default: 5 },
+    },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     displayName: { type: String, required: true },
@@ -45,6 +68,10 @@ const userSchema = new mongoose.Schema(
     },
     cyberPetStats: {
       type: cyberPetStatsSchema,
+      default: () => ({}),
+    },
+    settings: {
+      type: userSettingsSchema,
       default: () => ({}),
     },
   },

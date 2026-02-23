@@ -7,6 +7,40 @@ import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
+const DEFAULT_SETTINGS = {
+  notifications: { app: true, email: true },
+  app: { theme: "system", language: "en", soundEffects: true },
+  system: { biometrics: false, autoLockMinutes: 5 },
+};
+
+const sanitizeUser = (user) => ({
+  id: user._id,
+  displayName: user.displayName,
+  email: user.email,
+  coins: user.coins || 0,
+  phishingStats: user.phishingStats || {},
+  settings: {
+    notifications: {
+      app: user.settings?.notifications?.app ?? DEFAULT_SETTINGS.notifications.app,
+      email:
+        user.settings?.notifications?.email ?? DEFAULT_SETTINGS.notifications.email,
+    },
+    app: {
+      theme: user.settings?.app?.theme ?? DEFAULT_SETTINGS.app.theme,
+      language: user.settings?.app?.language ?? DEFAULT_SETTINGS.app.language,
+      soundEffects:
+        user.settings?.app?.soundEffects ?? DEFAULT_SETTINGS.app.soundEffects,
+    },
+    system: {
+      biometrics:
+        user.settings?.system?.biometrics ?? DEFAULT_SETTINGS.system.biometrics,
+      autoLockMinutes:
+        user.settings?.system?.autoLockMinutes ??
+        DEFAULT_SETTINGS.system.autoLockMinutes,
+    },
+  },
+});
+
 // ---------------- REGISTER ----------------
 router.post("/register", async (req, res) => {
   try {
@@ -41,13 +75,7 @@ router.post("/register", async (req, res) => {
 
     return res.status(201).json({
       token,
-      user: {
-        id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-        coins: user.coins || 0,
-        phishingStats: user.phishingStats || {},
-      },
+      user: sanitizeUser(user),
     });
   } catch (err) {
     console.error("Register error:", err);
@@ -80,13 +108,7 @@ router.post("/login", async (req, res) => {
 
     return res.json({
       token,
-      user: {
-        id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-        coins: user.coins || 0,
-        phishingStats: user.phishingStats || {},
-      },
+      user: sanitizeUser(user),
     });
   } catch (err) {
     console.error("Login error:", err);
@@ -107,18 +129,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     return res.json({
       success: true,
       user: {
-        id: user._id,
-        displayName: user.displayName,
-        email: user.email,
-        coins: user.coins || 0,
-        phishingStats: user.phishingStats || {
-          totalGames: 0,
-          totalQuestionsAnswered: 0,
-          totalCorrect: 0,
-          bestScore: 0,
-          lastScore: 0,
-          lastCompletedAt: null,
-        },
+        ...sanitizeUser(user),
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
