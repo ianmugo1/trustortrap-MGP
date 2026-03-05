@@ -54,7 +54,8 @@ export default function Topbar() {
 
           <div className="hidden md:block">
             <h2 className="text-sm font-semibold text-slate-100">
-              Welcome back, {displayName} 👋
+              Current Location: {location.pathname.split("/")[1] || ""}
+              
             </h2>
             <p className="text-xs text-slate-400">
               Track your cyber awareness progress at a glance.
