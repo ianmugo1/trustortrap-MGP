@@ -1,68 +1,68 @@
- # TrustOrTrap
+# TrustOrTrap
 
-  TrustOrTrap is a beginner-friendly cyber safety training app
-  that helps people build better online habits through short,
-  game-style challenges.
+  TrustOrTrap is a cyber awareness app designed to help beginners
+  build safer online habits through short, interactive challenges.
 
-  Instead of reading long security guides, users learn by doing:
-  - Spotting phishing scams
-  - Practicing safer online decisions
-  - Taking daily Cyber Pet challenges that reward consistent
-  learning
+  Instead of relying on long explanations, the app teaches users
+  through practical activities such as spotting phishing attempts,
+  making safer decisions online, and completing daily Cyber Pet
+  challenges.
 
-  ## Why This Project Exists
-  Most people know cyber threats are real, but learning
-  cybersecurity can feel technical and overwhelming.
-  TrustOrTrap makes it practical and engaging with quick,
-  interactive tasks that mirror real-world situations.
+  ## Features
 
-  ## What You Can Do in TrustOrTrap
-  - Create an account and log in securely
-  - Play a phishing awareness game
-  - Track your progress in a dashboard
-  - Complete a daily Cyber Pet challenge:
+  - Secure sign up and login
+  - Phishing awareness game
+  - Social scam awareness challenges
+  - Daily Cyber Pet mode
+  - Progress dashboard
+  - Kid-friendly story-based learning pages
+
+  ## Cyber Pet Mode
+
+  Cyber Pet is designed as a simple daily learning habit:
   - 5 short cybersecurity questions per day
   - Correct answers improve pet health
   - Wrong answers reduce pet health
-  - New question set each day
+  - Questions reset each day
+  - Progress is saved to the user account
 
-  ## Cyber Pet Mode (Simple + Daily)
-  Cyber Pet is designed as a lightweight daily habit:
-  - Pet starts below full health (to encourage play)
-  - You answer 5 questions each day
-  - Questions reset automatically each day
-  - Results are saved to your account
+  ## Why This Project Matters
 
-  This keeps learning short, consistent, and easy to return to.
+  Many people know cyber threats exist, but learning cybersecurity
+  often feels too technical or overwhelming. TrustOrTrap makes cyber
+  safety easier to understand by turning important lessons into short,
+  practical experiences.
 
   ## Who It’s For
-  - Students learning digital safety
-  - Beginners who want practical security awareness
-  - Anyone who wants to build safer online habits in a fun
-  format
 
-  ## Project Structure (High Level)
-  - `client/` Frontend app (Next.js + Tailwind)
-  - `server/` Backend API (Express + MongoDB)
-  - Auth is JWT-based
-  - Game logic lives in backend routes + models
-  - UI pages are in Next.js app routes
+  - Students learning digital safety
+  - Beginners exploring cybersecurity
+  - Anyone who wants to build safer online habits in a more engaging
+  way
+
+  ## Project Structure
+
+  - `client/` Next.js + Tailwind frontend
+  - `server/` Express + MongoDB backend
+  - JWT-based authentication
+  - Backend routes and models handle game logic
+  - Next.js app routes handle the user interface
 
   ## Running Locally
 
-  ### 1) Install dependencies
+  ### 1. Install dependencies
   ```bash
   npm install
 
-  ### 2) Set environment variables
+  ### 2. Add environment variables
 
-  Create a .env file with:
+  Create a .env file:
 
   MONGODB_URI=your_mongodb_connection_string
   JWT_SECRET=your_jwt_secret
   NEXT_PUBLIC_API_BASE=http://localhost:5050
 
-  ### 3) Start the app
+  ### 3. Start the app
 
   npm run dev
 
@@ -73,8 +73,7 @@
 
   ## Current Focus
 
-  TrustOrTrap currently focuses on core learning gameplay and
-  account flows.
-  Advanced systems (leaderboards, pet evolution, streak
-  mechanics, etc.) are intentionally left out for now to keep
-  the experience clean and simple.
+  TrustOrTrap currently focuses on core gameplay, learning
+  experiences, and account features. More advanced features like
+  leaderboards, pet evolution, and streak systems are intentionally
+  left out for now to keep the app simple and usable.
