@@ -9,12 +9,14 @@ import {
   Settings,
   LogOut,
   ListCheckIcon,
+  BookOpenText,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/games", label: "Training", icon: ListCheckIcon },
+  { href: "/stories", label: "Stories", icon: BookOpenText },
   { href: "/badges", label: "Badges", icon: Award },
 ];
 

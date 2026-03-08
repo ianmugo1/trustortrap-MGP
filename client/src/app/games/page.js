@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldAlert, Dog, ScanFace } from "lucide-react";
+import { ShieldAlert, Dog, ScanFace, BookOpenText } from "lucide-react";
 
 // game card data for each training scenario
 const games = [
@@ -32,6 +32,15 @@ const games = [
     iconColour: "text-rose-400",
     border: "hover:border-rose-500/50",
   },
+  {
+    href: "/stories",
+    icon: BookOpenText,
+    title: "Story Mode",
+    description: "Learn phishing, AI fraud, and passwords through short stories.",
+    colour: "from-emerald-500 to-teal-500",
+    iconColour: "text-emerald-400",
+    border: "hover:border-emerald-500/50",
+  },
 ];
 
 export default function GamesPage() {
@@ -46,7 +55,7 @@ export default function GamesPage() {
       </p>
 
       {/* game cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 w-full max-w-6xl">
         {games.map((game) => (
           <Link
             key={game.href}

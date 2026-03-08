@@ -121,6 +121,13 @@ export default function DashboardPage() {
       cta: "View badges",
       onClick: () => router.push("/badges"),
     },
+    {
+      title: "Read a cyber story",
+      description:
+        "Start with a kid-friendly story chapter before jumping into the training games.",
+      cta: "Open Stories",
+      onClick: () => router.push("/stories"),
+    },
   ];
 
   const handleSignOut = () => {

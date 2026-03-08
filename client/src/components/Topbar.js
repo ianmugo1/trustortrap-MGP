@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, Bell, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const quickLinks = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/games", label: "Games" },
+  { href: "/stories", label: "Stories" },
   { href: "/badges", label: "Badges" },
   { href: "/settings", label: "Settings" },
 ];
@@ -15,6 +17,7 @@ const quickLinks = [
 export default function Topbar() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
+  const pathname = usePathname();
 
   const displayName =
     user?.displayName || user?.name || user?.username || "Explorer";
@@ -30,6 +33,8 @@ export default function Topbar() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const currentLocation = pathname?.split("/")[1] || "";
 
   return (
     <>
@@ -54,8 +59,7 @@ export default function Topbar() {
 
           <div className="hidden md:block">
             <h2 className="text-sm font-semibold text-slate-100">
-              Current Location: {location.pathname.split("/")[1] || ""}
-              
+              Current Location: {currentLocation}
             </h2>
             <p className="text-xs text-slate-400">
               Track your cyber awareness progress at a glance.
