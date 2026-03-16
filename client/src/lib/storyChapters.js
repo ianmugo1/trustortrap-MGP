@@ -176,6 +176,67 @@ export const STORY_CHAPTERS = [
       },
     ],
   },
+  {
+    slug: "scam-mix",
+    chapterNumber: 4,
+    title: "The Four-Trick Scam Day",
+    subtitle: "A story about mixed scam tricks",
+    icon: "message",
+    accent: "from-indigo-500 via-blue-500 to-cyan-400",
+    softAccent: "border-indigo-200 bg-indigo-50 text-indigo-900",
+    definitionTitle: "What is a mixed scam?",
+    definition:
+      "A mixed scam is when tricksters use different fake messages in one day to steal money, account items, or login access.",
+    whyItMatters:
+      "Scammers often try many tricks quickly. Spotting each pattern helps kids stay calm, verify first, and protect their accounts.",
+    relatedGame: {
+      href: "/games/phishing",
+      label: "Practice Scam Spotting",
+    },
+    clueTitle: "Clues Lina notices",
+    clues: [
+      "A trader offers rare game items and asks Lina to send coins first.",
+      "A 'friend' account asks for urgent help, but the spelling and tone are strange.",
+      "A message asks for Lina's one-time code, saying it is needed to keep the account safe.",
+      "A fake support agent asks Lina to share her password in chat.",
+    ],
+    safetyRules: [
+      "Never pay first for surprise item trades or giveaways.",
+      "Verify friends by calling or messaging them on a known account.",
+      "Keep OTP codes private and never share them with anyone.",
+      "Real support teams do not ask for your password or codes.",
+    ],
+    slides: [
+      {
+        scene: "In-game market",
+        title: "The rare skin offer",
+        body:
+          "Lina gets a message from a player promising ultra-rare items if she sends game coins first. The deal looks exciting, but there is pressure to act now.",
+        visual: "A trade window with shiny items and a flashing timer.",
+      },
+      {
+        scene: "Friend request",
+        title: "A copied friend account appears",
+        body:
+          "Soon after, a profile with her friend's photo asks for help buying something fast. Lina notices the username has extra letters and the message sounds unlike her friend.",
+        visual: "Two similar profiles side by side, with tiny name differences circled.",
+      },
+      {
+        scene: "Security trick",
+        title: "The OTP code trap",
+        body:
+          "Lina receives a login code, then someone claims to be 'security' and asks for that code to verify ownership. Lina remembers one-time codes are private keys.",
+        visual: "A text bubble saying 'Send your code now' next to a locked shield.",
+      },
+      {
+        scene: "Fake support",
+        title: "The help-desk scam fails",
+        body:
+          "A fake support account asks for Lina's password to 'fix everything.' Lina reports the account, blocks it, and contacts support from the official app page instead.",
+        visual: "A fake badge fading out while an official support page is open.",
+      },
+    ],
+  },
 ];
 
 export function getStoryChapter(slug) {
