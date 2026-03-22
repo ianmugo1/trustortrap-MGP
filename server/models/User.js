@@ -13,6 +13,16 @@ const phishingStatsSchema = new mongoose.Schema(
   { _id: false } // we don't need a separate _id for this sub-document
 );
 
+const socialStatsSchema = new mongoose.Schema(
+  {
+    totalGames:      { type: Number, default: 0 },
+    bestScore:       { type: Number, default: 0 },
+    lastScore:       { type: Number, default: 0 },
+    lastCompletedAt: { type: Date },
+  },
+  { _id: false }
+);
+
 const cyberPetStatsSchema = new mongoose.Schema(
   {
     takeoversPrevented: { type: Number, default: 0 },
@@ -68,6 +78,10 @@ const userSchema = new mongoose.Schema(
     },
     cyberPetStats: {
       type: cyberPetStatsSchema,
+      default: () => ({}),
+    },
+    socialStats: {
+      type: socialStatsSchema,
       default: () => ({}),
     },
     settings: {

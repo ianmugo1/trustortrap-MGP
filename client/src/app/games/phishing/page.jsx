@@ -178,8 +178,8 @@ export default function PhishingPage() {
 
   if (!token) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-cyan-950 to-emerald-950 text-white px-4">
-        <p className="rounded-2xl border border-sky-400/30 bg-slate-900/70 px-6 py-4 backdrop-blur">
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <p className="rounded-2xl border border-slate-700 bg-slate-900 px-6 py-4">
           Please log in to play.
         </p>
       </main>
@@ -188,8 +188,8 @@ export default function PhishingPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-cyan-950 to-emerald-950 text-white px-4">
-        <p className="rounded-2xl border border-cyan-400/30 bg-slate-900/70 px-6 py-4 text-cyan-100 text-sm backdrop-blur">
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <p className="rounded-2xl border border-slate-700 bg-slate-900 px-6 py-4 text-slate-400 text-sm">
           Loading questions...
         </p>
       </main>
@@ -198,16 +198,16 @@ export default function PhishingPage() {
 
   if (loadError) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-cyan-950 to-emerald-950 text-white px-4">
-        <div className="max-w-md w-full rounded-3xl border border-rose-400/30 bg-slate-900/85 p-6 text-center shadow-2xl shadow-rose-900/20 backdrop-blur">
-          <h1 className="text-xl font-semibold mb-2 text-rose-100">Couldn’t load the game</h1>
-          <p className="text-slate-200 text-sm mb-4">{loadError}</p>
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <div className="max-w-md w-full rounded-3xl border border-slate-700 bg-slate-900 p-6 text-center shadow-2xl">
+          <h1 className="text-xl font-semibold mb-2 text-rose-400">Couldn’t load the game</h1>
+          <p className="text-slate-400 text-sm mb-4">{loadError}</p>
           <button
             onClick={() => {
               resetLocal();
               loadQuestions();
             }}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-900 font-semibold"
+            className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
           >
             Retry
           </button>
@@ -218,8 +218,8 @@ export default function PhishingPage() {
 
   if (!questions.length) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-cyan-950 to-emerald-950 text-white px-4">
-        <p className="rounded-2xl border border-amber-400/30 bg-slate-900/70 px-6 py-4 text-amber-100 text-sm backdrop-blur">
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <p className="rounded-2xl border border-slate-700 bg-slate-900 px-6 py-4 text-slate-400 text-sm">
           No questions found.
         </p>
       </main>
@@ -228,10 +228,8 @@ export default function PhishingPage() {
 
   if (!gameStarted) {
     return (
-      <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-cyan-950 to-emerald-950 text-white px-4">
-        <div className="absolute -top-20 -left-16 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute -bottom-20 -right-16 h-56 w-56 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="relative max-w-lg w-full rounded-3xl border border-sky-400/30 bg-slate-900/85 p-8 text-center shadow-2xl shadow-sky-900/30 backdrop-blur">
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <div className="max-w-lg w-full rounded-3xl border border-slate-700 bg-slate-900 p-8 text-center shadow-2xl">
           <h1 className="text-3xl md:text-4xl font-black mb-4 bg-gradient-to-r from-cyan-200 via-sky-300 to-indigo-200 bg-clip-text text-transparent">
             Phishing Awareness
           </h1>
@@ -257,10 +255,8 @@ export default function PhishingPage() {
 
   if (isFinished) {
     return (
-      <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-cyan-950 to-emerald-950 text-white px-4">
-        <div className="absolute top-8 left-10 h-48 w-48 rounded-full bg-lime-500/20 blur-3xl" />
-        <div className="absolute bottom-4 right-10 h-48 w-48 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="bg-slate-900/85 p-8 rounded-3xl text-center border border-sky-400/25 max-w-md w-full shadow-2xl shadow-sky-950/40 backdrop-blur">
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+        <div className="bg-slate-900 p-8 rounded-3xl text-center border border-slate-700 max-w-md w-full shadow-2xl">
           <h1 className="text-3xl font-black mb-3 bg-gradient-to-r from-cyan-200 to-lime-200 bg-clip-text text-transparent">
             Training Complete
           </h1>
@@ -315,11 +311,9 @@ export default function PhishingPage() {
   const isLocked = submitting || answer !== null;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-cyan-950 to-emerald-950 text-white">
-      <div className="absolute -top-20 left-10 h-56 w-56 rounded-full bg-cyan-400/15 blur-3xl" />
-      <div className="absolute top-1/2 -right-20 h-64 w-64 rounded-full bg-fuchsia-500/15 blur-3xl" />
+    <main className="min-h-screen bg-slate-950 text-white">
       <div className="w-full grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-4 md:gap-6 pl-0 pr-3 sm:pr-4 md:pr-6 py-3 sm:py-4 md:py-6">
-        <section className="bg-slate-900/80 rounded-3xl border border-sky-400/20 p-4 sm:p-6 md:p-8 shadow-2xl backdrop-blur">
+        <section className="bg-slate-900 rounded-3xl border border-slate-700 p-4 sm:p-6 md:p-8 shadow-2xl">
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-start justify-between gap-4 mb-3">
@@ -416,7 +410,7 @@ export default function PhishingPage() {
           )}
         </section>
 
-        <aside className="bg-slate-900/75 rounded-3xl border border-indigo-300/20 p-4 sm:p-6 shadow-xl backdrop-blur h-fit">
+        <aside className="bg-slate-900 rounded-3xl border border-slate-700 p-4 sm:p-6 shadow-xl h-fit">
           <h2 className="text-lg font-extrabold text-indigo-100 mb-4">Game Stats</h2>
           <div className="space-y-3 text-sm">
             <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3">
