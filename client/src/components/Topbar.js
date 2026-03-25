@@ -3,16 +3,34 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Bell, ShieldCheck } from "lucide-react";
+import { Menu, Settings, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const quickLinks = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/games", label: "Games" },
+  { href: "/games", label: "Training" },
   { href: "/stories", label: "Stories" },
-  { href: "/badges", label: "Badges" },
   { href: "/settings", label: "Settings" },
 ];
+
+const PAGE_META = {
+  dashboard: {
+    title: "Dashboard",
+    description: "Live progress across training, stories, and your cyber pet.",
+  },
+  games: {
+    title: "Training",
+    description: "Short challenges that build safer online habits.",
+  },
+  stories: {
+    title: "Stories",
+    description: "Short lessons that prepare you before practice.",
+  },
+  settings: {
+    title: "Settings",
+    description: "Account, notifications, and app behavior.",
+  },
+};
 
 export default function Topbar() {
   const [open, setOpen] = useState(false);
@@ -21,20 +39,23 @@ export default function Topbar() {
 
   const displayName =
     user?.displayName || user?.name || user?.username || "Explorer";
-  const level = user?.level ?? 1;
-  const role = user?.role || "Cyber Scout";
-  const notifications = user?.notifications?.length ?? 0;
+  const secondaryLabel = user?.email || "Signed in";
 
   const initials = displayName
     .trim()
     .split(/\s+/)
     .filter(Boolean)
-    .map((p) => p[0])
+    .map((part) => part[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
-  const currentLocation = pathname?.split("/")[1] || "";
+  const rootSegment = pathname?.split("/")[1] || "dashboard";
+  const pageMeta =
+    PAGE_META[rootSegment] || {
+      title: "TrustOrTrap",
+      description: "Cyber awareness practice for beginners.",
+    };
 
   return (
     <>
@@ -42,7 +63,7 @@ export default function Topbar() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setOpen((o) => !o)}
+            onClick={() => setOpen((value) => !value)}
             aria-label="Toggle navigation"
             aria-expanded={open}
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 md:hidden"
@@ -59,38 +80,31 @@ export default function Topbar() {
 
           <div className="hidden md:block">
             <h2 className="text-sm font-semibold text-slate-100">
-              Current Location: {currentLocation}
+              {pageMeta.title}
             </h2>
-            <p className="text-xs text-slate-400">
-              Track your cyber awareness progress at a glance.
-            </p>
+            <p className="text-xs text-slate-400">{pageMeta.description}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700"
-            aria-label="Notifications"
+          <Link
+            href="/settings"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-100 transition hover:bg-slate-700"
+            aria-label="Open settings"
           >
-            <Bell className="h-4 w-4 text-slate-100" />
-            {notifications > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-semibold text-slate-950">
-                {notifications}
-              </span>
-            )}
-          </button>
+            <Settings className="h-4 w-4" />
+          </Link>
 
           <div className="hidden items-center gap-2 rounded-full bg-slate-800 px-3 py-1.5 md:flex">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500 text-[11px] font-semibold text-slate-900">
               {initials}
             </div>
             <div className="text-xs leading-tight">
-              <p className="max-w-[140px] truncate font-medium text-slate-100">
+              <p className="max-w-[160px] truncate font-medium text-slate-100">
                 {displayName}
               </p>
-              <p className="text-[11px] text-slate-400">
-                Level {level} · {role}
+              <p className="max-w-[180px] truncate text-[11px] text-slate-400">
+                {secondaryLabel}
               </p>
             </div>
           </div>
