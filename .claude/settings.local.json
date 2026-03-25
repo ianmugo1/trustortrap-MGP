@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls -lh *.svg *.json)",
-      "Bash(node seed/seedSocial.js)"
-    ]
-  }
-}

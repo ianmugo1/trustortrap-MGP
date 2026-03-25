@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Bell, KeyRound, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 import { authFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
@@ -20,6 +21,23 @@ const DEFAULT_SETTINGS = {
     autoLockMinutes: 5,
   },
 };
+
+function SectionCard({ title, description, icon: Icon, children }) {
+  return (
+    <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-300">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+          <p className="mt-1 text-sm text-slate-400">{description}</p>
+        </div>
+      </div>
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -277,29 +295,69 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4 md:p-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-50">Settings</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Manage your profile, notifications, app behavior, and account actions.
-        </p>
-      </div>
+    <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-8">
+      <section className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95">
+        <div className="grid gap-6 p-6 lg:grid-cols-[1.15fr_0.85fr] lg:p-8">
+          <div>
+            <p className="text-sm font-medium text-emerald-300">Settings</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
+              Manage account details, app preferences, and security controls.
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+              This first pass improves the settings layout so each group is easier
+              to scan and use without changing the underlying save flows.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                Account
+              </p>
+              <p className="mt-3 text-lg font-semibold text-white">
+                {user?.displayName || "Explorer"}
+              </p>
+              <p className="mt-1 text-sm text-slate-400">{user?.email || "No email found"}</p>
+            </div>
+            <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                Sections
+              </p>
+              <p className="mt-3 text-lg font-semibold text-white">Profile, app, account</p>
+              <p className="mt-1 text-sm text-slate-400">
+                Settings are still saved through the same existing backend endpoints.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {status && (
-        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+        <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
           {status}
         </div>
       )}
       {error && (
-        <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
           {error}
         </div>
       )}
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5">
-        <h2 className="text-base font-semibold text-slate-100">Profile</h2>
+      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+      <SectionCard
+        title="Profile"
+        description="Keep the basic account details tied to your login up to date."
+        icon={UserRound}
+      >
         <form className="mt-4 grid gap-4" onSubmit={saveProfile}>
-          <label className="grid gap-1 text-sm">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <p className="text-sm font-medium text-white">Public account details</p>
+            <p className="mt-1 text-sm text-slate-400">
+              These are the visible identity fields currently stored on your account.
+            </p>
+          </div>
+
+          <label className="grid gap-1 text-sm md:grid-cols-1">
             <span className="text-slate-300">Username</span>
             <input
               type="text"
@@ -321,7 +379,7 @@ export default function SettingsPage() {
             />
           </label>
 
-          <div>
+          <div className="flex justify-start">
             <button
               type="submit"
               disabled={loadingSection === "profile"}
@@ -332,8 +390,20 @@ export default function SettingsPage() {
           </div>
         </form>
 
-        <form className="mt-6 grid gap-4" onSubmit={changePassword}>
-          <h3 className="text-sm font-semibold text-slate-200">Change password</h3>
+        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-800 text-slate-300">
+              <Shield className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-100">Change password</h3>
+              <p className="mt-1 text-sm text-slate-400">
+                Update your account password using the existing password endpoint.
+              </p>
+            </div>
+          </div>
+
+        <form className="mt-4 grid gap-4" onSubmit={changePassword}>
           <label className="grid gap-1 text-sm">
             <span className="text-slate-300">Current password</span>
             <input
@@ -378,13 +448,24 @@ export default function SettingsPage() {
             </button>
           </div>
         </form>
-      </section>
+        </div>
+      </SectionCard>
 
+      <div className="space-y-6">
+      <SectionCard
+        title="Preferences"
+        description="Notification, appearance, and device-related options stored in your account settings."
+        icon={SlidersHorizontal}
+      >
       <form
-        className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5"
+        className="space-y-6"
         onSubmit={saveSettings}
       >
-        <h2 className="text-base font-semibold text-slate-100">Notifications</h2>
+        <div>
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+          <Bell className="h-4 w-4 text-emerald-300" />
+          Notifications
+        </div>
         <div className="mt-4 grid gap-3 text-sm">
           <label className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2">
             <span className="text-slate-300">App notifications</span>
@@ -405,8 +486,10 @@ export default function SettingsPage() {
             />
           </label>
         </div>
+        </div>
 
-        <h2 className="mt-6 text-base font-semibold text-slate-100">App Settings</h2>
+        <div>
+        <h2 className="text-base font-semibold text-slate-100">App Settings</h2>
         <div className="mt-4 grid gap-4 text-sm md:grid-cols-2">
           <label className="grid gap-1">
             <span className="text-slate-300">Theme</span>
@@ -444,8 +527,20 @@ export default function SettingsPage() {
             />
           </label>
         </div>
+        </div>
 
-        <h2 className="mt-6 text-base font-semibold text-slate-100">System Settings</h2>
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-800 text-slate-300">
+            <KeyRound className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-100">System Settings</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Device-level preferences and quick maintenance tools.
+            </p>
+          </div>
+        </div>
         <div className="mt-4 grid gap-4 text-sm md:grid-cols-2">
           <label className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 md:col-span-2">
             <span className="text-slate-300">Biometrics</span>
@@ -482,6 +577,7 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
+        </div>
 
         <div className="mt-6">
           <button
@@ -493,9 +589,13 @@ export default function SettingsPage() {
           </button>
         </div>
       </form>
+      </SectionCard>
 
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5">
-        <h2 className="text-base font-semibold text-slate-100">Account</h2>
+      <SectionCard
+        title="Account"
+        description="Session and deletion actions that affect your whole account."
+        icon={Shield}
+      >
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
@@ -513,7 +613,9 @@ export default function SettingsPage() {
             {loadingSection === "delete" ? "Deleting..." : "Delete account"}
           </button>
         </div>
-      </section>
+      </SectionCard>
+      </div>
+      </div>
     </div>
   );
 }
