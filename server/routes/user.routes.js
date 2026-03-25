@@ -26,7 +26,10 @@ const sanitizeUser = (user) => ({
   displayName: user.displayName,
   email: user.email,
   coins: user.coins || 0,
+  learningInterest: user.learningInterest || "",
   phishingStats: user.phishingStats || {},
+  socialStats: user.socialStats || {},
+  cyberPetStats: user.cyberPetStats || {},
   settings: {
     notifications: {
       app: user.settings?.notifications?.app ?? DEFAULT_SETTINGS.notifications.app,
