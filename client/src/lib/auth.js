@@ -1,3 +1,5 @@
+import { NETWORK_ERROR_MESSAGE } from "./api";
+
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5050";
 
@@ -15,30 +17,42 @@ async function handle(res) {
 
 export const AuthAPI = {
   async register({ name, email, password, learningInterest }) {
-    const res = await fetch(`${API_BASE}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        displayName: name.trim(),
-        email: email.trim(),
-        password: password.trim(),
-        learningInterest: learningInterest || "",
-      }),
-    });
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          displayName: name.trim(),
+          email: email.trim(),
+          password: password.trim(),
+          learningInterest: learningInterest || "",
+        }),
+      });
+    } catch {
+      throw new Error(NETWORK_ERROR_MESSAGE);
+    }
+
     return handle(res);
   },
 
   async login({ email, password }) {
-    const res = await fetch(`${API_BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        email: email.trim(),
-        password: password.trim(),
-      }),
-    });
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+        }),
+      });
+    } catch {
+      throw new Error(NETWORK_ERROR_MESSAGE);
+    }
+
     return handle(res);
   },
 };

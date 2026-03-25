@@ -101,7 +101,6 @@ export function AuthProvider({ children }) {
           setToken(null);
           setSessionExpired(true);
         }
-        console.error("refreshUser failed:", res.status);
         return;
       }
 
@@ -116,8 +115,8 @@ export function AuthProvider({ children }) {
         STORAGE_KEY,
         JSON.stringify({ token, user: freshUser })
       );
-    } catch (err) {
-      console.error("Failed to refresh user", err);
+    } catch {
+      // Best-effort refresh; keep cached auth state if the API is temporarily unreachable.
     }
   }, [token]);
 
