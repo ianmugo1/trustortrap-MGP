@@ -5,85 +5,31 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { ActivityItem } from "../../components/ActivityItem";
 import { authFetch } from "@/lib/api";
-import { STORY_CHAPTERS } from "@/lib/storyChapters";
 import {
-  Activity,
   ArrowRight,
   BarChart3,
-  BookOpenText,
   Coins,
   Dog,
-  ScanFace,
   ShieldAlert,
 } from "lucide-react";
 
 const DAILY_QUESTION_TARGET = 5;
 
-function formatShortDate(value) {
-  if (!value) return "No recent run";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "No recent run";
-
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-  }).format(date);
-}
-
 function StatCard({ label, value, note, Icon }) {
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-5">
+    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             {label}
           </p>
-          <p className="mt-3 text-2xl font-bold text-white">{value}</p>
-          <p className="mt-1 text-sm text-slate-400">{note}</p>
+          <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-400">{note}</p>
         </div>
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-300">
           <Icon className="h-5 w-5" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Card({ title, children, action }) {
-  return (
-    <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
-        </div>
-        {action}
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-function FocusRow({ title, value, hint, href, cta, Icon }) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-semibold text-white">
-            <Icon className="h-4 w-4 text-emerald-300" />
-            <span>{title}</span>
-          </div>
-          <p className="mt-2 text-xl font-bold text-white">{value}</p>
-          <p className="mt-1 text-sm text-slate-400">{hint}</p>
-        </div>
-        <Link
-          href={href}
-          className="shrink-0 rounded-full border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-100 transition hover:border-slate-500 hover:bg-slate-800"
-        >
-          {cta}
-        </Link>
       </div>
     </div>
   );
@@ -238,7 +184,6 @@ export default function DashboardPage() {
 
   const phishingStats = user?.phishingStats ?? {};
   const socialStats = user?.socialStats ?? {};
-  const cyberPetStats = user?.cyberPetStats ?? {};
 
   const phishingGames = Number(phishingStats.totalGames ?? 0);
   const totalAnswered = Number(phishingStats.totalQuestionsAnswered ?? 0);
@@ -273,69 +218,45 @@ export default function DashboardPage() {
     [averageScore, dailyQuestionsDone, learningInterest, pet, phishingGames, socialGames]
   );
 
-  const activityFeed = useMemo(() => {
-    const items = [];
+  const hasMeaningfulProgress =
+    trainingRuns > 0 ||
+    dailyQuestionsDone > 0 ||
+    currentStreak > 0 ||
+    Boolean(phishingStats.lastCompletedAt) ||
+    Boolean(socialStats.lastCompletedAt);
 
-    if (activeIncident) {
-      items.push({
-        title: "Active cyber pet incident needs attention",
-        time: "Open Cyber Pet to respond",
-        tag: "Cyber Pet",
-      });
-    } else if (pet && dailyQuestionsDone > 0) {
-      items.push({
-        title: `Answered ${dailyQuestionsDone}/${DAILY_QUESTION_TARGET} cyber pet questions today`,
-        time: `${actionsLeft} actions left today`,
-        tag: "Cyber Pet",
-      });
-    }
+  const isFirstRun =
+    !hasMeaningfulProgress &&
+    totalAnswered === 0 &&
+    socialGames === 0 &&
+    !activeIncident;
 
-    if (phishingStats.lastCompletedAt) {
-      items.push({
-        title: `Finished phishing challenge with ${phishingStats.lastScore ?? 0} points`,
-        time: formatShortDate(phishingStats.lastCompletedAt),
-        tag: "Phishing",
-      });
-    }
-
-    if (socialStats.lastCompletedAt) {
-      items.push({
-        title: `Finished social challenge with ${socialStats.lastScore ?? 0} points`,
-        time: formatShortDate(socialStats.lastCompletedAt),
-        tag: "Social",
-      });
-    }
-
-    return items;
-  }, [
-    actionsLeft,
-    activeIncident,
-    dailyQuestionsDone,
-    pet,
-    phishingStats.lastCompletedAt,
-    phishingStats.lastScore,
-    socialStats.lastCompletedAt,
-    socialStats.lastScore,
-  ]);
+  const heroEyebrow = isFirstRun ? "New account" : recommendation.eyebrow;
+  const heroTitle = isFirstRun
+    ? "Build your first safety baseline."
+    : recommendation.title;
+  const heroDescription = isFirstRun
+    ? "Start with one short challenge so the dashboard has real activity to work with. One completed run is enough to make the next recommendations more useful."
+    : recommendation.description;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
+    <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 md:px-8 md:py-8">
       <section className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95">
-        <div className="grid gap-6 p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-8">
+        <div className="grid gap-5 p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
           <div>
             <div className="flex items-center gap-4">
-              <div className="relative h-14 w-14 overflow-hidden rounded-2xl shadow-md shadow-emerald-500/20">
+              <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-emerald-400/15 bg-slate-950 shadow-md shadow-emerald-500/10">
                 <Image
                   src="/logo.png"
                   alt="TrustOrTrap Logo"
                   fill
-                  className="object-cover"
+                  className="object-contain p-2"
                   sizes="56px"
                 />
               </div>
               <div>
                 <p className="text-sm font-medium text-emerald-300">
-                  {recommendation.eyebrow}
+                  {heroEyebrow}
                 </p>
                 <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
                   Welcome back, {displayName}.
@@ -343,80 +264,143 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <h2 className="mt-5 text-2xl font-bold text-white">
-              {recommendation.title}
+            <h2 className="mt-5 text-3xl font-black tracking-tight text-white">
+              {heroTitle}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              {recommendation.description}
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+              {heroDescription}
             </p>
 
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => router.push(recommendation.primaryHref)}
+                onClick={() =>
+                  router.push(
+                    isFirstRun ? "/games/phishing" : recommendation.primaryHref
+                  )
+                }
                 className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
               >
-                {recommendation.primaryLabel}
+                {isFirstRun
+                  ? "Start first challenge"
+                  : recommendation.primaryLabel}
                 <ArrowRight className="h-4 w-4" />
               </button>
               <button
                 type="button"
-                onClick={() => router.push(recommendation.secondaryHref)}
+                onClick={() =>
+                  router.push(isFirstRun ? "/stories" : recommendation.secondaryHref)
+                }
                 className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
               >
-                {recommendation.secondaryLabel}
+                {isFirstRun ? "Browse stories" : recommendation.secondaryLabel}
               </button>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2.5 text-sm">
+              <div className="rounded-full border border-slate-800 bg-slate-950/80 px-4 py-2 text-slate-300">
+                {trainingRuns} run{trainingRuns === 1 ? "" : "s"}
+              </div>
+              <div className="rounded-full border border-slate-800 bg-slate-950/80 px-4 py-2 text-slate-300">
+                {coins} coin{coins === 1 ? "" : "s"}
+              </div>
+              <div className="rounded-full border border-slate-800 bg-slate-950/80 px-4 py-2 text-slate-300">
+                {currentStreak} day{currentStreak === 1 ? "" : "s"} streak
+              </div>
             </div>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-800 bg-slate-950/80 p-5">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Snapshot
-            </p>
-            <div className="mt-4 space-y-4">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-                <p className="text-sm font-semibold text-white">Live cyber pet</p>
-                {petLoading ? (
-                  <p className="mt-2 text-sm text-slate-400">Loading live status...</p>
-                ) : petError ? (
-                  <p className="mt-2 text-sm text-amber-300">{petError}</p>
-                ) : (
-                  <>
-                    <p className="mt-2 text-2xl font-bold text-white">{petHealth}/100</p>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Risk {petRiskLevel} - {petRiskScore}/100
+            {isFirstRun ? (
+              <>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  Quick start
+                </p>
+                <h3 className="mt-2 text-lg font-bold text-white">
+                  Start here
+                </h3>
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+                    <p className="text-sm font-semibold text-white">
+                      1. Run phishing once
                     </p>
-                  </>
-                )}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-                  <p className="text-sm font-semibold text-white">Daily progress</p>
-                  <p className="mt-2 text-xl font-bold text-white">
-                    {dailyQuestionsDone}/{DAILY_QUESTION_TARGET}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-400">Questions answered</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                      One completed phishing session gives the dashboard a real baseline.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+                    <p className="text-sm font-semibold text-white">
+                      2. Read a short story
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                      Stories give quick context before more practice.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
+                    <p className="text-sm font-semibold text-white">
+                      3. Check in on Byte
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                      The cyber pet works best as a short daily habit.
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-4">
-                  <p className="text-sm font-semibold text-white">Current streak</p>
-                  <p className="mt-2 text-xl font-bold text-white">{currentStreak} day{currentStreak === 1 ? "" : "s"}</p>
-                  <p className="mt-1 text-sm text-slate-400">Daily cyber pet check-ins</p>
+              </>
+            ) : (
+              <>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  Today
+                </p>
+                <div className="mt-4 space-y-4">
+                  <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Cyber pet</p>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {petLoading
+                          ? "Loading live status..."
+                          : petError
+                            ? petError
+                            : `Risk ${petRiskLevel} · ${petRiskScore}/100`}
+                      </p>
+                    </div>
+                    <p className="text-xl font-bold text-white">
+                      {petLoading ? "--" : `${petHealth}/100`}
+                    </p>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Quiz</p>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {dailyQuestionsCorrect} correct today
+                      </p>
+                    </div>
+                    <p className="text-xl font-bold text-white">
+                      {dailyQuestionsDone}/{DAILY_QUESTION_TARGET}
+                    </p>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        Actions left
+                      </p>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {currentStreak} day{currentStreak === 1 ? "" : "s"} streak
+                      </p>
+                    </div>
+                    <p className="text-xl font-bold text-white">{actionsLeft}</p>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-3">
         <StatCard
-          label="Training Runs"
-          value={trainingRuns}
-          note="Completed phishing and social challenges"
-          Icon={Activity}
-        />
-        <StatCard
-          label="Phishing Accuracy"
+          label="Accuracy"
           value={totalAnswered > 0 ? `${averageScore}%` : "--"}
           note={
             totalAnswered > 0
@@ -426,200 +410,21 @@ export default function DashboardPage() {
           Icon={BarChart3}
         />
         <StatCard
-          label="Social Runs"
-          value={socialGames}
+          label="Daily Quiz"
+          value={`${dailyQuestionsDone}/${DAILY_QUESTION_TARGET}`}
           note={
-            socialGames > 0
-              ? `Best score ${socialStats.bestScore ?? 0}`
-              : "The social challenge has not been played yet"
+            dailyQuestionsDone > 0
+              ? `${dailyQuestionsCorrect} correct today`
+              : "No questions answered yet"
           }
-          Icon={ScanFace}
+          Icon={Dog}
         />
         <StatCard
-          label="Coins"
-          value={coins}
-          note="Earned through successful practice"
+          label="Streak"
+          value={`${currentStreak} day${currentStreak === 1 ? "" : "s"}`}
+          note={`${coins} coin${coins === 1 ? "" : "s"} earned`}
           Icon={Coins}
         />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        <Card
-          title="Today's Security Check"
-          action={
-            <Link
-              href="/games/cyberpet"
-              className="text-sm font-medium text-emerald-300 transition hover:text-emerald-200"
-            >
-              Open Cyber Pet
-            </Link>
-          }
-        >
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-              <p className="text-sm font-semibold text-white">What to do today</p>
-              <p className="mt-2 text-sm text-slate-300">
-                {activeIncident
-                  ? "Respond to the active incident first. That is the highest-signal security task on your dashboard."
-                  : dailyQuestionsDone < DAILY_QUESTION_TARGET
-                    ? `You have ${DAILY_QUESTION_TARGET - dailyQuestionsDone} daily cyber pet questions left.`
-                    : "Your daily questions are complete. Use any remaining actions to improve your pet posture."}
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <Dog className="h-4 w-4 text-violet-300" />
-                  Health
-                </div>
-                <p className="mt-2 text-2xl font-bold text-white">
-                  {petLoading && !pet ? "--" : `${petHealth}/100`}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">Live cyber pet status</p>
-              </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <ShieldAlert className="h-4 w-4 text-emerald-300" />
-                  Quiz
-                </div>
-                <p className="mt-2 text-2xl font-bold text-white">
-                  {dailyQuestionsDone}/{DAILY_QUESTION_TARGET}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {dailyQuestionsCorrect} correct today
-                </p>
-              </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <Activity className="h-4 w-4 text-sky-300" />
-                  Actions
-                </div>
-                <p className="mt-2 text-2xl font-bold text-white">{actionsLeft}</p>
-                <p className="mt-1 text-xs text-slate-400">Remaining for today</p>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card title="Progress by Area">
-          <div className="space-y-3">
-            <FocusRow
-              title="Phishing Detection"
-              value={totalAnswered > 0 ? `${averageScore}% accuracy` : "Not started"}
-              hint={
-                phishingGames > 0
-                  ? `Last run ${phishingStats.lastScore ?? 0} points on ${formatShortDate(phishingStats.lastCompletedAt)}`
-                  : "Run the phishing challenge to establish a real baseline."
-              }
-              href="/games/phishing"
-              cta="Practice"
-              Icon={ShieldAlert}
-            />
-            <FocusRow
-              title="Social Scam Awareness"
-              value={socialGames > 0 ? `${socialGames} completed run${socialGames === 1 ? "" : "s"}` : "Not started"}
-              hint={
-                socialGames > 0
-                  ? `Best score ${socialStats.bestScore ?? 0} - last played ${formatShortDate(
-                      socialStats.lastCompletedAt
-                    )}`
-                  : "Complete one social challenge run to add this area to your dashboard."
-              }
-              href="/games/social"
-              cta="Open"
-              Icon={ScanFace}
-            />
-            <FocusRow
-              title="Cyber Pet Security"
-              value={
-                petLoading && !pet
-                  ? "Loading live status"
-                  : activeIncident
-                    ? "Incident active"
-                    : `Risk ${petRiskLevel}`
-              }
-              hint={
-                petError
-                  ? petError
-                  : `Resolved incidents ${cyberPetStats.resolvedIncidents ?? 0} - average risk ${
-                      cyberPetStats.avgRiskScore ?? 0
-                    }`
-              }
-              href="/games/cyberpet"
-              cta="Check"
-              Icon={Dog}
-            />
-          </div>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        <Card
-          title="Story Library"
-          action={
-            <Link
-              href="/stories"
-              className="inline-flex items-center gap-1 text-sm font-medium text-emerald-300 transition hover:text-emerald-200"
-            >
-              All stories
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          }
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {STORY_CHAPTERS.map((chapter) => {
-              const isRecommended = chapter.slug === recommendation.storySlug;
-
-              return (
-                <Link
-                  key={chapter.slug}
-                  href={`/stories/${chapter.slug}`}
-                  className={`rounded-2xl border p-4 transition ${
-                    isRecommended
-                      ? "border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/15"
-                      : "border-slate-800 bg-slate-950/80 hover:bg-slate-950"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                        Chapter {chapter.chapterNumber}
-                      </p>
-                      <p className="mt-2 text-sm font-semibold text-white">
-                        {chapter.title}
-                      </p>
-                    </div>
-                    {isRecommended && (
-                      <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-slate-950">
-                        Recommended
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-3 text-sm text-slate-400">{chapter.subtitle}</p>
-                  <div className="mt-4 inline-flex items-center gap-2 text-xs font-medium text-slate-200">
-                    <BookOpenText className="h-3.5 w-3.5 text-emerald-300" />
-                    <span>{chapter.relatedGame.label}</span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </Card>
-
-        <Card title="Recent Activity">
-          {activityFeed.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/70 px-4 py-6 text-sm text-slate-400">
-              No completed activity yet. Start with one short challenge so the dashboard has real progress to summarize.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activityFeed.map((item, index) => (
-                <ActivityItem key={`${item.tag}-${index}`} {...item} />
-              ))}
-            </div>
-          )}
-        </Card>
       </section>
     </div>
   );

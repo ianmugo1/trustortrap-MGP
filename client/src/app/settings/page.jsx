@@ -259,7 +259,7 @@ export default function SettingsPage() {
 
   const handleSignOut = () => {
     signOut();
-    router.replace("/login");
+    router.replace("/");
   };
 
   const deleteAccount = async () => {

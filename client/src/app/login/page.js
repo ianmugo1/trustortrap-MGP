@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AuthAPI } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
-import Image from "next/image";
-
+import PublicAuthShell from "../../components/PublicAuthShell";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,53 +43,51 @@ export default function LoginPage() {
     }
   }
 
-if (loading)
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4 gap-4">
-      
-      {/* LOGO */}
-      <div className="relative h-90 w-200">
-        <Image
-          src="/logo.png"
-          alt="TrustOrTrap Logo"
-          fill
-          className="object-contain"
-          priority
-        />
-      </div>
-
-      <p className="text-slate-300 text-sm">
-        Checking session...
-      </p>
-
-    </div>
-  );
-
+  if (loading) {
+    return (
+      <PublicAuthShell
+        eyebrow="Session check"
+        title="Checking your session"
+        description="We are confirming whether you already have an active TrustOrTrap session."
+      >
+        <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950/80 px-4 py-6 text-center text-sm text-slate-300">
+          Checking session...
+        </div>
+      </PublicAuthShell>
+    );
+  }
 
   if (isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur px-6 py-8 shadow-xl">
-        <h1 className="text-2xl font-bold text-slate-50">Please sign in</h1>
-        <p className="text-sm text-slate-400 mb-6">
-          Access your personalised cyber awareness dashboard.
+    <PublicAuthShell
+      eyebrow="Sign in"
+      title="Welcome back"
+      description="Sign in to continue your training, track your progress, and check in on your cyber pet."
+      footer={
+        <p className="text-sm text-slate-400">
+          No account yet?{" "}
+          <Link href="/register" className="font-medium text-emerald-300 hover:text-emerald-200">
+            Create one
+          </Link>
         </p>
-
+      }
+    >
+      <div className="space-y-5">
         {msg && (
-          <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+          <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
             {msg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-slate-400">
               Email
             </label>
             <input
               type="email"
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500/60"
+              className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -98,12 +96,12 @@ if (loading)
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-slate-400">
               Password
             </label>
             <input
               type="password"
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500/60"
+              className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -114,19 +112,12 @@ if (loading)
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition disabled:opacity-60"
+            className="w-full rounded-2xl bg-emerald-400 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
-
-        <p className="mt-4 text-xs text-slate-400">
-          No account yet?{" "}
-          <a href="/register" className="text-emerald-300 hover:text-emerald-200">
-            Create one
-          </a>
-        </p>
       </div>
-    </div>
+    </PublicAuthShell>
   );
 }

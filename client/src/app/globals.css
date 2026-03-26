@@ -1,8 +1,92 @@
 /* Enable Tailwind v4 */
 @import "tailwindcss";
 
+:root {
+  --tt-bg: #020617;
+  --tt-panel: rgba(15, 23, 42, 0.78);
+  --tt-panel-strong: rgba(15, 23, 42, 0.94);
+  --tt-border: rgba(148, 163, 184, 0.16);
+  --tt-accent: #34d399;
+  --tt-accent-strong: #22d3ee;
+  --tt-highlight: #facc15;
+  --tt-text-soft: #94a3b8;
+}
 
 html,
 body {
-  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.12), transparent 28%),
+    radial-gradient(circle at 20% 20%, rgba(52, 211, 153, 0.12), transparent 22%),
+    var(--tt-bg);
+  color: #e2e8f0;
+  font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+::selection {
+  background: rgba(52, 211, 153, 0.3);
+  color: #f8fafc;
+}
+
+.font-display {
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", "Avenir Next", sans-serif;
+}
+
+.public-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent);
+}
+
+.hero-reveal {
+  animation: hero-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-reveal-delay {
+  animation: hero-rise 950ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.glow-orb {
+  animation: orb-drift 12s ease-in-out infinite;
+}
+
+.glow-orb-reverse {
+  animation: orb-drift 14s ease-in-out infinite reverse;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes orb-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-reveal,
+  .hero-reveal-delay,
+  .glow-orb,
+  .glow-orb-reverse {
+    animation: none;
+  }
 }

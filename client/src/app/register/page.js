@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthAPI } from "@/lib/auth";
 import { useAuth } from "@/context/AuthContext";
+import PublicAuthShell from "@/components/PublicAuthShell";
 
-// ── shared input style ──
 const inputClass =
-  "w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:ring-2 focus:ring-emerald-500/60";
+  "w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20";
 
-// ── interest options for step 3 ──
+const labelClass =
+  "mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-slate-400";
+
+const secondaryButtonClass =
+  "flex-1 rounded-2xl border border-slate-700 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800";
+
+const primaryButtonClass =
+  "flex-1 rounded-2xl bg-emerald-400 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-40";
+
 const interests = [
   { value: "phishing", label: "Spotting fake emails & messages" },
   { value: "passwords", label: "Creating strong passwords" },
@@ -17,15 +26,18 @@ const interests = [
   { value: "privacy", label: "Protecting personal information" },
 ];
 
-// ── step indicator dots ──
 function StepDots({ current }) {
   return (
-    <div className="flex justify-center gap-2 mb-6">
+    <div className="mb-6 flex justify-center gap-2">
       {[1, 2, 3].map((s) => (
         <div
           key={s}
-          className={`h-2 w-2 rounded-full transition ${
-            s === current ? "bg-emerald-400 scale-125" : s < current ? "bg-emerald-700" : "bg-slate-600"
+          className={`h-2.5 w-6 rounded-full transition ${
+            s === current
+              ? "bg-emerald-400"
+              : s < current
+                ? "bg-emerald-700"
+                : "bg-slate-700"
           }`}
         />
       ))}
@@ -35,23 +47,17 @@ function StepDots({ current }) {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, isAuthenticated, loading } = useAuth();
 
-  // step tracker (1, 2, or 3)
   const [step, setStep] = useState(1);
-
-  // field values
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [interest, setInterest] = useState("");
-
-  // ui state
   const [msg, setMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // ── password requirement checks ──
   const pwChecks = {
     length: password.length >= 8,
     number: /\d/.test(password),
@@ -60,7 +66,6 @@ export default function RegisterPage() {
   };
   const allPwValid = pwChecks.length && pwChecks.number && pwChecks.upper && pwChecks.match;
 
-  // ── step navigation ──
   function nextStep() {
     setMsg("");
     if (step === 1) {
@@ -83,7 +88,12 @@ export default function RegisterPage() {
     setStep((s) => s - 1);
   }
 
-  // ── final submit ──
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, loading, router]);
+
   async function handleRegister() {
     setMsg("");
     if (!interest) {
@@ -113,184 +123,179 @@ export default function RegisterPage() {
     }
   }
 
+  const footer = (
+    <p className="text-sm text-slate-400">
+      Already have an account?{" "}
+      <Link href="/login" className="font-medium text-emerald-300 hover:text-emerald-200">
+        Sign in
+      </Link>
+    </p>
+  );
+
+  if (loading) {
+    return (
+      <PublicAuthShell
+        eyebrow="Session check"
+        title="Checking your session"
+        description="We are confirming whether you already have an active TrustOrTrap session."
+      >
+        <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950/80 px-4 py-6 text-center text-sm text-slate-300">
+          Checking session...
+        </div>
+      </PublicAuthShell>
+    );
+  }
+
+  if (isAuthenticated) return null;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur px-6 py-8 shadow-xl">
-        <StepDots current={step} />
+    <PublicAuthShell
+      eyebrow={`Create account ${step}/3`}
+      title="Start your TrustOrTrap profile"
+      description="Set up your account in three short steps, then head straight into the app."
+      footer={footer}
+    >
+      <StepDots current={step} />
 
-        {/* ── error banner ── */}
-        {msg && (
-          <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
-            {msg}
+      {msg && (
+        <div className="mb-5 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          {msg}
+        </div>
+      )}
+
+      {step === 1 && (
+        <>
+          <h2 className="mb-2 text-2xl font-bold text-slate-50">Create your account</h2>
+          <p className="mb-6 text-sm leading-6 text-slate-400">
+            Start with your name and email address.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Full Name</label>
+              <input
+                className={inputClass}
+                placeholder="Alex Cyber"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Email</label>
+              <input
+                className={inputClass}
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <button onClick={nextStep} className="w-full rounded-2xl bg-emerald-400 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
+              Next
+            </button>
           </div>
-        )}
+        </>
+      )}
 
-        {/* ════════════ STEP 1 ════════════ */}
-        {step === 1 && (
-          <>
-            <h1 className="text-2xl font-bold text-slate-50">Create an account</h1>
-            <p className="text-sm text-slate-400 mb-6">
-              Let's start with your name and email.
-            </p>
+      {step === 2 && (
+        <>
+          <h2 className="mb-2 text-2xl font-bold text-slate-50">Choose a password</h2>
+          <p className="mb-6 text-sm leading-6 text-slate-400">
+            Use a password that meets the basic security checks below.
+          </p>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Full Name
-                </label>
-                <input
-                  className={inputClass}
-                  placeholder="Alex Cyber"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Password</label>
+              <input
+                className={inputClass}
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Email
-                </label>
-                <input
-                  className={inputClass}
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+            <div>
+              <label className={labelClass}>Confirm Password</label>
+              <input
+                className={inputClass}
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
 
-              <button
-                onClick={nextStep}
-                className="w-full rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
+            <ul className="space-y-2 text-sm">
+              {[
+                { ok: pwChecks.length, text: "At least 8 characters" },
+                { ok: pwChecks.number, text: "Contains a number" },
+                { ok: pwChecks.upper, text: "Contains an uppercase letter" },
+                { ok: pwChecks.match, text: "Passwords match" },
+              ].map(({ ok, text }) => (
+                <li key={text} className="flex items-center gap-2">
+                  <span className={ok ? "text-emerald-400" : "text-slate-600"}>
+                    {ok ? "✓" : "○"}
+                  </span>
+                  <span className={ok ? "text-emerald-300" : "text-slate-400"}>
+                    {text}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex gap-3">
+              <button onClick={prevStep} className={secondaryButtonClass}>
+                Back
+              </button>
+              <button onClick={nextStep} disabled={!allPwValid} className={primaryButtonClass}>
                 Next
               </button>
             </div>
+          </div>
+        </>
+      )}
 
-            <p className="mt-4 text-xs text-slate-400">
-              Already have an account?{" "}
-              <a href="/login" className="text-emerald-300 hover:text-emerald-200">
-                Sign in
-              </a>
-            </p>
-          </>
-        )}
+      {step === 3 && (
+        <>
+          <h2 className="mb-2 text-2xl font-bold text-slate-50">Choose your focus</h2>
+          <p className="mb-6 text-sm leading-6 text-slate-400">
+            Pick the area you want the app to emphasize first.
+          </p>
 
-        {/* ════════════ STEP 2 ════════════ */}
-        {step === 2 && (
-          <>
-            <h1 className="text-2xl font-bold text-slate-50">Choose a password</h1>
-            <p className="text-sm text-slate-400 mb-6">
-              Make it strong to keep your account safe.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Password
-                </label>
-                <input
-                  className={inputClass}
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Confirm Password
-                </label>
-                <input
-                  className={inputClass}
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-
-              {/* ── requirements checklist ── */}
-              <ul className="space-y-1 text-xs">
-                {[
-                  { ok: pwChecks.length, text: "At least 8 characters" },
-                  { ok: pwChecks.number, text: "Contains a number" },
-                  { ok: pwChecks.upper, text: "Contains an uppercase letter" },
-                  { ok: pwChecks.match, text: "Passwords match" },
-                ].map(({ ok, text }) => (
-                  <li key={text} className="flex items-center gap-2">
-                    <span className={ok ? "text-emerald-400" : "text-slate-500"}>
-                      {ok ? "✓" : "○"}
-                    </span>
-                    <span className={ok ? "text-emerald-300" : "text-slate-400"}>
-                      {text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={prevStep}
-                  className="flex-1 rounded-xl border border-slate-700 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={nextStep}
-                  disabled={!allPwValid}
-                  className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition disabled:opacity-40"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ════════════ STEP 3 ════════════ */}
-        {step === 3 && (
-          <>
-            <h1 className="text-2xl font-bold text-slate-50">One last thing!</h1>
-            <p className="text-sm text-slate-400 mb-6">
-              What interests you most about staying safe online?
-            </p>
-
-            <div className="space-y-3 mb-6">
-              {interests.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setInterest(opt.value)}
-                  className={`w-full text-left rounded-xl border px-4 py-3 text-sm transition ${
-                    interest === opt.value
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-200"
-                      : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-3">
+          <div className="mb-6 space-y-3">
+            {interests.map((opt) => (
               <button
-                onClick={prevStep}
-                className="flex-1 rounded-xl border border-slate-700 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
+                key={opt.value}
+                onClick={() => setInterest(opt.value)}
+                className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${
+                  interest === opt.value
+                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500"
+                }`}
               >
-                Back
+                {opt.label}
               </button>
-              <button
-                onClick={handleRegister}
-                disabled={submitting || !interest}
-                className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition disabled:opacity-40"
-              >
-                {submitting ? "Creating account..." : "Create account"}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            <button onClick={prevStep} className={secondaryButtonClass}>
+              Back
+            </button>
+            <button
+              onClick={handleRegister}
+              disabled={submitting || !interest}
+              className={primaryButtonClass}
+            >
+              {submitting ? "Creating account..." : "Create account"}
+            </button>
+          </div>
+        </>
+      )}
+    </PublicAuthShell>
   );
 }

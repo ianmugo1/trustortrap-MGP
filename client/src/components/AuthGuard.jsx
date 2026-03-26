@@ -4,19 +4,18 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
-
-const PUBLIC_ROUTES = ["/", "/login", "/register"];
+import { isPublicPathname } from "../lib/routes";
 
 export function AuthGuard({ children }) {
   const { user, loading, sessionExpired, clearSessionExpired } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublic = PUBLIC_ROUTES.includes(pathname);
+  const isPublic = isPublicPathname(pathname);
 
   useEffect(() => {
     if (!isPublic && !loading && !user) {
-      router.replace("/login");
+      router.replace("/");
     }
   }, [isPublic, loading, user, router]);
 
