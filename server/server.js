@@ -16,7 +16,7 @@ import socialRoutes from "./routes/socialGame.js";
 dotenv.config();
 
 const app = express();
-const PORT = 5050;
+const PORT = Number(process.env.PORT) || 5050;
 
 const allowedOrigins = [
   process.env.CLIENT_ORIGIN,

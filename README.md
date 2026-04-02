@@ -1,79 +1,90 @@
 # TrustOrTrap
 
-  TrustOrTrap is a cyber awareness app designed to help beginners
-  build safer online habits through short, interactive challenges.
+TrustOrTrap is a cyber awareness app designed to help beginners
+build safer online habits through short, interactive challenges.
 
-  Instead of relying on long explanations, the app teaches users
-  through practical activities such as spotting phishing attempts,
-  making safer decisions online, and completing daily Cyber Pet
-  challenges.
+Instead of relying on long explanations, the app teaches users
+through practical activities such as spotting phishing attempts,
+making safer decisions online, and completing daily Cyber Pet
+challenges.
 
-  ## Features
+## Features
 
-  - Secure sign up and login
-  - Phishing awareness game
-  - Social scam awareness challenges
-  - Daily Cyber Pet mode
-  - Progress dashboard
-  - Kid-friendly story-based learning pages
+- Secure sign up and login
+- Phishing awareness game
+- Social scam awareness challenges
+- Daily Cyber Pet mode
+- Progress dashboard
+- Kid-friendly story-based learning pages
 
-  ## Cyber Pet Mode
+## Cyber Pet Mode
 
-  Cyber Pet is designed as a simple daily learning habit:
-  - 5 short cybersecurity questions per day
-  - Correct answers improve pet health
-  - Wrong answers reduce pet health
-  - Questions reset each day
-  - Progress is saved to the user account
+Cyber Pet is designed as a simple daily learning habit:
+- 5 short cybersecurity questions per day
+- Correct answers improve pet health
+- Wrong answers reduce pet health
+- Questions reset each day
+- Progress is saved to the user account
 
-  ## Why This Project Matters
+## Why This Project Matters
 
-  Many people know cyber threats exist, but learning cybersecurity
-  often feels too technical or overwhelming. TrustOrTrap makes cyber
-  safety easier to understand by turning important lessons into short,
-  practical experiences.
+Many people know cyber threats exist, but learning cybersecurity
+often feels too technical or overwhelming. TrustOrTrap makes cyber
+safety easier to understand by turning important lessons into short,
+practical experiences.
 
-  ## Who It’s For
+## Who It's For
 
-  - Students learning digital safety
-  - Beginners exploring cybersecurity
-  - Anyone who wants to build safer online habits in a more engaging
-  way
+- Students learning digital safety
+- Beginners exploring cybersecurity
+- Anyone who wants to build safer online habits in a more engaging way
 
-  ## Project Structure
+## Project Structure
 
-  - `client/` Next.js + Tailwind frontend
-  - `server/` Express + MongoDB backend
-  - JWT-based authentication
-  - Backend routes and models handle game logic
-  - Next.js app routes handle the user interface
+- `client/` Next.js + Tailwind frontend
+- `server/` Express + MongoDB backend
+- JWT-based authentication
+- Backend routes and models handle game logic
+- Next.js app routes handle the user interface
 
-  ## Running Locally
+## Running Locally
 
-  ### 1. Install dependencies
-  ```bash
-  npm install
+### 1. Install dependencies
 
-  ### 2. Add environment variables
+```bash
+npm install
+```
 
-  Create a .env file:
+### 2. Add environment variables
 
-  MONGODB_URI=your_mongodb_connection_string
-  JWT_SECRET=your_jwt_secret
-  NEXT_PUBLIC_API_BASE=http://localhost:5050
+Create a `.env` file in the project root. You can copy [`.env.example`](/Users/ianmugo/Desktop/TrustOrTrap/.env.example):
 
-  ### 3. Start the app
+```bash
+cp .env.example .env
+```
 
-  npm run dev
+Required values:
 
-  Then open:
+- `PORT=5050`
+- `MONGODB_URI=your_mongodb_connection_string`
+- `JWT_SECRET=your_jwt_secret`
+- `CLIENT_ORIGIN=http://localhost:3000`
+- `NEXT_PUBLIC_API_BASE=http://localhost:5050`
 
-  - Frontend: http://localhost:3000
-  - API: http://localhost:5050
+### 3. Start the app
 
-  ## Current Focus
+```bash
+npm run dev
+```
 
-  TrustOrTrap currently focuses on core gameplay, learning
-  experiences, and account features. More advanced features like
-  leaderboards, pet evolution, and streak systems are intentionally
-  left out for now to keep the app simple and usable.
+Then open:
+
+- Frontend: `http://localhost:3000`
+- API: `http://localhost:5050`
+
+## Current Focus
+
+TrustOrTrap currently focuses on core gameplay, learning
+experiences, and account features. More advanced features like
+leaderboards, pet evolution, and streak systems are intentionally
+left out for now to keep the app simple and usable.
