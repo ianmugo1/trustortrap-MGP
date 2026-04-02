@@ -2,19 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthAPI } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
 import PublicAuthShell from "../../components/PublicAuthShell";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn, isAuthenticated, loading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const sessionExpired = searchParams.get("expired") === "1";
 
   useEffect(() => {
     if (!loading && isAuthenticated) router.replace("/dashboard");
@@ -74,6 +76,12 @@ export default function LoginPage() {
       }
     >
       <div className="space-y-5">
+        {sessionExpired && !msg && (
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            Your session expired. Sign in again to continue.
+          </div>
+        )}
+
         {msg && (
           <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
             {msg}

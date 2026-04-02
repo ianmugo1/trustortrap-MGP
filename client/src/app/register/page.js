@@ -65,12 +65,17 @@ export default function RegisterPage() {
     match: password.length > 0 && password === confirmPassword,
   };
   const allPwValid = pwChecks.length && pwChecks.number && pwChecks.upper && pwChecks.match;
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   function nextStep() {
     setMsg("");
     if (step === 1) {
       if (!name.trim() || !email.trim()) {
         setMsg("Please fill in both fields.");
+        return;
+      }
+      if (!isValidEmail) {
+        setMsg("Enter a valid email address.");
         return;
       }
       setStep(2);
@@ -183,14 +188,15 @@ export default function RegisterPage() {
 
             <div>
               <label className={labelClass}>Email</label>
-              <input
-                className={inputClass}
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+            <input
+              className={inputClass}
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
             <button onClick={nextStep} className="w-full rounded-2xl bg-emerald-400 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
               Next

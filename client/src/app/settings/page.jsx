@@ -39,6 +39,40 @@ function SectionCard({ title, description, icon: Icon, children }) {
   );
 }
 
+function formatSettingsError(message, fallback) {
+  const raw = String(message || "").trim();
+
+  if (!raw) return fallback;
+
+  if (raw.includes("Unable to reach the API server")) {
+    return raw;
+  }
+
+  const normalized = raw.toLowerCase();
+
+  if (normalized.includes("username and email are required")) {
+    return "Enter both your name and email address.";
+  }
+
+  if (normalized.includes("please provide a valid email")) {
+    return "Enter a valid email address.";
+  }
+
+  if (normalized.includes("email is already in use")) {
+    return "That email is already linked to another account.";
+  }
+
+  if (normalized.includes("current password is incorrect")) {
+    return "Your current password is incorrect.";
+  }
+
+  if (normalized.includes("new password must be at least 6 characters")) {
+    return "Your new password must be at least 6 characters long.";
+  }
+
+  return raw;
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const { user, token, signOut, refreshUser } = useAuth();
@@ -139,6 +173,21 @@ export default function SettingsPage() {
   const saveProfile = async (e) => {
     e.preventDefault();
     clearMessages();
+
+    const nextDisplayName = displayName.trim();
+    const nextEmail = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!nextDisplayName || !nextEmail) {
+      setError("Enter both your name and email address.");
+      return;
+    }
+
+    if (!emailRegex.test(nextEmail)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+
     setLoadingSection("profile");
 
     try {
@@ -146,7 +195,7 @@ export default function SettingsPage() {
         "/api/users/me/profile",
         {
           method: "PATCH",
-          body: JSON.stringify({ displayName, email }),
+          body: JSON.stringify({ displayName: nextDisplayName, email: nextEmail }),
         },
         token
       );
@@ -159,7 +208,7 @@ export default function SettingsPage() {
       await refreshUser();
       setStatus("Profile updated.");
     } catch (err) {
-      setError(err.message || "Could not update profile");
+      setError(formatSettingsError(err.message, "Could not update profile."));
     } finally {
       setLoadingSection("");
     }
@@ -169,8 +218,18 @@ export default function SettingsPage() {
     e.preventDefault();
     clearMessages();
 
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError("Fill in all password fields before saving.");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      setError("New password and confirm password do not match.");
+      setError("Your new password and confirmation do not match.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError("Your new password must be at least 6 characters long.");
       return;
     }
 
@@ -196,7 +255,7 @@ export default function SettingsPage() {
       setConfirmPassword("");
       setStatus("Password updated.");
     } catch (err) {
-      setError(err.message || "Could not update password");
+      setError(formatSettingsError(err.message, "Could not update password."));
     } finally {
       setLoadingSection("");
     }
@@ -225,7 +284,7 @@ export default function SettingsPage() {
       await refreshUser();
       setStatus("Settings saved.");
     } catch (err) {
-      setError(err.message || "Could not save settings");
+      setError(formatSettingsError(err.message, "Could not save settings."));
     } finally {
       setLoadingSection("");
     }
@@ -288,7 +347,7 @@ export default function SettingsPage() {
       signOut();
       router.replace("/register");
     } catch (err) {
-      setError(err.message || "Could not delete account");
+      setError(formatSettingsError(err.message, "Could not delete your account."));
     } finally {
       setLoadingSection("");
     }
