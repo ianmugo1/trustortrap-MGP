@@ -1,7 +1,6 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
-import authMiddleware from "../middleware/auth.js";
 import { createAuthToken } from "../lib/auth.js";
 import { sanitizeUser } from "../lib/user.js";
 
@@ -69,32 +68,6 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ message: "Server error during login" });
-  }
-});
-
-// ---------------- ME ----------------
-router.get("/me", authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    return res.json({
-      success: true,
-      user: {
-        ...sanitizeUser(user),
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-    });
-  } catch (err) {
-    console.error("Get me error:", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Server error" });
   }
 });
 
