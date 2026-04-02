@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import { verifyAuthToken } from "../lib/auth.js";
 
 // Middleware to verify JWT tokens in the Authorization header
 const authMiddleware = (req, res, next) => {
@@ -11,7 +11,7 @@ const authMiddleware = (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = verifyAuthToken(token);
 
     req.user = {
       id: decoded.id,

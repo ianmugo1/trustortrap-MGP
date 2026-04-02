@@ -1,45 +1,11 @@
-// server/src/routes/auth.routes.js
 import express from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import authMiddleware from "../middleware/auth.js";
+import { createAuthToken } from "../lib/auth.js";
+import { sanitizeUser } from "../lib/user.js";
 
 const router = express.Router();
-
-const DEFAULT_SETTINGS = {
-  notifications: { app: true, email: true },
-  app: { theme: "system", language: "en", soundEffects: true },
-  system: { biometrics: false, autoLockMinutes: 5 },
-};
-
-const sanitizeUser = (user) => ({
-  id: user._id,
-  displayName: user.displayName,
-  email: user.email,
-  coins: user.coins || 0,
-  phishingStats: user.phishingStats || {},
-  settings: {
-    notifications: {
-      app: user.settings?.notifications?.app ?? DEFAULT_SETTINGS.notifications.app,
-      email:
-        user.settings?.notifications?.email ?? DEFAULT_SETTINGS.notifications.email,
-    },
-    app: {
-      theme: user.settings?.app?.theme ?? DEFAULT_SETTINGS.app.theme,
-      language: user.settings?.app?.language ?? DEFAULT_SETTINGS.app.language,
-      soundEffects:
-        user.settings?.app?.soundEffects ?? DEFAULT_SETTINGS.app.soundEffects,
-    },
-    system: {
-      biometrics:
-        user.settings?.system?.biometrics ?? DEFAULT_SETTINGS.system.biometrics,
-      autoLockMinutes:
-        user.settings?.system?.autoLockMinutes ??
-        DEFAULT_SETTINGS.system.autoLockMinutes,
-    },
-  },
-});
 
 // ---------------- REGISTER ----------------
 router.post("/register", async (req, res) => {
@@ -66,12 +32,7 @@ router.post("/register", async (req, res) => {
       learningInterest: learningInterest || "",
     });
 
-    // Sign JWT (30d)
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    const token = createAuthToken(user);
 
     return res.status(201).json({
       token,
@@ -99,12 +60,7 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Sign JWT (30d)
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    const token = createAuthToken(user);
 
     return res.json({
       token,
