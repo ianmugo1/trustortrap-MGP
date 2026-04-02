@@ -1,5 +1,5 @@
 // Intro screen for the social media game
-export default function IntroScreen({ onStart, hasContent }) {
+export default function IntroScreen({ onStart, hasContent, message = "", onRetry }) {
   const acts = [
     { num: "01", title: "Spot the AI Image", desc: "Real photo or AI generated?" },
     { num: "02", title: "Comment Section",   desc: "Find the bot accounts" },
@@ -22,6 +22,12 @@ export default function IntroScreen({ onStart, hasContent }) {
           Can you tell us what is real and what is not?
         </p>
 
+        {message && (
+          <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            {message}
+          </div>
+        )}
+
         {/* Act cards */}
         <div className="grid grid-cols-3 gap-3 mb-8 text-left">
           {acts.map((act) => (
@@ -40,6 +46,15 @@ export default function IntroScreen({ onStart, hasContent }) {
         >
           {hasContent ? "Start" : "No content loaded"}
         </button>
+
+        {!hasContent && onRetry && (
+          <button
+            onClick={onRetry}
+            className="mt-3 w-full rounded-2xl border border-slate-700 py-3 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
+          >
+            Retry loading
+          </button>
+        )}
       </div>
     </main>
   );

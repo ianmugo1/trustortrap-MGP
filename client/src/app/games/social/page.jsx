@@ -9,11 +9,34 @@ import ActComments from "./_ActComments";
 import ActPrivacy from "./_ActPrivacy";
 import ResultsScreen from "./_ResultsScreen";
 
+function formatSocialMessage(message, fallback) {
+  const raw = String(message || "").trim();
+  if (!raw) return fallback;
+
+  if (raw.includes("Unable to reach the API server")) {
+    return raw;
+  }
+
+  const normalized = raw.toLowerCase();
+  if (normalized.includes("failed to load")) {
+    return "The social game content could not be loaded right now.";
+  }
+
+  return raw;
+}
+
 export default function SocialGamePage() {
   const { token, refreshUser } = useAuth();
 
   // Game content from MongoDB
-  const [gameData, setGameData] = useState({ aiImages: [], commentScenarios: [], settings: [], loaded: false, error: false });
+  const [gameData, setGameData] = useState({
+    aiImages: [],
+    commentScenarios: [],
+    settings: [],
+    loaded: false,
+    error: "",
+  });
+  const [rewardStatus, setRewardStatus] = useState({ message: "", tone: "info" });
 
   // Game phase + coins
   const [phase, setPhase]             = useState("intro");
@@ -39,16 +62,22 @@ export default function SocialGamePage() {
     async function load() {
       try {
         const res  = await authFetch("/api/social/questions", {}, token);
-        const data = await res.json();
-        if (!data.success) throw new Error("Failed to load");
-        setGameData({ ...data, loaded: true, error: false });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.message || "Failed to load");
+        }
+        setGameData({ ...data, loaded: true, error: "" });
         setToggles(Object.fromEntries(data.settings.map((s) => [s._id, false])));
-      } catch {
-        setGameData((prev) => ({ ...prev, loaded: true, error: true }));
+      } catch (err) {
+        setGameData((prev) => ({
+          ...prev,
+          loaded: true,
+          error: formatSocialMessage(err?.message, "The social game content could not be loaded right now."),
+        }));
       }
     }
     if (token) load();
-    else setGameData((prev) => ({ ...prev, loaded: true }));
+    else setGameData((prev) => ({ ...prev, loaded: true, error: "" }));
   }, [token]);
 
   // Derived scores
@@ -98,6 +127,7 @@ export default function SocialGamePage() {
   function handleRestart() {
     setPhase("intro");
     setCoinsEarned(null);
+    setRewardStatus({ message: "", tone: "info" });
     setStoryStep(0); setStoryAnswer(null); setAct1Correct(0);
     setAct2Step(0); setSelectedComments(new Set()); setAct2Submitted(false); setAct2TotalCorrect(0);
     setToggles(Object.fromEntries(settings.map((s) => [s._id, false])));
@@ -108,9 +138,31 @@ export default function SocialGamePage() {
     if (!token) return;
     try {
       const res  = await authFetch("/api/social/complete", { method: "POST", body: JSON.stringify({ totalScore: score }) }, token);
-      const data = await res.json();
-      if (data.success) { setCoinsEarned(data.coinsEarned + data.completionBonus); await refreshUser(); }
-    } catch (err) { console.error("Social game submit error:", err); }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
+        setCoinsEarned(data.coinsEarned + data.completionBonus);
+        setRewardStatus({ message: "Rewards saved successfully.", tone: "info" });
+        await refreshUser();
+        return;
+      }
+
+      setRewardStatus({
+        message: formatSocialMessage(
+          data?.message,
+          "Your score was shown, but the reward could not be saved."
+        ),
+        tone: "warning",
+      });
+    } catch (err) {
+      console.error("Social game submit error:", err);
+      setRewardStatus({
+        message: formatSocialMessage(
+          err?.message,
+          "Your score was shown, but the reward could not be saved."
+        ),
+        tone: "warning",
+      });
+    }
   }
 
   // ── Render ────────────────────────────────────────────────────────────
@@ -122,18 +174,46 @@ export default function SocialGamePage() {
     </main>
   );
 
+  if (!token) return (
+    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-center">
+        <p className="text-lg font-semibold text-white">Please sign in to play.</p>
+        <p className="mt-2 text-sm text-slate-400">
+          The social challenge needs an active account so it can save your progress.
+        </p>
+      </div>
+    </main>
+  );
+
   // Error
   if (gameData.error) return (
     <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-      <div className="text-center">
+      <div className="max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-center">
         <p className="text-rose-400 font-semibold mb-2">Could not load game content.</p>
-        <p className="text-slate-500 text-sm">Please refresh the page and try again.</p>
+        <p className="text-slate-400 text-sm mb-4">{gameData.error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
+        >
+          Retry
+        </button>
       </div>
     </main>
   );
 
   // Intro
-  if (phase === "intro") return <IntroScreen onStart={() => setPhase("act1")} hasContent={aiImages.length > 0} />;
+  if (phase === "intro") return (
+    <IntroScreen
+      onStart={() => setPhase("act1")}
+      hasContent={aiImages.length > 0}
+      message={
+        aiImages.length > 0
+          ? ""
+          : "The game needs seeded social content before it can start."
+      }
+      onRetry={() => window.location.reload()}
+    />
+  );
 
   // Act 1 — Spot the AI image
   if (phase === "act1") return (
@@ -168,6 +248,8 @@ export default function SocialGamePage() {
       totalScore={totalScore}
       totalMax={totalMax}
       coinsEarned={coinsEarned}
+      rewardMessage={rewardStatus.message}
+      rewardMessageTone={rewardStatus.tone}
       onRestart={handleRestart}
     />
   );

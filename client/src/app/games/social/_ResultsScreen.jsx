@@ -9,7 +9,15 @@ function getGrade(pct) {
   return                   { label: "Keep practising", msg: "The more you practise, the easier it gets to spot these risks online." };
 }
 
-export default function ResultsScreen({ breakdown, totalScore, totalMax, coinsEarned, onRestart }) {
+export default function ResultsScreen({
+  breakdown,
+  totalScore,
+  totalMax,
+  coinsEarned,
+  rewardMessage = "",
+  rewardMessageTone = "info",
+  onRestart,
+}) {
   const pct   = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
   const grade = getGrade(pct);
 
@@ -26,6 +34,18 @@ export default function ResultsScreen({ breakdown, totalScore, totalMax, coinsEa
           <div className="rounded-2xl bg-amber-500/15 border border-amber-500/30 px-4 py-3 mb-5 flex items-center justify-center gap-2">
             <span className="text-amber-300 font-black text-xl">+{coinsEarned}</span>
             <span className="text-amber-400 font-semibold text-sm">coins earned</span>
+          </div>
+        )}
+
+        {rewardMessage && (
+          <div
+            className={`mb-5 rounded-2xl border px-4 py-3 text-sm ${
+              rewardMessageTone === "warning"
+                ? "border-amber-500/30 bg-amber-500/10 text-amber-100"
+                : "border-slate-700 bg-slate-800 text-slate-200"
+            }`}
+          >
+            {rewardMessage}
           </div>
         )}
 

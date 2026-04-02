@@ -437,7 +437,14 @@ export default function CyberPetPage() {
           {(() => {
             const game = miniGames[activeGame];
             if (!game || !game.questions?.length) {
-              return <p className="text-sm text-slate-400">Loading questions...</p>;
+              return (
+                <div className="rounded-xl border border-slate-700 bg-slate-800/70 p-4">
+                  <p className="text-sm font-medium text-slate-200">No questions loaded for this mini-game yet.</p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Try another tab or reload the page to fetch the latest daily questions.
+                  </p>
+                </div>
+              );
             }
 
             const info = game.info || {};

@@ -4,6 +4,25 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
 
+function formatGameMessage(message, fallback) {
+  const raw = String(message || "").trim();
+  if (!raw) return fallback;
+
+  if (raw.includes("Unable to reach the API server")) {
+    return raw;
+  }
+
+  const normalized = raw.toLowerCase();
+  if (normalized.includes("failed to load questions")) {
+    return "The phishing questions could not be loaded right now.";
+  }
+  if (normalized.includes("failed to complete run")) {
+    return "Your score was shown, but the reward could not be saved.";
+  }
+
+  return raw;
+}
+
 export default function PhishingPage() {
   const { token, refreshUser } = useAuth();
 
@@ -46,7 +65,9 @@ export default function PhishingPage() {
 
       if (!res.ok || !data?.success) {
         setQuestions([]);
-        setLoadError(data?.message || "Failed to load questions");
+        setLoadError(
+          formatGameMessage(data?.message, "The phishing questions could not be loaded right now.")
+        );
         return;
       }
 
@@ -60,7 +81,7 @@ export default function PhishingPage() {
     } catch (err) {
       console.error(err);
       setQuestions([]);
-      setLoadError("Could not reach the API. Is the server running?");
+      setLoadError(formatGameMessage(err?.message, "Could not reach the API."));
     } finally {
       setLoading(false);
     }
@@ -99,14 +120,20 @@ export default function PhishingPage() {
         } else {
           setCompletionInfo({
             success: false,
-            message: data?.message || "Failed to complete run",
+            message: formatGameMessage(
+              data?.message,
+              "Your score was shown, but the reward could not be saved."
+            ),
           });
         }
       } catch (err) {
         console.error(err);
         setCompletionInfo({
           success: false,
-          message: "Could not complete game (API unreachable)",
+          message: formatGameMessage(
+            err?.message,
+            "Your score was shown, but the reward could not be saved."
+          ),
         });
       }
     })();
@@ -273,7 +300,7 @@ export default function PhishingPage() {
               </p>
             </>
           ) : (
-            <p className="text-slate-300 mb-6">Finalising rewards…</p>
+            <p className="text-slate-300 mb-6">Finalising your rewards...</p>
           )}
 
           {completionInfo?.success === false && completionInfo?.message && (
