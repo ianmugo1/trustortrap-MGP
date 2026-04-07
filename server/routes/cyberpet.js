@@ -1,15 +1,6 @@
 import express from "express";
 import authMiddleware from "../middleware/auth.js";
-import {
-  ACTIONS_PER_DAY_DEFAULT,
-  ALLOWED_ACTIONS,
-  applyAction,
-} from "../services/cyberpet/action.service.js";
-import { getDateKey, getYesterdayDateKey } from "../services/cyberpet/daily.service.js";
-import {
-  applyIncidentResponse,
-  rollIncident,
-} from "../services/cyberpet/incident.service.js";
+import { getDateKey } from "../services/cyberpet/daily.service.js";
 import {
   applyMiniGameReward,
   ensureMiniGamesState,
@@ -22,26 +13,17 @@ import {
   getUserWithCyberPetStats,
 } from "../services/cyberpet/pet.repository.js";
 import { applyDailyDecay } from "../services/cyberpet/pet-state.service.js";
-import {
-  DAILY_QUESTION_COUNT,
-  ensureDailyQuestions,
-} from "../services/cyberpet/question.service.js";
 import { calculateRisk, clamp } from "../services/cyberpet/risk.service.js";
 import {
   syncAdoptionDates,
   updateAverageRisk,
 } from "../services/cyberpet/stats.service.js";
-import {
-  isValidDailyAnswerIndex,
-  isValidDailyQuestionIndex,
-} from "../services/cyberpet/validators.js";
 
 const router = express.Router();
 
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const pet = await getOrCreatePet(req.user.id);
-    await ensureDailyQuestions(pet);
 
     return res.json({
       success: true,
@@ -58,13 +40,12 @@ router.post("/tick", authMiddleware, async (req, res) => {
     const pet = await getOrCreatePet(req.user.id);
     const now = new Date();
     const todayKey = getDateKey(now);
-    const yesterdayKey = getYesterdayDateKey(now);
+    const yesterdayKey = getDateKey(new Date(now - 86400000));
 
     if (pet.daily?.dateKey === todayKey && pet.daily?.tickApplied) {
       return res.json({
         success: true,
         alreadyApplied: true,
-        incidentTriggered: false,
         pet,
       });
     }
@@ -83,18 +64,7 @@ router.post("/tick", authMiddleware, async (req, res) => {
 
     applyDailyDecay(pet);
 
-    const riskState = calculateRisk(pet.posture || {});
-    pet.risk = riskState;
-
-    const hasActiveIncident = pet.activeIncident?.status === "active";
-    let rolledIncident = null;
-
-    if (!hasActiveIncident) {
-      rolledIncident = rollIncident(riskState, pet.posture || {});
-      if (rolledIncident) {
-        pet.activeIncident = rolledIncident;
-      }
-    }
+    pet.risk = calculateRisk(pet.posture || {});
 
     const lastCheckIn = pet.streak?.lastCheckInDateKey || "";
     if (lastCheckIn !== todayKey) {
@@ -116,9 +86,6 @@ router.post("/tick", authMiddleware, async (req, res) => {
     const user = await getUserWithCyberPetStats(req.user.id);
     if (user) {
       const stats = user.cyberPetStats;
-      if (rolledIncident) {
-        stats.totalIncidents = (Number(stats.totalIncidents) || 0) + 1;
-      }
       updateAverageRisk(stats, pet.risk?.score || 0);
       syncAdoptionDates(stats, pet.posture, now);
       await user.save();
@@ -127,116 +94,10 @@ router.post("/tick", authMiddleware, async (req, res) => {
     return res.json({
       success: true,
       alreadyApplied: false,
-      incidentTriggered: Boolean(rolledIncident),
       pet,
     });
   } catch (err) {
     console.error("Tick cyber pet error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-router.post("/action", authMiddleware, async (req, res) => {
-  try {
-    const { actionType, payload } = req.body || {};
-    if (!ALLOWED_ACTIONS.has(actionType)) {
-      return res.status(400).json({ success: false, message: "Invalid actionType" });
-    }
-
-    const pet = await getOrCreatePet(req.user.id);
-    const todayKey = getDateKey();
-
-    if (pet.daily?.dateKey !== todayKey || !pet.daily?.tickApplied) {
-      return res.status(409).json({
-        success: false,
-        message: "Daily tick required before taking actions",
-      });
-    }
-
-    pet.daily.actionsUsed = Number(pet.daily.actionsUsed) || 0;
-    pet.daily.maxActions = Number(pet.daily.maxActions) || ACTIONS_PER_DAY_DEFAULT;
-
-    if (pet.daily.actionsUsed >= pet.daily.maxActions) {
-      return res.status(400).json({
-        success: false,
-        message: "No actions left for today",
-      });
-    }
-
-    const actionResult = applyAction(pet, actionType, payload || {});
-    if (!actionResult) {
-      return res.status(400).json({ success: false, message: "Failed to apply action" });
-    }
-
-    pet.daily.actionsUsed += 1;
-    const now = new Date();
-    pet.lastUpdated = now;
-
-    await pet.save();
-
-    const user = await getUserWithCyberPetStats(req.user.id);
-    if (user) {
-      const stats = user.cyberPetStats;
-      updateAverageRisk(stats, pet.risk?.score || 0);
-      syncAdoptionDates(stats, pet.posture, now);
-      await user.save();
-    }
-
-    return res.json({
-      success: true,
-      actionResult,
-      remainingActions: Math.max(0, pet.daily.maxActions - pet.daily.actionsUsed),
-      pet,
-    });
-  } catch (err) {
-    console.error("Action cyber pet error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-router.post("/incident/respond", authMiddleware, async (req, res) => {
-  try {
-    const { responseId } = req.body || {};
-    if (!responseId || typeof responseId !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "responseId is required",
-      });
-    }
-
-    const pet = await getOrCreatePet(req.user.id);
-    const result = applyIncidentResponse(pet, responseId);
-    if (!result.ok) {
-      return res.status(400).json({ success: false, message: result.message });
-    }
-
-    const now = new Date();
-    pet.lastUpdated = now;
-    await pet.save();
-
-    const user = await getUserWithCyberPetStats(req.user.id);
-    if (user) {
-      const stats = user.cyberPetStats;
-      stats.resolvedIncidents = (Number(stats.resolvedIncidents) || 0) + 1;
-      if (
-        result.incidentType === "account_takeover" &&
-        result.responseId !== "minimal_response"
-      ) {
-        stats.takeoversPrevented =
-          (Number(stats.takeoversPrevented) || 0) + 1;
-      }
-      updateAverageRisk(stats, pet.risk?.score || 0);
-      syncAdoptionDates(stats, pet.posture, now);
-      await user.save();
-    }
-
-    return res.json({
-      success: true,
-      result,
-      pet,
-    });
-  } catch (err) {
-    console.error("Respond cyber pet incident error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
@@ -412,66 +273,6 @@ router.post("/minigame/:type/submit", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/answer", authMiddleware, async (req, res) => {
-  try {
-    const { questionIndex, answerIndex } = req.body || {};
-
-    const qIndex = Number(questionIndex);
-    const aIndex = Number(answerIndex);
-
-    if (!isValidDailyQuestionIndex(questionIndex)) {
-      return res.status(400).json({ success: false, message: "Invalid questionIndex" });
-    }
-
-    if (!isValidDailyAnswerIndex(answerIndex)) {
-      return res.status(400).json({ success: false, message: "Invalid answerIndex" });
-    }
-
-    const pet = await getOrCreatePet(req.user.id);
-    await ensureDailyQuestions(pet);
-
-    const question = pet.dailyQuestions[qIndex];
-
-    if (!question) {
-      return res.status(400).json({ success: false, message: "Question not found" });
-    }
-
-    if (question.userAnswerIndex !== null && question.userAnswerIndex !== undefined) {
-      return res.status(400).json({ success: false, message: "Question already answered" });
-    }
-
-    const isCorrect = aIndex === question.correctIndex;
-
-    question.userAnswerIndex = aIndex;
-    question.isCorrect = isCorrect;
-
-    const answeredCount = pet.dailyQuestions.filter(
-      (item) => item.userAnswerIndex !== null && item.userAnswerIndex !== undefined
-    ).length;
-    const correctCount = pet.dailyQuestions.filter((item) => item.isCorrect === true).length;
-
-    pet.dailyProgress.answeredCount = answeredCount;
-    pet.dailyProgress.correctCount = correctCount;
-
-    pet.health = isCorrect ? clamp(pet.health + 5) : clamp(pet.health - 7);
-    pet.lastUpdated = new Date();
-
-    await pet.save();
-
-    return res.json({
-      success: true,
-      pet,
-      result: {
-        isCorrect,
-        explanation: question.explanation,
-      },
-    });
-  } catch (err) {
-    console.error("Answer cyber pet question error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
 router.post("/name", authMiddleware, async (req, res) => {
   try {
     const { name } = req.body || {};
@@ -493,33 +294,6 @@ router.post("/name", authMiddleware, async (req, res) => {
     return res.json({ success: true, pet });
   } catch (err) {
     console.error("Rename cyber pet error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-router.post("/update", authMiddleware, async (req, res) => {
-  try {
-    const { health, happiness } = req.body || {};
-
-    const pet = await getOrCreatePet(req.user.id);
-
-    if (health !== undefined) {
-      pet.health = clamp(health);
-    }
-
-    if (happiness !== undefined) {
-      pet.happiness = clamp(happiness);
-    }
-
-    pet.lastUpdated = new Date();
-    await pet.save();
-
-    return res.json({
-      success: true,
-      pet,
-    });
-  } catch (err) {
-    console.error("Update cyber pet error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
