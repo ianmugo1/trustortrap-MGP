@@ -36,6 +36,8 @@ export function sanitizeUser(user) {
     displayName: user.displayName,
     email: user.email,
     coins: user.coins || 0,
+    xp: user.xp || 0,
+    level: user.level || 1,
     learningInterest: user.learningInterest || "",
     phishingStats: user.phishingStats || {},
     socialStats: user.socialStats || {},

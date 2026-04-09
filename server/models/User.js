@@ -113,6 +113,8 @@ const userSchema = new mongoose.Schema(
 
     // Coins for rewards / gamification
     coins: { type: Number, default: 0 },
+    xp: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
 
     // Learning interest picked during registration
     learningInterest: { type: String, default: "" },
