@@ -2,6 +2,7 @@ import express from "express";
 import PhishingQuestion from "../models/PhishingQuestion.js";
 import User from "../models/User.js";
 import authMiddleware from "../middleware/auth.js"; // must set req.user.id from JWT
+import { applyMasteryResult } from "../lib/progress.js";
 
 const router = express.Router();
 
@@ -135,6 +136,11 @@ router.post("/submit", authMiddleware, async (req, res) => {
       user.phishingStats.totalCorrect =
         (user.phishingStats.totalCorrect || 0) + 1;
     }
+
+    applyMasteryResult(user, "phishing", {
+      answered: 1,
+      correct: isCorrect ? 1 : 0,
+    });
 
     await user.save();
 

@@ -4,6 +4,7 @@ import SocialAiImage from "../models/SocialAiImage.js";
 import SocialCommentScenario from "../models/SocialCommentScenario.js";
 import SocialSetting from "../models/SocialSetting.js";
 import authMiddleware from "../middleware/auth.js";
+import { applyMasteryResult } from "../lib/progress.js";
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.get("/questions", authMiddleware, async (req, res) => {
 router.post("/complete", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { totalScore = 0 } = req.body;
+    const { totalScore = 0, breakdown = {} } = req.body;
 
     const numericScore = Number(totalScore) || 0;
 
@@ -55,6 +56,34 @@ router.post("/complete", authMiddleware, async (req, res) => {
     const coinsEarned     = numericScore * 10;
     const completionBonus = 20;
     user.coins = (user.coins || 0) + coinsEarned + completionBonus;
+
+    const aiAnswered = Number(breakdown.aiImages?.answered || 0);
+    const aiCorrect = Number(breakdown.aiImages?.correct || 0);
+    const commentAnswered = Number(breakdown.commentScenarios?.answered || 0);
+    const commentCorrect = Number(breakdown.commentScenarios?.correct || 0);
+    const privacyAnswered = Number(breakdown.privacy?.answered || 0);
+    const privacyCorrect = Number(breakdown.privacy?.correct || 0);
+
+    if (aiAnswered > 0) {
+      applyMasteryResult(user, "aiSafety", {
+        answered: aiAnswered,
+        correct: aiCorrect,
+      });
+    }
+
+    if (commentAnswered > 0) {
+      applyMasteryResult(user, "socialScams", {
+        answered: commentAnswered,
+        correct: commentCorrect,
+      });
+    }
+
+    if (privacyAnswered > 0) {
+      applyMasteryResult(user, "privacy", {
+        answered: privacyAnswered,
+        correct: privacyCorrect,
+      });
+    }
 
     await user.save();
 

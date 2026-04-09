@@ -18,8 +18,15 @@ import {
   syncAdoptionDates,
   updateAverageRisk,
 } from "../services/cyberpet/stats.service.js";
+import { applyMasteryResult } from "../lib/progress.js";
 
 const router = express.Router();
+
+function getMiniGameTopic(type) {
+  if (type === "passwordStrengthener") return "passwords";
+  if (type === "fillBlanks") return "privacy";
+  return "socialScams";
+}
 
 router.get("/", authMiddleware, async (req, res) => {
   try {
@@ -246,6 +253,11 @@ router.post("/minigame/:type/submit", authMiddleware, async (req, res) => {
 
     const user = await getUserWithCyberPetStats(req.user.id);
     if (user) {
+      applyMasteryResult(user, getMiniGameTopic(type), {
+        answered: 1,
+        correct: isCorrect ? 1 : 0,
+      });
+
       const stats = user.cyberPetStats;
       updateAverageRisk(stats, pet.risk?.score || 0);
       syncAdoptionDates(stats, pet.posture, new Date());

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { authenticateUser } from "../middleware/auth.js";
 import User from "../models/User.js";
 import { sanitizeUser } from "../lib/user.js";
+import { applyMasteryResult, markStoryComplete } from "../lib/progress.js";
 
 const router = express.Router();
 
@@ -177,6 +178,47 @@ router.patch("/me/settings", authenticateUser, async (req, res) => {
     });
   } catch (err) {
     console.error("Update settings error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.post("/me/story-progress", authenticateUser, async (req, res) => {
+  try {
+    const { slug, relatedTopic } = req.body || {};
+    const storySlug = String(slug || "").trim();
+    const topic = String(relatedTopic || "").trim();
+
+    if (!storySlug) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Story slug is required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const isNewCompletion = markStoryComplete(user, {
+      slug: storySlug,
+      relatedTopic: topic,
+    });
+
+    if (isNewCompletion && topic) {
+      applyMasteryResult(user, topic, { answered: 1, correct: 1 });
+    }
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      newlyCompleted: isNewCompletion,
+      user: sanitizeUser(user),
+    });
+  } catch (err) {
+    console.error("Update story progress error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
