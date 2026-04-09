@@ -4,6 +4,7 @@ import { authenticateUser } from "../middleware/auth.js";
 import User from "../models/User.js";
 import { sanitizeUser } from "../lib/user.js";
 import { applyMasteryResult, markStoryComplete } from "../lib/progress.js";
+import { applyXpReward } from "../lib/xp.js";
 
 const router = express.Router();
 
@@ -208,6 +209,7 @@ router.post("/me/story-progress", authenticateUser, async (req, res) => {
 
     if (isNewCompletion && topic) {
       applyMasteryResult(user, topic, { answered: 1, correct: 1 });
+      applyXpReward(user, 20);
     }
 
     await user.save();

@@ -5,6 +5,7 @@ import SocialCommentScenario from "../models/SocialCommentScenario.js";
 import SocialSetting from "../models/SocialSetting.js";
 import authMiddleware from "../middleware/auth.js";
 import { applyMasteryResult } from "../lib/progress.js";
+import { applyXpReward } from "../lib/xp.js";
 
 const router = express.Router();
 
@@ -56,6 +57,8 @@ router.post("/complete", authMiddleware, async (req, res) => {
     const coinsEarned     = numericScore * 10;
     const completionBonus = 20;
     user.coins = (user.coins || 0) + coinsEarned + completionBonus;
+    const xpReward = 18 + numericScore * 2;
+    const xpInfo = applyXpReward(user, xpReward);
 
     const aiAnswered = Number(breakdown.aiImages?.answered || 0);
     const aiCorrect = Number(breakdown.aiImages?.correct || 0);
@@ -87,7 +90,16 @@ router.post("/complete", authMiddleware, async (req, res) => {
 
     await user.save();
 
-    return res.json({ success: true, coinsEarned, completionBonus, totalCoins: user.coins, stats });
+    return res.json({
+      success: true,
+      coinsEarned,
+      completionBonus,
+      xpAwarded: xpReward,
+      level: xpInfo.level,
+      totalXp: user.xp,
+      totalCoins: user.coins,
+      stats,
+    });
   } catch (err) {
     console.error("Complete social game error:", err);
     return res.status(500).json({ success: false, message: "Server error" });

@@ -19,6 +19,7 @@ import {
   updateAverageRisk,
 } from "../services/cyberpet/stats.service.js";
 import { applyMasteryResult } from "../lib/progress.js";
+import { applyXpReward } from "../lib/xp.js";
 
 const router = express.Router();
 
@@ -92,6 +93,7 @@ router.post("/tick", authMiddleware, async (req, res) => {
 
     const user = await getUserWithCyberPetStats(req.user.id);
     if (user) {
+      applyXpReward(user, 10);
       const stats = user.cyberPetStats;
       updateAverageRisk(stats, pet.risk?.score || 0);
       syncAdoptionDates(stats, pet.posture, now);
@@ -257,6 +259,7 @@ router.post("/minigame/:type/submit", authMiddleware, async (req, res) => {
         answered: 1,
         correct: isCorrect ? 1 : 0,
       });
+      applyXpReward(user, isCorrect ? 6 : 2);
 
       const stats = user.cyberPetStats;
       updateAverageRisk(stats, pet.risk?.score || 0);

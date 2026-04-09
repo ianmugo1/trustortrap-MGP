@@ -3,6 +3,7 @@ import PhishingQuestion from "../models/PhishingQuestion.js";
 import User from "../models/User.js";
 import authMiddleware from "../middleware/auth.js"; // must set req.user.id from JWT
 import { applyMasteryResult } from "../lib/progress.js";
+import { applyXpReward } from "../lib/xp.js";
 
 const router = express.Router();
 
@@ -141,6 +142,7 @@ router.post("/submit", authMiddleware, async (req, res) => {
       answered: 1,
       correct: isCorrect ? 1 : 0,
     });
+    applyXpReward(user, isCorrect ? 8 : 3);
 
     await user.save();
 
@@ -199,12 +201,17 @@ router.post("/complete", authMiddleware, async (req, res) => {
     // Completion bonus (on top of per-question rewards)
     const completionBonus = 20;
     user.coins = (user.coins || 0) + completionBonus;
+    const xpReward = numericScore >= 50 ? 25 : 15;
+    const xpInfo = applyXpReward(user, xpReward);
 
     await user.save();
 
     return res.json({
       success: true,
       completionBonus,
+      xpAwarded: xpReward,
+      level: xpInfo.level,
+      totalXp: user.xp,
       totalCoins: user.coins,
       stats,
     });
