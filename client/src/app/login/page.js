@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthAPI } from "../../lib/auth";
 import { useAuth } from "../../context/AuthContext";
 import PublicAuthShell from "../../components/PublicAuthShell";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, isAuthenticated, loading } = useAuth();
@@ -127,5 +127,25 @@ export default function LoginPage() {
         </form>
       </div>
     </PublicAuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <PublicAuthShell
+          eyebrow="Session check"
+          title="Checking your session"
+          description="We are confirming whether you already have an active TrustOrTrap session."
+        >
+          <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950/80 px-4 py-6 text-center text-sm text-slate-300">
+            Checking session...
+          </div>
+        </PublicAuthShell>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }
