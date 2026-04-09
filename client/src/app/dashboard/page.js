@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { authFetch } from "@/lib/api";
+import { getStoryChapterByTopic } from "@/lib/storyChapters";
 import {
   ArrowRight,
   BarChart3,
@@ -151,6 +152,34 @@ function getTopicEntries(mastery) {
   }));
 }
 
+function getPracticePlan(topicKey) {
+  if (topicKey === "phishing") {
+    return {
+      gameHref: "/games/phishing",
+      gameLabel: "Practice phishing",
+    };
+  }
+
+  if (topicKey === "passwords" || topicKey === "privacy") {
+    return {
+      gameHref: "/games/cyberpet",
+      gameLabel: "Open cyber pet",
+    };
+  }
+
+  if (topicKey === "aiSafety" || topicKey === "socialScams") {
+    return {
+      gameHref: "/games/social",
+      gameLabel: "Open social challenge",
+    };
+  }
+
+  return {
+    gameHref: "/games",
+    gameLabel: "Open training",
+  };
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, token, refreshUser } = useAuth();
@@ -227,6 +256,8 @@ export default function DashboardPage() {
   const strongestTopic = [...topicEntries].sort((a, b) => b.accuracy - a.accuracy)[0] || null;
   const weakestTopic = [...topicEntries].sort((a, b) => a.accuracy - b.accuracy)[0] || null;
   const storiesCompleted = Number(storyProgress?.completedCount ?? 0);
+  const weakestStory = weakestTopic ? getStoryChapterByTopic(weakestTopic.key) : null;
+  const weakestPracticePlan = weakestTopic ? getPracticePlan(weakestTopic.key) : null;
 
   const recommendation = useMemo(
     () =>
@@ -519,6 +550,61 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {weakestTopic && weakestPracticePlan && (
+        <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            Practice weakest topic
+          </p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-sm font-semibold text-white">{weakestTopic.label}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                This is your lowest mastery area right now at {weakestTopic.accuracy}% accuracy.
+                The fastest improvement is one short practice run followed by a quick story refresh.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push(weakestPracticePlan.gameHref)}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400"
+                >
+                  {weakestPracticePlan.gameLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                {weakestStory && (
+                  <Link
+                    href={`/stories/${weakestStory.slug}`}
+                    className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
+                  >
+                    Read {weakestStory.title}
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-sm font-semibold text-white">Suggested plan</p>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+                  <p className="text-sm font-semibold text-white">1. Read the warning signs</p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {weakestStory
+                      ? `Start with ${weakestStory.title} to refresh the basic clues.`
+                      : "Start with a short story to refresh the basic clues."}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+                  <p className="text-sm font-semibold text-white">2. Run one short practice</p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    One focused run is enough to move this topic forward if you pay attention to the feedback.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

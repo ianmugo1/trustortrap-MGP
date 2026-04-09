@@ -250,3 +250,7 @@ export function getStoryChapter(slug) {
 export function getStoryChapterByGameHref(href) {
   return STORY_CHAPTERS.find((chapter) => chapter.relatedGame?.href === href) || null;
 }
+
+export function getStoryChapterByTopic(topic) {
+  return STORY_CHAPTERS.find((chapter) => chapter.relatedTopic === topic) || null;
+}
