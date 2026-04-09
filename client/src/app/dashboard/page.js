@@ -7,11 +7,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { authFetch } from "@/lib/api";
 import { getStoryChapterByTopic } from "@/lib/storyChapters";
+import { getXpProgress } from "@/lib/xp";
 import {
   ArrowRight,
   BarChart3,
   Coins,
   Dog,
+  Sparkles,
   ShieldAlert,
 } from "lucide-react";
 
@@ -226,7 +228,10 @@ export default function DashboardPage() {
 
   const displayName = user?.displayName || user?.email || "Explorer";
   const coins = Number(user?.coins ?? 0);
+  const xp = Number(user?.xp ?? 0);
+  const level = Number(user?.level ?? 1);
   const learningInterest = user?.learningInterest || "";
+  const xpProgress = getXpProgress(xp);
 
   const phishingStats = user?.phishingStats ?? {};
   const socialStats = user?.socialStats ?? {};
@@ -364,6 +369,9 @@ export default function DashboardPage() {
               <div className="rounded-full border border-slate-800 bg-slate-950/80 px-4 py-2 text-slate-300">
                 {storiesCompleted} stor{storiesCompleted === 1 ? "y" : "ies"} completed
               </div>
+              <div className="rounded-full border border-slate-800 bg-slate-950/80 px-4 py-2 text-slate-300">
+                Level {level}
+              </div>
             </div>
           </div>
 
@@ -457,6 +465,12 @@ export default function DashboardPage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         <StatCard
+          label="Level"
+          value={`Lv ${level}`}
+          note={`${xpProgress.xpToNextLevel} XP to next level`}
+          Icon={Sparkles}
+        />
+        <StatCard
           label="Accuracy"
           value={totalAnswered > 0 ? `${averageScore}%` : "--"}
           note={
@@ -477,11 +491,42 @@ export default function DashboardPage() {
           Icon={Dog}
         />
         <StatCard
-          label="Streak"
-          value={`${currentStreak} day${currentStreak === 1 ? "" : "s"}`}
-          note={`${coins} coin${coins === 1 ? "" : "s"} earned`}
+          label="Coins"
+          value={`${coins}`}
+          note={`${currentStreak} day${currentStreak === 1 ? "" : "s"} streak`}
           Icon={Coins}
         />
+      </section>
+
+      <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              XP progress
+            </p>
+            <h3 className="mt-2 text-xl font-bold text-white">Level {level}</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              {xpProgress.xpToNextLevel} XP until the next level unlock.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-right">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Total XP</p>
+            <p className="mt-2 text-2xl font-bold text-white">{xp}</p>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <div className="mb-2 flex justify-between text-xs text-slate-400">
+            <span>{xpProgress.progressPercent}% through this level</span>
+            <span>{xpProgress.xpToNextLevel} XP left</span>
+          </div>
+          <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-400"
+              style={{ width: `${xpProgress.progressPercent}%` }}
+            />
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
