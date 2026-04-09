@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
 import { getStoryChapter } from "@/lib/storyChapters";
 import ReviewScreen from "./_ReviewScreen";
+import { BADGE_STYLES, ROOM_THEMES, SHOP_APPEARANCE } from "@/lib/shop";
 
 function toPercent(value) {
   return `${Math.max(0, Math.min(100, Number(value) || 0))}%`;
@@ -25,9 +26,9 @@ const MOOD_COLOURS = {
 };
 
 // Simple inline SVG robot pet
-function PetCharacter({ mood }) {
+function PetCharacter({ mood, palette }) {
   const tier = getMoodTier(mood);
-  const c = MOOD_COLOURS[tier];
+  const c = palette || MOOD_COLOURS[tier];
 
   return (
     <svg viewBox="0 0 120 140" width="120" height="140" aria-label="Cyber pet robot">
@@ -72,8 +73,22 @@ function PetCharacter({ mood }) {
   );
 }
 
+function getPetPalette(itemId, mood) {
+  const tier = getMoodTier(mood);
+  const moodPalette = MOOD_COLOURS[tier];
+  const shopPalette = SHOP_APPEARANCE[itemId];
+
+  if (!shopPalette) return moodPalette;
+
+  return {
+    body: shopPalette.body,
+    eye: shopPalette.eye,
+    mouth: shopPalette.mouth,
+  };
+}
+
 export default function CyberPetPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [pet, setPet] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -96,6 +111,10 @@ export default function CyberPetPage() {
 
   const petStatus = pet?.pet || {};
   const petName = pet?.name || "Byte";
+  const equipped = user?.shop?.equipped || {};
+  const roomTheme = ROOM_THEMES[equipped.roomTheme] || ROOM_THEMES["theme-terminal"];
+  const badgeStyle = BADGE_STYLES[equipped.badge] || BADGE_STYLES["badge-none"];
+  const petPalette = getPetPalette(equipped.petSkin, petStatus.mood);
 
   const resetReviewHistory = useCallback(() => {
     setReviewHistory({
@@ -360,7 +379,12 @@ export default function CyberPetPage() {
 
           {/* Pet character + name */}
           <div className="mt-3 flex items-center gap-5">
-            <PetCharacter mood={petStatus.mood} />
+            <div className={`rounded-[1.75rem] border p-3 ${roomTheme.panel}`}>
+              <PetCharacter
+                mood={petStatus.mood}
+                palette={petPalette}
+              />
+            </div>
 
             <div>
               {editingName ? (
@@ -412,6 +436,14 @@ export default function CyberPetPage() {
                 {getMoodTier(petStatus.mood) === "happy" ? "Feeling great!" :
                  getMoodTier(petStatus.mood) === "neutral" ? "Doing okay" : "Needs attention"}
               </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeStyle.chip}`}>
+                  {badgeStyle.label}
+                </span>
+                <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${roomTheme.badge}`}>
+                  {roomTheme.label}
+                </span>
+              </div>
             </div>
           </div>
 
