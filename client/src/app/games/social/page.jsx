@@ -137,7 +137,30 @@ export default function SocialGamePage() {
   async function submitGame(score) {
     if (!token) return;
     try {
-      const res  = await authFetch("/api/social/complete", { method: "POST", body: JSON.stringify({ totalScore: score }) }, token);
+      const res  = await authFetch(
+        "/api/social/complete",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            totalScore: score,
+            breakdown: {
+              aiImages: {
+                answered: aiImages.length,
+                correct: act1Correct,
+              },
+              commentScenarios: {
+                answered: act2Max,
+                correct: act2TotalCorrect,
+              },
+              privacy: {
+                answered: act3Max,
+                correct: act3Score,
+              },
+            },
+          }),
+        },
+        token
+      );
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.success) {
         setCoinsEarned(data.coinsEarned + data.completionBonus);

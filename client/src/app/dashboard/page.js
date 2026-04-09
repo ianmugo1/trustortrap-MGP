@@ -15,6 +15,13 @@ import {
 } from "lucide-react";
 
 const DAILY_QUESTION_TARGET = 5;
+const TOPIC_LABELS = {
+  phishing: "Phishing",
+  passwords: "Passwords",
+  privacy: "Privacy",
+  aiSafety: "AI Safety",
+  socialScams: "Social Scams",
+};
 
 function StatCard({ label, value, note, Icon }) {
   return (
@@ -134,6 +141,16 @@ function getDashboardRecommendation({
   };
 }
 
+function getTopicEntries(mastery) {
+  return Object.entries(mastery || {}).map(([key, value]) => ({
+    key,
+    label: TOPIC_LABELS[key] || key,
+    accuracy: Number(value?.accuracy || 0),
+    answered: Number(value?.answered || 0),
+    level: value?.level || "new",
+  }));
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, token, refreshUser } = useAuth();
@@ -204,6 +221,12 @@ export default function DashboardPage() {
   const actionsLeft = Math.max(0, maxActions - actionsUsed);
   const currentStreak = Number(pet?.streak?.current ?? 0);
   const activeIncident = pet?.activeIncident?.status === "active";
+  const mastery = user?.mastery || {};
+  const storyProgress = user?.storyProgress || {};
+  const topicEntries = getTopicEntries(mastery).filter((topic) => topic.answered > 0);
+  const strongestTopic = [...topicEntries].sort((a, b) => b.accuracy - a.accuracy)[0] || null;
+  const weakestTopic = [...topicEntries].sort((a, b) => a.accuracy - b.accuracy)[0] || null;
+  const storiesCompleted = Number(storyProgress?.completedCount ?? 0);
 
   const recommendation = useMemo(
     () =>
@@ -306,6 +329,9 @@ export default function DashboardPage() {
               </div>
               <div className="rounded-full border border-slate-800 bg-slate-950/80 px-4 py-2 text-slate-300">
                 {currentStreak} day{currentStreak === 1 ? "" : "s"} streak
+              </div>
+              <div className="rounded-full border border-slate-800 bg-slate-950/80 px-4 py-2 text-slate-300">
+                {storiesCompleted} stor{storiesCompleted === 1 ? "y" : "ies"} completed
               </div>
             </div>
           </div>
@@ -425,6 +451,73 @@ export default function DashboardPage() {
           note={`${coins} coin${coins === 1 ? "" : "s"} earned`}
           Icon={Coins}
         />
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            Learning mastery
+          </p>
+          {topicEntries.length > 0 ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {topicEntries.map((topic) => (
+                <div
+                  key={topic.key}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{topic.label}</p>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {topic.answered} practice item{topic.answered === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">
+                      {topic.level}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-2xl font-bold text-white">{topic.accuracy}%</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-400">
+              Complete a game or finish a story chapter to start building topic mastery.
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            Progress snapshot
+          </p>
+          <div className="mt-4 space-y-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-sm font-semibold text-white">Strongest area</p>
+              <p className="mt-2 text-sm text-slate-400">
+                {strongestTopic
+                  ? `${strongestTopic.label} at ${strongestTopic.accuracy}% accuracy.`
+                  : "No strongest area yet. You need more completed practice first."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-sm font-semibold text-white">Best area to revisit</p>
+              <p className="mt-2 text-sm text-slate-400">
+                {weakestTopic
+                  ? `${weakestTopic.label} is your current weakest topic.`
+                  : "Once you complete more activities, the dashboard will point out weaker topics here."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+              <p className="text-sm font-semibold text-white">Story progress</p>
+              <p className="mt-2 text-sm text-slate-400">
+                {storiesCompleted > 0
+                  ? `You have completed ${storiesCompleted} story chapter${storiesCompleted === 1 ? "" : "s"}.`
+                  : "You have not completed a story chapter yet."}
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

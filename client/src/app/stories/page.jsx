@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Bot, Dog, MessageSquareWarning, ShieldCheck, Stars } from "lucide-react";
 import { STORY_CHAPTERS } from "@/lib/storyChapters";
+import { useAuth } from "@/context/AuthContext";
 
 const ICON_MAP = {
   message: MessageSquareWarning,
@@ -9,6 +12,9 @@ const ICON_MAP = {
 };
 
 export default function StoriesHubPage() {
+  const { user } = useAuth();
+  const completedSlugs = user?.storyProgress?.completedSlugs || [];
+
   return (
     <main className="min-h-screen bg-transparent px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -56,6 +62,11 @@ export default function StoriesHubPage() {
                 <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Chapter {chapter.chapterNumber}
                 </p>
+                {completedSlugs.includes(chapter.slug) && (
+                  <p className="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                    Completed
+                  </p>
+                )}
                 <h2 className="mt-2 text-xl font-black text-slate-950">{chapter.title}</h2>
                 <p className="mt-2 text-sm text-slate-600">{chapter.subtitle}</p>
 

@@ -10,6 +10,7 @@ export const STORY_CHAPTERS = [
     definitionTitle: "What is phishing?",
     definition:
       "Phishing is when someone sends a fake message to trick you into clicking, sharing secrets, or logging in.",
+    relatedTopic: "phishing",
     whyItMatters:
       "Phishing messages often pretend to be from games, schools, or apps so kids feel rushed and click before checking.",
     relatedGame: {
@@ -69,6 +70,7 @@ export const STORY_CHAPTERS = [
     definitionTitle: "What is AI fraud?",
     definition:
       "AI fraud happens when people use smart tools to make fake pictures, fake voices, or fake messages that look real.",
+    relatedTopic: "aiSafety",
     whyItMatters:
       "Online scams are more dangerous when fake stories, videos, and voices look trustworthy enough to fool friends and families.",
     relatedGame: {
@@ -128,6 +130,7 @@ export const STORY_CHAPTERS = [
     definitionTitle: "What is a strong password?",
     definition:
       "A strong password is a secret key that is hard for others to guess and helps keep your account safe.",
+    relatedTopic: "passwords",
     whyItMatters:
       "Weak passwords make it easier for strangers to enter accounts, change settings, or pretend to be you online.",
     relatedGame: {
@@ -187,6 +190,7 @@ export const STORY_CHAPTERS = [
     definitionTitle: "What is a mixed scam?",
     definition:
       "A mixed scam is when tricksters use different fake messages in one day to steal money, account items, or login access.",
+    relatedTopic: "socialScams",
     whyItMatters:
       "Scammers often try many tricks quickly. Spotting each pattern helps kids stay calm, verify first, and protect their accounts.",
     relatedGame: {

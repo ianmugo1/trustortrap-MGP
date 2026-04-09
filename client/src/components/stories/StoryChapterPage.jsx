@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -13,6 +13,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { STORY_CHAPTERS } from "@/lib/storyChapters";
+import { useAuth } from "@/context/AuthContext";
+import { authFetch } from "@/lib/api";
 
 const ICON_MAP = {
   message: MessageSquareWarning,
@@ -21,7 +23,13 @@ const ICON_MAP = {
 };
 
 export default function StoryChapterPage({ chapter }) {
+  const { token, user, refreshUser } = useAuth();
   const [slideIndex, setSlideIndex] = useState(0);
+  const [completionState, setCompletionState] = useState({
+    saving: false,
+    completed: false,
+    error: "",
+  });
 
   const Icon = ICON_MAP[chapter.icon] || Sparkles;
   const slide = chapter.slides[slideIndex];
@@ -33,6 +41,80 @@ export default function StoryChapterPage({ chapter }) {
   const progress = useMemo(() => {
     return Math.round(((slideIndex + 1) / chapter.slides.length) * 100);
   }, [chapter.slides.length, slideIndex]);
+
+  const isFinalSlide = slideIndex === chapter.slides.length - 1;
+  const alreadyCompleted = Boolean(
+    user?.storyProgress?.completedSlugs?.includes(chapter.slug)
+  );
+
+  useEffect(() => {
+    setCompletionState((prev) => ({
+      ...prev,
+      completed: alreadyCompleted,
+      error: "",
+    }));
+  }, [alreadyCompleted]);
+
+  useEffect(() => {
+    if (!token || !isFinalSlide || alreadyCompleted || completionState.saving) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function saveCompletion() {
+      setCompletionState((prev) => ({ ...prev, saving: true, error: "" }));
+
+      try {
+        const res = await authFetch(
+          "/api/users/me/story-progress",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              slug: chapter.slug,
+              relatedTopic: chapter.relatedTopic,
+            }),
+          },
+          token
+        );
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.message || "Could not save story progress.");
+        }
+
+        if (!cancelled) {
+          setCompletionState({ saving: false, completed: true, error: "" });
+        }
+
+        if (typeof refreshUser === "function") {
+          await refreshUser();
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setCompletionState({
+            saving: false,
+            completed: alreadyCompleted,
+            error: err?.message || "Could not save story progress.",
+          });
+        }
+      }
+    }
+
+    saveCompletion();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    alreadyCompleted,
+    chapter.relatedTopic,
+    chapter.slug,
+    completionState.saving,
+    isFinalSlide,
+    refreshUser,
+    token,
+  ]);
 
   return (
     <main className="min-h-screen bg-transparent px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
@@ -148,7 +230,18 @@ export default function StoryChapterPage({ chapter }) {
                 >
                   Next
                 </button>
+                {completionState.completed && (
+                  <span className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
+                    Story saved
+                  </span>
+                )}
               </div>
+              {isFinalSlide && completionState.saving && (
+                <p className="text-sm text-slate-500">Saving your story progress...</p>
+              )}
+              {completionState.error && (
+                <p className="text-sm text-rose-500">{completionState.error}</p>
+              )}
             </div>
           </div>
         </section>
