@@ -36,6 +36,52 @@ const cyberPetStatsSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const masteryTopicSchema = new mongoose.Schema(
+  {
+    answered: { type: Number, default: 0 },
+    correct: { type: Number, default: 0 },
+    accuracy: { type: Number, default: 0 },
+    level: {
+      type: String,
+      enum: ["new", "building", "steady", "strong"],
+      default: "new",
+    },
+    lastPracticedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
+const masterySchema = new mongoose.Schema(
+  {
+    phishing: { type: masteryTopicSchema, default: () => ({}) },
+    passwords: { type: masteryTopicSchema, default: () => ({}) },
+    privacy: { type: masteryTopicSchema, default: () => ({}) },
+    aiSafety: { type: masteryTopicSchema, default: () => ({}) },
+    socialScams: { type: masteryTopicSchema, default: () => ({}) },
+  },
+  { _id: false }
+);
+
+const storyChapterProgressSchema = new mongoose.Schema(
+  {
+    slug: { type: String, required: true },
+    completedAt: { type: Date, default: Date.now },
+    relatedTopic: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const storyProgressSchema = new mongoose.Schema(
+  {
+    completedSlugs: { type: [String], default: [] },
+    completedCount: { type: Number, default: 0 },
+    lastCompletedSlug: { type: String, default: "" },
+    lastCompletedAt: { type: Date, default: null },
+    chapters: { type: [storyChapterProgressSchema], default: [] },
+  },
+  { _id: false }
+);
+
 const userSettingsSchema = new mongoose.Schema(
   {
     notifications: {
@@ -82,6 +128,14 @@ const userSchema = new mongoose.Schema(
     },
     socialStats: {
       type: socialStatsSchema,
+      default: () => ({}),
+    },
+    mastery: {
+      type: masterySchema,
+      default: () => ({}),
+    },
+    storyProgress: {
+      type: storyProgressSchema,
       default: () => ({}),
     },
     settings: {

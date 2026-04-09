@@ -14,6 +14,22 @@ const DEFAULT_SETTINGS = {
   },
 };
 
+const DEFAULT_MASTERY = {
+  phishing: { answered: 0, correct: 0, accuracy: 0, level: "new", lastPracticedAt: null },
+  passwords: { answered: 0, correct: 0, accuracy: 0, level: "new", lastPracticedAt: null },
+  privacy: { answered: 0, correct: 0, accuracy: 0, level: "new", lastPracticedAt: null },
+  aiSafety: { answered: 0, correct: 0, accuracy: 0, level: "new", lastPracticedAt: null },
+  socialScams: { answered: 0, correct: 0, accuracy: 0, level: "new", lastPracticedAt: null },
+};
+
+const DEFAULT_STORY_PROGRESS = {
+  completedSlugs: [],
+  completedCount: 0,
+  lastCompletedSlug: "",
+  lastCompletedAt: null,
+  chapters: [],
+};
+
 export function sanitizeUser(user) {
   return {
     id: user._id,
@@ -24,6 +40,38 @@ export function sanitizeUser(user) {
     phishingStats: user.phishingStats || {},
     socialStats: user.socialStats || {},
     cyberPetStats: user.cyberPetStats || {},
+    mastery: {
+      phishing: {
+        ...DEFAULT_MASTERY.phishing,
+        ...(user.mastery?.phishing || {}),
+      },
+      passwords: {
+        ...DEFAULT_MASTERY.passwords,
+        ...(user.mastery?.passwords || {}),
+      },
+      privacy: {
+        ...DEFAULT_MASTERY.privacy,
+        ...(user.mastery?.privacy || {}),
+      },
+      aiSafety: {
+        ...DEFAULT_MASTERY.aiSafety,
+        ...(user.mastery?.aiSafety || {}),
+      },
+      socialScams: {
+        ...DEFAULT_MASTERY.socialScams,
+        ...(user.mastery?.socialScams || {}),
+      },
+    },
+    storyProgress: {
+      ...DEFAULT_STORY_PROGRESS,
+      ...(user.storyProgress || {}),
+      completedSlugs: Array.isArray(user.storyProgress?.completedSlugs)
+        ? user.storyProgress.completedSlugs
+        : [],
+      chapters: Array.isArray(user.storyProgress?.chapters)
+        ? user.storyProgress.chapters
+        : [],
+    },
     settings: {
       notifications: {
         app:
