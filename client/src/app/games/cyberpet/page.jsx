@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
 import { getStoryChapter } from "@/lib/storyChapters";
+import ReviewScreen from "./_ReviewScreen";
 
 function toPercent(value) {
   return `${Math.max(0, Math.min(100, Number(value) || 0))}%`;
@@ -86,9 +87,23 @@ export default function CyberPetPage() {
   const [nameInput, setNameInput] = useState("");
   const [nameError, setNameError] = useState("");
   const [storyPrompt, setStoryPrompt] = useState("");
+  const [showReview, setShowReview] = useState(false);
+  const [reviewHistory, setReviewHistory] = useState({
+    trueFalse: [],
+    passwordStrengthener: [],
+    fillBlanks: [],
+  });
 
   const petStatus = pet?.pet || {};
   const petName = pet?.name || "Byte";
+
+  const resetReviewHistory = useCallback(() => {
+    setReviewHistory({
+      trueFalse: [],
+      passwordStrengthener: [],
+      fillBlanks: [],
+    });
+  }, []);
 
   const loadPetSnapshot = useCallback(async () => {
     if (!token) return;
@@ -156,6 +171,8 @@ export default function CyberPetPage() {
       }
 
       setPet(ticked.pet);
+      resetReviewHistory();
+      setShowReview(false);
 
       const games = await loadAllMiniGames();
       setMiniGames(games);
@@ -166,7 +183,7 @@ export default function CyberPetPage() {
     } finally {
       setLoading(false);
     }
-  }, [loadPetSnapshot, runTick, loadAllMiniGames, token]);
+  }, [loadPetSnapshot, resetReviewHistory, runTick, loadAllMiniGames, token]);
 
   useEffect(() => {
     loadAndSync();
@@ -251,6 +268,24 @@ export default function CyberPetPage() {
           },
         }));
 
+        const currentQuestion =
+          (miniGames[gameType]?.questions || []).find((item) => item.id === questionId) ||
+          { id: questionId, prompt: questionId };
+
+        setReviewHistory((prev) => ({
+          ...prev,
+          [gameType]: [
+            ...(prev[gameType] || []),
+            {
+              question: currentQuestion,
+              userAnswer: answer,
+              correctAnswer: null,
+              explanation: data.result?.explanation || "",
+              isCorrect: !!data.result?.isCorrect,
+            },
+          ],
+        }));
+
         setMgFeedback({
           isCorrect: !!data.result?.isCorrect,
           explanation: data.result?.explanation || "",
@@ -266,7 +301,7 @@ export default function CyberPetPage() {
         setBusy(false);
       }
     },
-    [busy, token]
+    [busy, miniGames, token]
   );
 
   if (!token) {
@@ -421,6 +456,25 @@ export default function CyberPetPage() {
           </div>
 
           {/* Game type tabs */}
+          <div className="mb-5 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowReview((current) => !current)}
+              className="rounded-xl border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800"
+            >
+              {showReview ? "Hide review" : "Review answers"}
+            </button>
+          </div>
+
+          {showReview && (
+            <div className="mb-5">
+              <ReviewScreen
+                reviewHistory={reviewHistory}
+                onClose={() => setShowReview(false)}
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-2 mb-5">
             {[
               { key: "trueFalse", label: "True / False", active: "border-emerald-500/50 bg-emerald-500/10", activeText: "text-emerald-200" },
