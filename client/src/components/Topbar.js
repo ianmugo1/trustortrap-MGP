@@ -10,6 +10,7 @@ const quickLinks = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/games", label: "Training" },
   { href: "/stories", label: "Stories" },
+  { href: "/shop", label: "Shop" },
   { href: "/settings", label: "Settings" },
 ];
 
@@ -25,6 +26,10 @@ const PAGE_META = {
   stories: {
     title: "Stories",
     description: "Short lessons that prepare you before practice.",
+  },
+  shop: {
+    title: "Shop",
+    description: "Spend coins on Byte cosmetics and unlocked rewards.",
   },
   settings: {
     title: "Settings",

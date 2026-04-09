@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpenText,
+  Coins,
   LayoutDashboard,
   ListCheckIcon,
   LogOut,
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/games", label: "Training", icon: ListCheckIcon },
   { href: "/stories", label: "Stories", icon: BookOpenText },
+  { href: "/shop", label: "Shop", icon: Coins },
 ];
 
 export default function Sidebar() {
