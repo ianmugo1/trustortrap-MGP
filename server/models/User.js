@@ -82,6 +82,18 @@ const storyProgressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const shopSchema = new mongoose.Schema(
+  {
+    ownedItemIds: { type: [String], default: [] },
+    equipped: {
+      petSkin: { type: String, default: "skin-classic" },
+      roomTheme: { type: String, default: "theme-terminal" },
+      badge: { type: String, default: "badge-none" },
+    },
+  },
+  { _id: false }
+);
+
 const userSettingsSchema = new mongoose.Schema(
   {
     notifications: {
@@ -138,6 +150,10 @@ const userSchema = new mongoose.Schema(
     },
     storyProgress: {
       type: storyProgressSchema,
+      default: () => ({}),
+    },
+    shop: {
+      type: shopSchema,
       default: () => ({}),
     },
     settings: {

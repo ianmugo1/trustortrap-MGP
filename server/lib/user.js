@@ -30,6 +30,15 @@ const DEFAULT_STORY_PROGRESS = {
   chapters: [],
 };
 
+const DEFAULT_SHOP = {
+  ownedItemIds: ["skin-classic", "theme-terminal", "badge-none"],
+  equipped: {
+    petSkin: "skin-classic",
+    roomTheme: "theme-terminal",
+    badge: "badge-none",
+  },
+};
+
 export function sanitizeUser(user) {
   return {
     id: user._id,
@@ -73,6 +82,17 @@ export function sanitizeUser(user) {
       chapters: Array.isArray(user.storyProgress?.chapters)
         ? user.storyProgress.chapters
         : [],
+    },
+    shop: {
+      ...DEFAULT_SHOP,
+      ...(user.shop || {}),
+      ownedItemIds: Array.isArray(user.shop?.ownedItemIds)
+        ? [...new Set([...DEFAULT_SHOP.ownedItemIds, ...user.shop.ownedItemIds])]
+        : DEFAULT_SHOP.ownedItemIds,
+      equipped: {
+        ...DEFAULT_SHOP.equipped,
+        ...(user.shop?.equipped || {}),
+      },
     },
     settings: {
       notifications: {

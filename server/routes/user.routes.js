@@ -5,6 +5,11 @@ import User from "../models/User.js";
 import { sanitizeUser } from "../lib/user.js";
 import { applyMasteryResult, markStoryComplete } from "../lib/progress.js";
 import { applyXpReward } from "../lib/xp.js";
+import {
+  getCatalogForUser,
+  getShopItem,
+  normalizeUserShop,
+} from "../lib/shop.js";
 
 const router = express.Router();
 
@@ -221,6 +226,120 @@ router.post("/me/story-progress", authenticateUser, async (req, res) => {
     });
   } catch (err) {
     console.error("Update story progress error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.get("/me/shop", authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.shop = normalizeUserShop(user.shop);
+    user.markModified("shop");
+    await user.save();
+
+    return res.json({
+      success: true,
+      catalog: getCatalogForUser(user),
+      user: sanitizeUser(user),
+    });
+  } catch (err) {
+    console.error("Get shop error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.post("/me/shop/purchase", authenticateUser, async (req, res) => {
+  try {
+    const { itemId } = req.body || {};
+    const targetItemId = String(itemId || "").trim();
+
+    if (!targetItemId) {
+      return res.status(400).json({ success: false, message: "itemId is required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const item = getShopItem(targetItemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Shop item not found" });
+    }
+
+    user.shop = normalizeUserShop(user.shop);
+
+    if (user.shop.ownedItemIds.includes(item.id)) {
+      return res.status(409).json({ success: false, message: "Item already owned" });
+    }
+
+    if ((user.level || 1) < item.minLevel) {
+      return res.status(403).json({ success: false, message: "Level too low for this item" });
+    }
+
+    if ((user.coins || 0) < item.cost) {
+      return res.status(400).json({ success: false, message: "Not enough coins" });
+    }
+
+    user.coins -= item.cost;
+    user.shop.ownedItemIds.push(item.id);
+    user.shop.equipped[item.category] = item.id;
+    user.markModified("shop");
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: `${item.name} purchased`,
+      catalog: getCatalogForUser(user),
+      user: sanitizeUser(user),
+    });
+  } catch (err) {
+    console.error("Purchase shop item error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+router.patch("/me/shop/equip", authenticateUser, async (req, res) => {
+  try {
+    const { itemId } = req.body || {};
+    const targetItemId = String(itemId || "").trim();
+
+    if (!targetItemId) {
+      return res.status(400).json({ success: false, message: "itemId is required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const item = getShopItem(targetItemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Shop item not found" });
+    }
+
+    user.shop = normalizeUserShop(user.shop);
+
+    if (!user.shop.ownedItemIds.includes(item.id)) {
+      return res.status(403).json({ success: false, message: "Item not owned" });
+    }
+
+    user.shop.equipped[item.category] = item.id;
+    user.markModified("shop");
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: `${item.name} equipped`,
+      catalog: getCatalogForUser(user),
+      user: sanitizeUser(user),
+    });
+  } catch (err) {
+    console.error("Equip shop item error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });
