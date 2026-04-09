@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
 import { getStoryChapter } from "@/lib/storyChapters";
+import ReviewScreen from "./_ReviewScreen";
 
 function formatGameMessage(message, fallback) {
   const raw = String(message || "").trim();
@@ -40,6 +41,8 @@ export default function PhishingPage() {
   const [loadError, setLoadError] = useState("");
   const [gameStarted, setGameStarted] = useState(false);
   const [storyPrompt, setStoryPrompt] = useState("");
+  const [showReview, setShowReview] = useState(false);
+  const [answerHistory, setAnswerHistory] = useState([]);
 
   const total = questions.length;
   const isFinished = total > 0 && step >= total;
@@ -53,6 +56,8 @@ export default function PhishingPage() {
     setSubmitting(false);
     setLoadError("");
     setGameStarted(false);
+    setShowReview(false);
+    setAnswerHistory([]);
   }, []);
 
   const loadQuestions = useCallback(async () => {
@@ -80,6 +85,8 @@ export default function PhishingPage() {
       setAnswer(null);
       setFeedback(null);
       setCompletionInfo(null);
+      setShowReview(false);
+      setAnswerHistory([]);
     } catch (err) {
       console.error(err);
       setQuestions([]);
@@ -182,14 +189,33 @@ export default function PhishingPage() {
         const data = await res.json().catch(() => ({}));
 
         if (res.ok && data?.success) {
+          const isCorrect = !!data.correct;
+
+          setAnswerHistory((prev) => [
+            ...prev,
+            {
+              question: q,
+              userAnswer: choice,
+              isCorrect,
+            },
+          ]);
+
           if (data.correct) {
             setScore((prev) => prev + (data.pointsAwarded || 0));
           }
           setFeedback({
-            isCorrect: !!data.correct,
+            isCorrect,
             explanation: q.explanation || "",
           });
         } else {
+          setAnswerHistory((prev) => [
+            ...prev,
+            {
+              question: q,
+              userAnswer: choice,
+              isCorrect: false,
+            },
+          ]);
           setFeedback({
             isCorrect: false,
             explanation: data?.message || "Submission failed.",
@@ -213,6 +239,19 @@ export default function PhishingPage() {
     },
     [answer, questions, step, submitting, token]
   );
+
+  if (showReview) {
+    return (
+      <ReviewScreen
+        answers={answerHistory}
+        onBack={() => setShowReview(false)}
+        onPlayAgain={() => {
+          resetLocal();
+          loadQuestions();
+        }}
+      />
+    );
+  }
 
   // ====== UI states ======
 
@@ -327,15 +366,23 @@ export default function PhishingPage() {
             </p>
           )}
 
-          <button
-            onClick={() => {
-              resetLocal();
-              loadQuestions();
-            }}
-            className="px-6 py-3 bg-gradient-to-r from-cyan-300 to-emerald-300 text-slate-900 rounded-xl font-semibold"
-          >
-            Play again
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setShowReview(true)}
+              className="px-6 py-3 rounded-xl border border-slate-600 bg-slate-950 text-white font-semibold"
+            >
+              Review answers
+            </button>
+            <button
+              onClick={() => {
+                resetLocal();
+                loadQuestions();
+              }}
+              className="px-6 py-3 bg-gradient-to-r from-cyan-300 to-emerald-300 text-slate-900 rounded-xl font-semibold"
+            >
+              Play again
+            </button>
+          </div>
         </div>
       </main>
     );
