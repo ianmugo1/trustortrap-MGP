@@ -1,5 +1,11 @@
 // Intro screen for the social media game
-export default function IntroScreen({ onStart, hasContent, message = "", onRetry }) {
+export default function IntroScreen({
+  onStart,
+  hasContent,
+  message = "",
+  onRetry,
+  storyPrompt = "",
+}) {
   const acts = [
     { num: "01", title: "Spot the AI Image", desc: "Real photo or AI generated?" },
     { num: "02", title: "Comment Section",   desc: "Find the bot accounts" },
@@ -21,6 +27,12 @@ export default function IntroScreen({ onStart, hasContent, message = "", onRetry
           Every day, fake posts AI generated videos, and bot accounts spread across social media.
           Can you tell us what is real and what is not?
         </p>
+
+        {storyPrompt && (
+          <div className="mb-6 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+            {storyPrompt}
+          </div>
+        )}
 
         {message && (
           <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">

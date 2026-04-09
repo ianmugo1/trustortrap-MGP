@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { ShieldAlert, Dog, ScanFace, BookOpenText } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { getStoryChapterByGameHref } from "@/lib/storyChapters";
 
 // game card data for each training scenario
 const games = [
@@ -44,6 +46,9 @@ const games = [
 ];
 
 export default function GamesPage() {
+  const { user } = useAuth();
+  const completedStories = user?.storyProgress?.completedSlugs || [];
+
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6 py-12">
       {/* page heading */}
@@ -57,34 +62,85 @@ export default function GamesPage() {
       {/* game cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 w-full max-w-6xl">
         {games.map((game) => (
-          <Link
-            key={game.href}
-            href={game.href}
-            className={`group relative bg-slate-900 rounded-2xl border border-slate-800 p-8
-              text-center transition-all duration-300 hover:scale-105 hover:-translate-y-1
-              hover:shadow-2xl ${game.border}`}
-          >
-            {/* gradient glow behind icon */}
-            <div
-              className={`mx-auto w-20 h-20 rounded-full bg-gradient-to-br ${game.colour}
-                p-[2px] mb-6 shadow-lg group-hover:shadow-xl transition-shadow`}
-            >
-              <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                <game.icon className={`w-10 h-10 ${game.iconColour}`} />
+          (() => {
+            const relatedStory = getStoryChapterByGameHref(game.href);
+            const storyCompleted = relatedStory
+              ? completedStories.includes(relatedStory.slug)
+              : true;
+
+            return (
+              <div
+                key={game.href}
+                className={`group relative bg-slate-900 rounded-2xl border border-slate-800 p-8
+                  text-center transition-all duration-300 hover:-translate-y-1
+                  hover:shadow-2xl ${game.border}`}
+              >
+                <div
+                  className={`mx-auto w-20 h-20 rounded-full bg-gradient-to-br ${game.colour}
+                    p-[2px] mb-6 shadow-lg group-hover:shadow-xl transition-shadow`}
+                >
+                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                    <game.icon className={`w-10 h-10 ${game.iconColour}`} />
+                  </div>
+                </div>
+
+                <h2 className="text-xl font-bold text-white mb-2">{game.title}</h2>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  {game.description}
+                </p>
+
+                {relatedStory && (
+                  <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-left">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">
+                      Read first
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      {relatedStory.title}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-400">
+                      {storyCompleted
+                        ? "You already finished the matching story. Start training now."
+                        : "Read the matching story first for a quick warm-up before the game."}
+                    </p>
+                    <div className="mt-4 flex gap-2">
+                      {!storyCompleted && (
+                        <Link
+                          href={`/stories/${relatedStory.slug}`}
+                          className="rounded-xl border border-slate-700 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+                        >
+                          Read story
+                        </Link>
+                      )}
+                      <Link
+                        href={
+                          relatedStory
+                            ? `${game.href}?fromStory=${relatedStory.slug}`
+                            : game.href
+                        }
+                        className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                      >
+                        Start game
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {!relatedStory && (
+                  <Link
+                    href={game.href}
+                    className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                  >
+                    Open
+                  </Link>
+                )}
+
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl bg-gradient-to-r
+                    ${game.colour} opacity-0 group-hover:opacity-100 transition-opacity`}
+                />
               </div>
-            </div>
-
-            <h2 className="text-xl font-bold text-white mb-2">{game.title}</h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              {game.description}
-            </p>
-
-            {/* subtle bottom gradient bar */}
-            <div
-              className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-2xl bg-gradient-to-r
-                ${game.colour} opacity-0 group-hover:opacity-100 transition-opacity`}
-            />
-          </Link>
+            );
+          })()
         ))}
       </div>
     </main>

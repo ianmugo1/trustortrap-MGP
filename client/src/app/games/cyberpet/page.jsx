@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
+import { getStoryChapter } from "@/lib/storyChapters";
 
 function toPercent(value) {
   return `${Math.max(0, Math.min(100, Number(value) || 0))}%`;
@@ -84,6 +85,7 @@ export default function CyberPetPage() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [nameError, setNameError] = useState("");
+  const [storyPrompt, setStoryPrompt] = useState("");
 
   const petStatus = pet?.pet || {};
   const petName = pet?.name || "Byte";
@@ -169,6 +171,17 @@ export default function CyberPetPage() {
   useEffect(() => {
     loadAndSync();
   }, [loadAndSync]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("fromStory");
+    if (!slug) return;
+
+    const story = getStoryChapter(slug);
+    if (!story) return;
+
+    setStoryPrompt(`You came from "${story.title}". Use Byte's daily tasks to practise stronger password and account habits.`);
+  }, []);
 
   // Save a new pet name
   const handleRenamePet = useCallback(
@@ -304,6 +317,11 @@ export default function CyberPetPage() {
         {/* Pet status */}
         <section className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
           <p className="text-sm uppercase tracking-wide text-emerald-300">Cyber Pet</p>
+          {storyPrompt && (
+            <div className="mt-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+              {storyPrompt}
+            </div>
+          )}
 
           {/* Pet character + name */}
           <div className="mt-3 flex items-center gap-5">

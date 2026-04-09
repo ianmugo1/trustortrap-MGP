@@ -246,3 +246,7 @@ export const STORY_CHAPTERS = [
 export function getStoryChapter(slug) {
   return STORY_CHAPTERS.find((chapter) => chapter.slug === slug) || null;
 }
+
+export function getStoryChapterByGameHref(href) {
+  return STORY_CHAPTERS.find((chapter) => chapter.relatedGame?.href === href) || null;
+}

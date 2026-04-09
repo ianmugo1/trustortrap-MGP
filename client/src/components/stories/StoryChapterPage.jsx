@@ -273,7 +273,7 @@ export default function StoryChapterPage({ chapter }) {
               Ready to try what this story taught you?
             </p>
             <Link
-              href={chapter.relatedGame.href}
+              href={`${chapter.relatedGame.href}?fromStory=${chapter.slug}`}
               className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px]"
             >
               {chapter.relatedGame.label}

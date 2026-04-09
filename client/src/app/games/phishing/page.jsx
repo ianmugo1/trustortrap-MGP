@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
+import { getStoryChapter } from "@/lib/storyChapters";
 
 function formatGameMessage(message, fallback) {
   const raw = String(message || "").trim();
@@ -38,6 +39,7 @@ export default function PhishingPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [gameStarted, setGameStarted] = useState(false);
+  const [storyPrompt, setStoryPrompt] = useState("");
 
   const total = questions.length;
   const isFinished = total > 0 && step >= total;
@@ -91,6 +93,17 @@ export default function PhishingPage() {
   useEffect(() => {
     loadQuestions();
   }, [loadQuestions]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("fromStory");
+    if (!slug) return;
+
+    const story = getStoryChapter(slug);
+    if (!story) return;
+
+    setStoryPrompt(`You came from "${story.title}". Look for the same warning signs in this practice round.`);
+  }, []);
 
   // Complete game once
   useEffect(() => {
@@ -264,6 +277,11 @@ export default function PhishingPage() {
             Test your ability to spot phishing attempts. You'll be presented with {total} scenarios
             and asked to identify the safest response.
           </p>
+          {storyPrompt && (
+            <div className="mb-6 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+              {storyPrompt}
+            </div>
+          )}
           <div className="text-sky-100/90 text-sm mb-6 space-y-1">
             <p>{total} questions</p>
             <p>+10 coins per correct answer</p>

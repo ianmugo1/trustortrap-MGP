@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
+import { getStoryChapter } from "@/lib/storyChapters";
 
 import IntroScreen from "./_IntroScreen";
 import ActAiImage from "./_ActAiImage";
@@ -37,6 +38,7 @@ export default function SocialGamePage() {
     error: "",
   });
   const [rewardStatus, setRewardStatus] = useState({ message: "", tone: "info" });
+  const [storyPrompt, setStoryPrompt] = useState("");
 
   // Game phase + coins
   const [phase, setPhase]             = useState("intro");
@@ -58,6 +60,17 @@ export default function SocialGamePage() {
   const [act3Submitted, setAct3Submitted] = useState(false);
 
   // Fetch questions on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("fromStory");
+    if (!slug) return;
+
+    const story = getStoryChapter(slug);
+    if (!story) return;
+
+    setStoryPrompt(`You came from "${story.title}". Use this challenge to practice what that story just taught.`);
+  }, []);
+
   useEffect(() => {
     async function load() {
       try {
@@ -229,6 +242,7 @@ export default function SocialGamePage() {
     <IntroScreen
       onStart={() => setPhase("act1")}
       hasContent={aiImages.length > 0}
+      storyPrompt={storyPrompt}
       message={
         aiImages.length > 0
           ? ""
