@@ -16,6 +16,7 @@ export default function ResultsScreen({
   coinsEarned,
   rewardMessage = "",
   rewardMessageTone = "info",
+  onReview,
   onRestart,
 }) {
   const pct   = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
@@ -83,12 +84,20 @@ export default function ResultsScreen({
           If you ever see something suspicious online, tell a parent or teacher straight away.
         </p>
 
-        <button
-          onClick={onRestart}
-          className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-base transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-        >
-          Play Again
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={onReview}
+            className="w-full rounded-2xl border border-slate-600 bg-slate-950 py-3.5 text-base font-bold text-white transition-colors hover:bg-slate-800"
+          >
+            Review answers
+          </button>
+          <button
+            onClick={onRestart}
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-base transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+          >
+            Play Again
+          </button>
+        </div>
       </div>
     </main>
   );

@@ -9,6 +9,7 @@ import ActAiImage from "./_ActAiImage";
 import ActComments from "./_ActComments";
 import ActPrivacy from "./_ActPrivacy";
 import ResultsScreen from "./_ResultsScreen";
+import ReviewScreen from "./_ReviewScreen";
 
 function formatSocialMessage(message, fallback) {
   const raw = String(message || "").trim();
@@ -48,16 +49,19 @@ export default function SocialGamePage() {
   const [storyStep, setStoryStep]     = useState(0);
   const [storyAnswer, setStoryAnswer] = useState(null);
   const [act1Correct, setAct1Correct] = useState(0);
+  const [act1Review, setAct1Review]   = useState([]);
 
   // Act 2 state
   const [act2Step, setAct2Step]                 = useState(0);
   const [selectedComments, setSelectedComments] = useState(new Set());
   const [act2Submitted, setAct2Submitted]       = useState(false);
   const [act2TotalCorrect, setAct2TotalCorrect] = useState(0);
+  const [act2Review, setAct2Review]             = useState([]);
 
   // Act 3 state
   const [toggles, setToggles]             = useState({});
   const [act3Submitted, setAct3Submitted] = useState(false);
+  const [act3Review, setAct3Review]       = useState([]);
 
   // Fetch questions on mount
   useEffect(() => {
@@ -109,6 +113,28 @@ export default function SocialGamePage() {
     const correct = img.type === "side-by-side" ? choice === img.realSide : (choice === "ai") === img.isAI;
     setStoryAnswer(correct ? "correct" : "wrong");
     if (correct) setAct1Correct((n) => n + 1);
+
+    const correctAnswer = img.type === "side-by-side"
+      ? `${img.realSide === "left" ? "Left" : "Right"} is real`
+      : img.isAI
+        ? "AI made it"
+        : "Real photo";
+    const userAnswer = img.type === "side-by-side"
+      ? `${choice === "left" ? "Left" : "Right"} is real`
+      : choice === "ai"
+        ? "AI made it"
+        : "Real photo";
+
+    setAct1Review((prev) => [
+      ...prev,
+      {
+        subject: img.subject,
+        userAnswer,
+        correctAnswer,
+        tell: img.tell,
+        isCorrect: correct,
+      },
+    ]);
   }
 
   function handleStoryNext() {
@@ -128,6 +154,17 @@ export default function SocialGamePage() {
   function handleAct2Submit() {
     const bots    = new Set(commentScenarios[act2Step].comments.map((c, i) => c.isBot ? i : -1).filter((i) => i !== -1));
     const correct = [...selectedComments].filter((i) => bots.has(i)).length;
+    const scenario = commentScenarios[act2Step];
+
+    setAct2Review((prev) => [
+      ...prev,
+      {
+        postText: scenario.post.text,
+        selected: [...selectedComments].map((i) => `User${i + 1}`),
+        correct: [...bots].map((i) => `User${i + 1}`),
+        tip: scenario.tip,
+      },
+    ]);
     setAct2TotalCorrect((n) => n + correct);
     setAct2Submitted(true);
   }
@@ -142,9 +179,12 @@ export default function SocialGamePage() {
     setCoinsEarned(null);
     setRewardStatus({ message: "", tone: "info" });
     setStoryStep(0); setStoryAnswer(null); setAct1Correct(0);
+    setAct1Review([]);
     setAct2Step(0); setSelectedComments(new Set()); setAct2Submitted(false); setAct2TotalCorrect(0);
+    setAct2Review([]);
     setToggles(Object.fromEntries(settings.map((s) => [s._id, false])));
     setAct3Submitted(false);
+    setAct3Review([]);
   }
 
   async function submitGame(score) {
@@ -269,8 +309,33 @@ export default function SocialGamePage() {
       toggles={toggles}
       submitted={act3Submitted}
       onToggle={(id) => { if (!act3Submitted) setToggles((prev) => ({ ...prev, [id]: !prev[id] })); }}
-      onSave={() => setAct3Submitted(true)}
+      onSave={() => {
+        setAct3Review(
+          settings
+            .filter((setting) => setting.dangerous)
+            .map((setting) => ({
+              label: setting.label,
+              current: setting.current,
+              safe: setting.safe,
+              fixed: !!toggles[setting._id],
+              tip: setting.tip,
+            }))
+        );
+        setAct3Submitted(true);
+      }}
       onViewResults={() => { submitGame(totalScore); setPhase("results"); }}
+    />
+  );
+
+  if (phase === "review") return (
+    <ReviewScreen
+      review={{
+        aiImages: act1Review,
+        commentScenarios: act2Review,
+        privacy: act3Review,
+      }}
+      onBack={() => setPhase("results")}
+      onRestart={handleRestart}
     />
   );
 
@@ -287,6 +352,7 @@ export default function SocialGamePage() {
       coinsEarned={coinsEarned}
       rewardMessage={rewardStatus.message}
       rewardMessageTone={rewardStatus.tone}
+      onReview={() => setPhase("review")}
       onRestart={handleRestart}
     />
   );
