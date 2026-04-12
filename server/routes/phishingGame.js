@@ -144,6 +144,7 @@ router.post("/submit", authMiddleware, async (req, res) => {
     });
     applyXpReward(user, isCorrect ? 8 : 3);
 
+    user.markModified("mastery"); // tell Mongoose the nested mastery object changed
     await user.save();
 
     return res.json({

@@ -11,6 +11,7 @@ import userRoutes from "./routes/user.routes.js";
 import phishingRoutes from "./routes/phishingGame.js";
 import cyberPetRoutes from "./routes/cyberpet.js";
 import socialRoutes from "./routes/socialGame.js";
+import leaderboardRoutes from "./routes/leaderboard.js";
 
 
 dotenv.config();
@@ -71,11 +72,12 @@ app.use(cookieParser());
 // ---------- ROUTES ----------
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
-app.use("/api/auth", authLimiter, authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/phishing", phishingRoutes);   // ✅ MUST COME BEFORE 404 HANDLER
-app.use("/api/cyberpet", cyberPetRoutes);
-app.use("/api/social",   socialRoutes);
+app.use("/api/auth",        authLimiter, authRoutes);
+app.use("/api/users",       userRoutes);
+app.use("/api/phishing",    phishingRoutes);
+app.use("/api/cyberpet",    cyberPetRoutes);
+app.use("/api/social",      socialRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
 
 // ---------- 404 HANDLER ----------
 app.use((req, res) => {

@@ -88,6 +88,7 @@ router.post("/complete", authMiddleware, async (req, res) => {
       });
     }
 
+    user.markModified("mastery"); // tell Mongoose the nested mastery object changed
     await user.save();
 
     return res.json({

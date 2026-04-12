@@ -10,14 +10,16 @@ import {
   ListCheckIcon,
   LogOut,
   Settings,
+  Trophy,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/games", label: "Training", icon: ListCheckIcon },
-  { href: "/stories", label: "Stories", icon: BookOpenText },
-  { href: "/shop", label: "Shop", icon: Coins },
+  { href: "/dashboard",   label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/games",       label: "Training",    icon: ListCheckIcon },
+  { href: "/stories",     label: "Stories",     icon: BookOpenText },
+  { href: "/shop",        label: "Shop",        icon: Coins },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
 export default function Sidebar() {
