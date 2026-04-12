@@ -1,7 +1,4 @@
-import { NETWORK_ERROR_MESSAGE } from "./api";
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5050";
+import { API_BASE, NETWORK_ERROR_MESSAGE } from "./api";
 
 function normalizeAuthMessage(message, fallback) {
   const raw = String(message || "").trim();

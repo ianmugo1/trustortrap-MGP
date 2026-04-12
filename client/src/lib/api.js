@@ -1,5 +1,15 @@
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5050";
+function normalizeApiBase(rawBase) {
+  const fallback = "http://localhost:5050";
+  const value = String(rawBase || fallback).trim();
+
+  if (!value) return fallback;
+
+  return value
+    .replace(/\/+$/, "")
+    .replace(/\/api$/, "");
+}
+
+export const API_BASE = normalizeApiBase(process.env.NEXT_PUBLIC_API_BASE);
 
 const STORAGE_KEY = "tt_auth";
 const EXPIRED_KEY = "tt_session_expired";
