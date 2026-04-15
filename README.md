@@ -89,6 +89,23 @@ Then open:
 - Frontend: `http://localhost:3000`
 - API: `http://localhost:5050`
 
+## Vercel Deployment Notes
+
+The Vercel setup uses two projects:
+
+- `trustortrap-web` for the Next.js frontend
+- `trustortrap-api` for the Express API
+
+The frontend project must have:
+
+- `NEXT_PUBLIC_API_BASE=https://trustortrap-api.vercel.app`
+
+The API project must have:
+
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `CLIENT_ORIGIN=https://trustortrap-web.vercel.app`
+
 ## Submission Notes
 
 TrustOrTrap currently focuses on core gameplay, learning experiences, and
