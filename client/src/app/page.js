@@ -47,8 +47,40 @@ export default function Home() {
       <div className="glow-orb-reverse absolute right-[-6rem] top-28 h-72 w-72 rounded-full bg-cyan-400/18 blur-3xl" />
       <div className="glow-orb absolute bottom-[-6rem] left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-yellow-300/10 blur-3xl" />
 
-      <section className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-5 py-12 sm:px-8 lg:px-10">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+      <section className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-8 sm:px-8 lg:px-10">
+        <div className="hero-reveal flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 rounded-[1.75rem] border border-slate-800 bg-slate-950/70 px-4 py-3 shadow-[0_10px_40px_rgba(2,6,23,0.3)] backdrop-blur-xl">
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-emerald-400/20 bg-slate-900">
+              <Image
+                src="/logo.png"
+                alt="TrustOrTrap logo"
+                fill
+                className="object-contain p-2"
+                priority
+                sizes="56px"
+              />
+            </div>
+            <div>
+              <p className="font-display text-2xl font-black tracking-tight text-white sm:text-3xl">
+                TrustOrTrap
+              </p>
+              <p className="text-sm text-slate-400">
+                Cyber awareness training built for quick, repeatable practice.
+              </p>
+            </div>
+          </div>
+
+          {!isAuthenticated && !loading ? (
+            <Link
+              href="/login"
+              className="hidden rounded-2xl border border-slate-700 bg-slate-900/70 px-5 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-800 lg:inline-flex"
+            >
+              Sign in
+            </Link>
+          ) : null}
+        </div>
+
+        <div className="grid flex-1 items-center gap-12 pt-10 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="hero-reveal max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200">
               <Sparkles className="h-3.5 w-3.5" />
@@ -130,14 +162,11 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200">
-                    Welcome screen
-                  </p>
                   <h2 className="font-display mt-1 text-2xl font-black text-white">
-                    TrustOrTrap
+                    What you&apos;ll practise
                   </h2>
                   <p className="mt-1 text-sm text-slate-400">
-                    A beginner-friendly cyber awareness hub built around action, not theory.
+                    A beginner-friendly set of activities designed to build safer online habits without feeling overwhelming.
                   </p>
                 </div>
               </div>
