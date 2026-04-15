@@ -7,6 +7,44 @@ import { applyXpReward } from "../lib/xp.js";
 
 const router = express.Router();
 
+function isValidSubmittedAnswer(question, answerGiven) {
+  const hasOptions = Array.isArray(question.options) && question.options.length > 0;
+  const isDual = Boolean(question.imageLeft && question.imageRight);
+
+  if (hasOptions) {
+    const selectedIndex = Number(answerGiven);
+    if (Number.isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= question.options.length) {
+      return false;
+    }
+
+    if (typeof question.correctOption === "number") {
+      return selectedIndex === question.correctOption;
+    }
+
+    if (question.correct) {
+      const correctIndex = question.options.findIndex(
+        (option) =>
+          option === question.correct ||
+          option.toLowerCase().includes(question.correct.toLowerCase().substring(0, 20))
+      );
+
+      return selectedIndex === correctIndex;
+    }
+
+    return false;
+  }
+
+  if (isDual) {
+    return (answerGiven === "left" || answerGiven === "right") && answerGiven === question.phishingSide;
+  }
+
+  if (answerGiven !== "Phishing" && answerGiven !== "Safe") {
+    return false;
+  }
+
+  return question.isPhishing ? answerGiven === "Phishing" : answerGiven === "Safe";
+}
+
 /**
  * GET /api/phishing/questions
  * - Returns all phishing questions
@@ -57,55 +95,30 @@ router.post("/submit", authMiddleware, async (req, res) => {
         .json({ success: false, message: "Question not found" });
     }
 
-    let isCorrect = false;
     const hasOptions = Array.isArray(question.options) && question.options.length > 0;
-    const isDual = Boolean(question.imageLeft && question.imageRight);
-
     if (hasOptions) {
-      // Multiple choice question - answerGiven should be the option index (0-3)
       const selectedIndex = Number(answerGiven);
-      if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= question.options.length) {
+      if (Number.isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= question.options.length) {
         return res.status(400).json({
           success: false,
           message: "Invalid answer format - expected valid option index",
         });
       }
-
-      // Support both correctOption (index) and correct (text) fields
-      if (typeof question.correctOption === "number") {
-        isCorrect = selectedIndex === question.correctOption;
-      } else if (question.correct) {
-        // Find which option matches the correct answer text
-        const correctIndex = question.options.findIndex(
-          (opt) => opt === question.correct || opt.toLowerCase().includes(question.correct.toLowerCase().substring(0, 20))
-        );
-        isCorrect = selectedIndex === correctIndex;
-      }
-    } else if (isDual) {
-      if (!question.phishingSide) {
-        return res.status(422).json({
-          success: false,
-          message: "Question is missing phishingSide",
-        });
-      }
-      if (answerGiven !== "left" && answerGiven !== "right") {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid answer format",
-        });
-      }
-      isCorrect = answerGiven === question.phishingSide;
     } else {
-      if (answerGiven !== "Phishing" && answerGiven !== "Safe") {
+      if (
+        answerGiven !== "left" &&
+        answerGiven !== "right" &&
+        answerGiven !== "Phishing" &&
+        answerGiven !== "Safe"
+      ) {
         return res.status(400).json({
           success: false,
           message: "Invalid answer format",
         });
       }
-      isCorrect = question.isPhishing
-        ? answerGiven === "Phishing"
-        : answerGiven === "Safe";
     }
+
+    const isCorrect = isValidSubmittedAnswer(question, answerGiven);
 
     // Scoring rule for each correct answer
     const pointsForCorrect = 10;
@@ -164,7 +177,7 @@ router.post("/submit", authMiddleware, async (req, res) => {
 
 /**
  * POST /api/phishing/complete
- * Body: { scoreForThisRun }
+ * Body: { answers }
  * - Called once when the user finishes the game
  * - Updates phishingStats.totalGames, bestScore, lastScore, lastCompletedAt
  * - Awards a completion bonus in coins
@@ -172,9 +185,27 @@ router.post("/submit", authMiddleware, async (req, res) => {
 router.post("/complete", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { scoreForThisRun } = req.body;
+    const { answers = [] } = req.body || {};
+    const normalizedAnswers = Array.isArray(answers) ? answers : [];
+    const questionIds = [
+      ...new Set(
+        normalizedAnswers.map((entry) => String(entry?.questionId || "")).filter(Boolean)
+      ),
+    ];
+    const questions = await PhishingQuestion.find({ _id: { $in: questionIds } }).lean();
+    const questionMap = new Map(questions.map((question) => [String(question._id), question]));
 
-    const numericScore = Number(scoreForThisRun) || 0;
+    let correctAnswers = 0;
+    for (const entry of normalizedAnswers) {
+      const question = questionMap.get(String(entry?.questionId || ""));
+      if (!question) continue;
+
+      if (isValidSubmittedAnswer(question, entry?.answerGiven)) {
+        correctAnswers += 1;
+      }
+    }
+
+    const numericScore = correctAnswers * 10;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -209,6 +240,7 @@ router.post("/complete", authMiddleware, async (req, res) => {
 
     return res.json({
       success: true,
+      verifiedCorrectAnswers: correctAnswers,
       completionBonus,
       xpAwarded: xpReward,
       level: xpInfo.level,

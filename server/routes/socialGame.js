@@ -9,6 +9,22 @@ import { applyXpReward } from "../lib/xp.js";
 
 const router = express.Router();
 
+function normalizeAiChoice(choice) {
+  return choice === "ai" || choice === "real" || choice === "left" || choice === "right"
+    ? choice
+    : "";
+}
+
+function normalizeNumberList(values) {
+  if (!Array.isArray(values)) return [];
+
+  return [...new Set(values.map((value) => Number(value)).filter(Number.isInteger))];
+}
+
+function normalizeBoolean(value) {
+  return typeof value === "boolean" ? value : null;
+}
+
 /**
  * GET /api/social/questions
  * Returns all game content for all three acts, sorted by order.
@@ -30,21 +46,86 @@ router.get("/questions", authMiddleware, async (req, res) => {
 
 /**
  * POST /api/social/complete
- * Body: { totalScore }
+ * Body: { aiAnswers, commentAnswers, privacyAnswers }
  * - Awards 10 coins per correct answer + 20 coin completion bonus
  * - Updates user.socialStats
  */
 router.post("/complete", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { totalScore = 0, breakdown = {} } = req.body;
+    const {
+      aiAnswers = [],
+      commentAnswers = [],
+      privacyAnswers = [],
+    } = req.body || {};
 
-    const numericScore = Number(totalScore) || 0;
+    const [aiImages, commentScenarios, settings] = await Promise.all([
+      SocialAiImage.find().sort({ order: 1 }).lean(),
+      SocialCommentScenario.find().sort({ order: 1 }).lean(),
+      SocialSetting.find().sort({ order: 1 }).lean(),
+    ]);
 
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
+
+    const aiMap = new Map(aiImages.map((item) => [String(item._id), item]));
+    const commentMap = new Map(commentScenarios.map((item) => [String(item._id), item]));
+    const settingMap = new Map(settings.map((item) => [String(item._id), item]));
+
+    let aiCorrect = 0;
+    let commentCorrect = 0;
+    let privacyCorrect = 0;
+
+    const normalizedAiAnswers = Array.isArray(aiAnswers) ? aiAnswers : [];
+    for (const entry of normalizedAiAnswers) {
+      const image = aiMap.get(String(entry?.id || ""));
+      const choice = normalizeAiChoice(entry?.choice);
+
+      if (!image || !choice) continue;
+
+      const isCorrect = image.type === "side-by-side"
+        ? choice === image.realSide
+        : (choice === "ai") === Boolean(image.isAI);
+
+      if (isCorrect) {
+        aiCorrect += 1;
+      }
+    }
+
+    const normalizedCommentAnswers = Array.isArray(commentAnswers) ? commentAnswers : [];
+    for (const entry of normalizedCommentAnswers) {
+      const scenario = commentMap.get(String(entry?.id || ""));
+      if (!scenario) continue;
+
+      const selectedIndexes = normalizeNumberList(entry?.selectedIndexes);
+      const botIndexes = scenario.comments
+        .map((comment, index) => (comment.isBot ? index : -1))
+        .filter((index) => index >= 0);
+
+      const botIndexSet = new Set(botIndexes);
+      commentCorrect += selectedIndexes.filter((index) => botIndexSet.has(index)).length;
+    }
+
+    const normalizedPrivacyAnswers = Array.isArray(privacyAnswers) ? privacyAnswers : [];
+    for (const entry of normalizedPrivacyAnswers) {
+      const setting = settingMap.get(String(entry?.id || ""));
+      const enabled = normalizeBoolean(entry?.enabled);
+
+      if (!setting || enabled === null) continue;
+      if (setting.dangerous && enabled) {
+        privacyCorrect += 1;
+      }
+    }
+
+    const aiAnswered = Math.min(normalizedAiAnswers.length, aiImages.length);
+    const commentAnswered = Math.min(
+      normalizedCommentAnswers.length,
+      commentScenarios.length
+    );
+    const privacyAnswered = Math.min(normalizedPrivacyAnswers.length, settings.length);
+    const numericScore = aiCorrect + commentCorrect + privacyCorrect;
 
     if (!user.socialStats) user.socialStats = {};
 
@@ -59,13 +140,6 @@ router.post("/complete", authMiddleware, async (req, res) => {
     user.coins = (user.coins || 0) + coinsEarned + completionBonus;
     const xpReward = 18 + numericScore * 2;
     const xpInfo = applyXpReward(user, xpReward);
-
-    const aiAnswered = Number(breakdown.aiImages?.answered || 0);
-    const aiCorrect = Number(breakdown.aiImages?.correct || 0);
-    const commentAnswered = Number(breakdown.commentScenarios?.answered || 0);
-    const commentCorrect = Number(breakdown.commentScenarios?.correct || 0);
-    const privacyAnswered = Number(breakdown.privacy?.answered || 0);
-    const privacyCorrect = Number(breakdown.privacy?.correct || 0);
 
     if (aiAnswered > 0) {
       applyMasteryResult(user, "aiSafety", {
@@ -99,6 +173,12 @@ router.post("/complete", authMiddleware, async (req, res) => {
       level: xpInfo.level,
       totalXp: user.xp,
       totalCoins: user.coins,
+      totalScore: numericScore,
+      breakdown: {
+        aiImages: { answered: aiAnswered, correct: aiCorrect },
+        commentScenarios: { answered: commentAnswered, correct: commentCorrect },
+        privacy: { answered: privacyAnswered, correct: privacyCorrect },
+      },
       stats,
     });
   } catch (err) {

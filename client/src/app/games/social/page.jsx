@@ -50,6 +50,7 @@ export default function SocialGamePage() {
   const [storyAnswer, setStoryAnswer] = useState(null);
   const [act1Correct, setAct1Correct] = useState(0);
   const [act1Review, setAct1Review]   = useState([]);
+  const [act1Answers, setAct1Answers] = useState([]);
 
   // Act 2 state
   const [act2Step, setAct2Step]                 = useState(0);
@@ -57,6 +58,7 @@ export default function SocialGamePage() {
   const [act2Submitted, setAct2Submitted]       = useState(false);
   const [act2TotalCorrect, setAct2TotalCorrect] = useState(0);
   const [act2Review, setAct2Review]             = useState([]);
+  const [act2Answers, setAct2Answers]           = useState([]);
 
   // Act 3 state
   const [toggles, setToggles]             = useState({});
@@ -113,6 +115,7 @@ export default function SocialGamePage() {
     const correct = img.type === "side-by-side" ? choice === img.realSide : (choice === "ai") === img.isAI;
     setStoryAnswer(correct ? "correct" : "wrong");
     if (correct) setAct1Correct((n) => n + 1);
+    setAct1Answers((prev) => [...prev, { id: img._id, choice }]);
 
     const correctAnswer = img.type === "side-by-side"
       ? `${img.realSide === "left" ? "Left" : "Right"} is real`
@@ -165,6 +168,10 @@ export default function SocialGamePage() {
         tip: scenario.tip,
       },
     ]);
+    setAct2Answers((prev) => [
+      ...prev,
+      { id: scenario._id, selectedIndexes: [...selectedComments] },
+    ]);
     setAct2TotalCorrect((n) => n + correct);
     setAct2Submitted(true);
   }
@@ -180,8 +187,10 @@ export default function SocialGamePage() {
     setRewardStatus({ message: "", tone: "info" });
     setStoryStep(0); setStoryAnswer(null); setAct1Correct(0);
     setAct1Review([]);
+    setAct1Answers([]);
     setAct2Step(0); setSelectedComments(new Set()); setAct2Submitted(false); setAct2TotalCorrect(0);
     setAct2Review([]);
+    setAct2Answers([]);
     setToggles(Object.fromEntries(settings.map((s) => [s._id, false])));
     setAct3Submitted(false);
     setAct3Review([]);
@@ -195,21 +204,12 @@ export default function SocialGamePage() {
         {
           method: "POST",
           body: JSON.stringify({
-            totalScore: score,
-            breakdown: {
-              aiImages: {
-                answered: aiImages.length,
-                correct: act1Correct,
-              },
-              commentScenarios: {
-                answered: act2Max,
-                correct: act2TotalCorrect,
-              },
-              privacy: {
-                answered: act3Max,
-                correct: act3Score,
-              },
-            },
+            aiAnswers: act1Answers,
+            commentAnswers: act2Answers,
+            privacyAnswers: settings.map((setting) => ({
+              id: setting._id,
+              enabled: Boolean(toggles[setting._id]),
+            })),
           }),
         },
         token

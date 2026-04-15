@@ -124,7 +124,12 @@ export default function PhishingPage() {
           "/api/phishing/complete",
           {
             method: "POST",
-            body: JSON.stringify({ scoreForThisRun: score }),
+            body: JSON.stringify({
+              answers: answerHistory.map((entry) => ({
+                questionId: entry.question?._id,
+                answerGiven: entry.userAnswer,
+              })),
+            }),
           },
           token
         );
