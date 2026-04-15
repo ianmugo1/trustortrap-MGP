@@ -1,12 +1,11 @@
 # TrustOrTrap
 
-TrustOrTrap is a cyber awareness app designed to help beginners
-build safer online habits through short, interactive challenges.
+TrustOrTrap is a cyber awareness app designed to help beginners build safer
+online habits through short, interactive challenges.
 
-Instead of relying on long explanations, the app teaches users
-through practical activities such as spotting phishing attempts,
-making safer decisions online, and completing daily Cyber Pet
-challenges.
+Instead of relying on long explanations, the app teaches users through
+practical activities such as spotting phishing attempts, making safer decisions
+online, and completing daily Cyber Pet challenges.
 
 ## Features
 
@@ -16,10 +15,13 @@ challenges.
 - Daily Cyber Pet mode
 - Progress dashboard
 - Kid-friendly story-based learning pages
+- Leaderboard, streak tracking, and story progress
+- Cosmetic shop tied to coins and levels
 
 ## Cyber Pet Mode
 
 Cyber Pet is designed as a simple daily learning habit:
+
 - 5 short cybersecurity questions per day
 - Correct answers improve pet health
 - Wrong answers reduce pet health
@@ -28,10 +30,9 @@ Cyber Pet is designed as a simple daily learning habit:
 
 ## Why This Project Matters
 
-Many people know cyber threats exist, but learning cybersecurity
-often feels too technical or overwhelming. TrustOrTrap makes cyber
-safety easier to understand by turning important lessons into short,
-practical experiences.
+Many people know cyber threats exist, but learning cybersecurity often feels too
+technical or overwhelming. TrustOrTrap makes cyber safety easier to understand
+by turning important lessons into short, practical experiences.
 
 ## Who It's For
 
@@ -57,21 +58,27 @@ npm install
 
 ### 2. Add environment variables
 
-Create a `.env` file in the project root. You can copy [`.env.example`](/Users/ianmugo/Desktop/TrustOrTrap/.env.example):
-
-```bash
-cp .env.example .env
-```
+Create a `.env` file in the project root. You can copy `.env.example`.
 
 Required values:
 
 - `PORT=5050`
 - `MONGODB_URI=your_mongodb_connection_string`
-- `JWT_SECRET=your_jwt_secret`
+- `JWT_SECRET=your_long_random_jwt_secret`
 - `CLIENT_ORIGIN=http://localhost:3000`
 - `NEXT_PUBLIC_API_BASE=http://localhost:5050`
 
-### 3. Start the app
+### 3. Seed the game content
+
+The phishing and social games expect MongoDB content to be present before they
+can run fully.
+
+```bash
+npm --prefix server run seed:phishing
+npm --prefix server run seed:social
+```
+
+### 4. Start the app
 
 ```bash
 npm run dev
@@ -82,9 +89,9 @@ Then open:
 - Frontend: `http://localhost:3000`
 - API: `http://localhost:5050`
 
-## Current Focus
+## Submission Notes
 
-TrustOrTrap currently focuses on core gameplay, learning
-experiences, and account features. More advanced features like
-leaderboards, pet evolution, and streak systems are intentionally
-left out for now to keep the app simple and usable.
+TrustOrTrap currently focuses on core gameplay, learning experiences, and
+account features. The current build includes leaderboards, streak tracking,
+story progress, account settings, and a simple cosmetic shop alongside the main
+learning activities.

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "seed:phishing": "node seed/phishingQuestions.js"
+    "seed:phishing": "node seed/phishingQuestions.js",
+    "seed:social": "node seed/seedSocial.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
