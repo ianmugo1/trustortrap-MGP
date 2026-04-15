@@ -16,6 +16,7 @@ import userRoutes from "./routes/user.routes.js";
 import phishingRoutes from "./routes/phishingGame.js";
 import cyberPetRoutes from "./routes/cyberpet.js";
 import socialRoutes from "./routes/socialGame.js";
+import leaderboardRoutes from "./routes/leaderboard.js";
 
 loadEnv();
 
@@ -145,6 +146,8 @@ app.use("/api/cyberpet", cyberPetRoutes);
 app.use("/cyberpet", cyberPetRoutes);
 app.use("/api/social", socialRoutes);
 app.use("/social", socialRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/leaderboard", leaderboardRoutes);
 
 app.use((_req, res) => {
   return res.status(404).json({ message: "Not found" });
