@@ -30,6 +30,7 @@ function markSessionExpired() {
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.setItem(EXPIRED_KEY, "1");
+    window.dispatchEvent(new Event("tt:session-expired"));
   } catch {}
 }
 

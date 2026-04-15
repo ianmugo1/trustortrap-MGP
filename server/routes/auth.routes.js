@@ -10,14 +10,16 @@ const router = express.Router();
 router.post("/register", async (req, res) => {
   try {
     const { displayName, email, password, learningInterest } = req.body || {};
+    const normalizedDisplayName = String(displayName || "").trim();
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!displayName || !email || !password) {
+    if (!normalizedDisplayName || !normalizedEmail || !password) {
       return res
         .status(400)
         .json({ message: "Display name, email and password are required" });
     }
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) {
       return res.status(409).json({ message: "Email is already in use" });
     }
@@ -25,8 +27,8 @@ router.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      displayName,
-      email,
+      displayName: normalizedDisplayName,
+      email: normalizedEmail,
       password: hashedPassword,
       learningInterest: learningInterest || "",
     });
@@ -49,11 +51,13 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body || {};
-    if (!email || !password) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    if (!normalizedEmail || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const ok = await bcrypt.compare(password, user.password);

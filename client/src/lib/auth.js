@@ -48,7 +48,6 @@ export const AuthAPI = {
       res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           displayName: name.trim(),
           email: email.trim(),
@@ -69,7 +68,6 @@ export const AuthAPI = {
       res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           email: email.trim(),
           password: password.trim(),

@@ -119,8 +119,8 @@ const userSettingsSchema = new mongoose.Schema(
 
 const userSchema = new mongoose.Schema(
   {
-    displayName: { type: String, required: true },
-    email:      { type: String, required: true, unique: true },
+    displayName: { type: String, required: true, trim: true },
+    email:      { type: String, required: true, unique: true, trim: true, lowercase: true },
     password:   { type: String, required: true },
 
     // Coins for rewards / gamification
