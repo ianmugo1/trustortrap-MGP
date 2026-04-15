@@ -24,11 +24,17 @@ export function getAllowedOrigins() {
     process.env.NEXT_PUBLIC_CLIENT_ORIGIN,
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
   ]
     .map((value) => String(value || "").trim().replace(/\/+$/, ""))
     .filter(Boolean);
 }
 
 export function getAllowedOriginPatterns() {
-  return [];
+  return [
+    /^https:\/\/trustortrap-web(?:-[a-z0-9-]+)?\.vercel\.app$/i,
+    /^https:\/\/trustortrap(?:-[a-z0-9-]+)?-courseconnect\.vercel\.app$/i,
+    /^https:\/\/trustortrap-web-git-[a-z0-9-]+-courseconnect\.vercel\.app$/i,
+  ];
 }
