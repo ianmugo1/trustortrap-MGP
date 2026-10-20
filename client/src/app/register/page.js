@@ -134,6 +134,10 @@ export default function RegisterPage() {
       <Link href="/login" className="font-medium text-emerald-300 hover:text-emerald-200">
         Sign in
       </Link>
+      {" · "}
+      <Link href="/privacy" className="hover:text-slate-200">
+        Privacy policy
+      </Link>
     </p>
   );
 

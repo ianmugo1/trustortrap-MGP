@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, KeyRound, Shield, SlidersHorizontal, UserRound } from "lucide-react";
 import { authFetch } from "@/lib/api";
@@ -671,6 +672,12 @@ export default function SettingsPage() {
           >
             {loadingSection === "delete" ? "Deleting..." : "Delete account"}
           </button>
+          <Link
+            href="/privacy"
+            className="self-center text-sm text-slate-400 underline hover:text-slate-200"
+          >
+            Privacy policy
+          </Link>
         </div>
       </SectionCard>
       </div>

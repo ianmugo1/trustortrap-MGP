@@ -2,6 +2,8 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import { authenticateUser } from "../middleware/auth.js";
 import User from "../models/User.js";
+import CyberPet from "../models/CyberPet.js";
+import PhishingResult from "../models/PhishingResult.js";
 import { sanitizeUser } from "../lib/user.js";
 import { applyMasteryResult, markStoryComplete } from "../lib/progress.js";
 import { applyXpReward } from "../lib/xp.js";
@@ -353,6 +355,12 @@ router.delete("/me", authenticateUser, async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
+
+    // Remove everything linked to the account (App Store requirement)
+    await Promise.all([
+      CyberPet.deleteMany({ userId: req.user.id }),
+      PhishingResult.deleteMany({ userId: req.user.id }),
+    ]);
 
     return res.json({ success: true, message: "Account deleted" });
   } catch (err) {
