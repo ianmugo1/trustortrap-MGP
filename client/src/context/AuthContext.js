@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { authFetch } from "@/lib/api";
+import { syncDailyReminder } from "@/lib/native";
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = "tt_auth";
@@ -61,6 +62,13 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   }, []);
+
+  // Keep the iOS daily reminder in step with the "App notifications" setting
+  const appNotifications = user ? user.settings?.notifications?.app ?? true : false;
+  useEffect(() => {
+    if (loading) return;
+    syncDailyReminder(appNotifications);
+  }, [loading, appNotifications]);
 
   useEffect(() => {
     const handleExpired = () => {

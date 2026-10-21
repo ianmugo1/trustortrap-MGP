@@ -1,0 +1,16 @@
+{
+  "appId": "com.trustortrap.app",
+  "appName": "TrustOrTrap",
+  "webDir": "out",
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#0f172a"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1000,
+      "backgroundColor": "#0f172a",
+      "showSpinner": false
+    }
+  }
+}

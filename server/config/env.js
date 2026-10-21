@@ -26,6 +26,7 @@ export function getAllowedOrigins() {
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
+    "capacitor://localhost", // iOS app
   ]
     .map((value) => String(value || "").trim().replace(/\/+$/, ""))
     .filter(Boolean);
