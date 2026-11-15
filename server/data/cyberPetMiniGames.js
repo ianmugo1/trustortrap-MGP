@@ -101,6 +101,96 @@ const cyberPetMiniGames = {
         answer: false,
         explanation: "Personal info like pet names can be guessed from social media. Use random passphrases instead.",
       },
+      {
+        id: "tf_16",
+        prompt: "A message that says 'you must act in 10 minutes' deserves extra checking.",
+        answer: true,
+        explanation: "Rushing you is a common scam trick. Slow down and check."
+      },
+      {
+        id: "tf_17",
+        prompt: "It is fine to share a one-time login code with someone who says they are from support.",
+        answer: false,
+        explanation: "Real support never asks for your code. Anyone who has it can get into your account."
+      },
+      {
+        id: "tf_18",
+        prompt: "Public Wi-Fi in a cafe is a safe place to log in to a bank account.",
+        answer: false,
+        explanation: "Other people on open Wi-Fi may be able to snoop. Use mobile data for private things."
+      },
+      {
+        id: "tf_19",
+        prompt: "Installing updates helps fix security holes in your apps.",
+        answer: true,
+        explanation: "Updates often close gaps that attackers use."
+      },
+      {
+        id: "tf_20",
+        prompt: "If a friend's account sends a strange link, it could have been hacked.",
+        answer: true,
+        explanation: "Check with your friend another way before you tap."
+      },
+      {
+        id: "tf_21",
+        prompt: "A website address starting with https can never be a scam site.",
+        answer: false,
+        explanation: "Scam sites can use https too. Check the name of the site as well."
+      },
+      {
+        id: "tf_22",
+        prompt: "Posting a photo of your school uniform can tell strangers where you go to school.",
+        answer: true,
+        explanation: "Small details in photos can give away where you are."
+      },
+      {
+        id: "tf_23",
+        prompt: "A game mod from an unknown website is always safe if lots of people downloaded it.",
+        answer: false,
+        explanation: "Download counts can be faked. Stick to official stores."
+      },
+      {
+        id: "tf_24",
+        prompt: "You should use a different password for your email than for your games.",
+        answer: true,
+        explanation: "If one is stolen, the other stays safe."
+      },
+      {
+        id: "tf_25",
+        prompt: "A pop-up saying your device has 5 viruses is usually telling the truth.",
+        answer: false,
+        explanation: "Scary pop-ups are adverts or scams. Close the tab and do not tap the buttons."
+      },
+      {
+        id: "tf_26",
+        prompt: "Locking your screen with a PIN protects you if you lose your phone.",
+        answer: true,
+        explanation: "A screen lock keeps a stranger out of your apps and photos."
+      },
+      {
+        id: "tf_27",
+        prompt: "It is safe to tell an online friend your home address if they seem nice.",
+        answer: false,
+        explanation: "You cannot be sure who someone online really is."
+      },
+      {
+        id: "tf_28",
+        prompt: "Backing up your photos means you still have them if your device breaks.",
+        answer: true,
+        explanation: "A backup is a second copy kept somewhere else."
+      },
+      {
+        id: "tf_29",
+        prompt: "Clicking 'unsubscribe' in a scam email is the best way to stop it.",
+        answer: false,
+        explanation: "It can show scammers your address is real. Mark it as spam instead."
+      },
+      {
+        id: "tf_30",
+        prompt: "A voice on the phone can be faked by AI to sound like someone you know.",
+        answer: true,
+        explanation: "If a call asks for money or secrets, hang up and ring the person back yourself."
+      },
     ],
   },
 
@@ -205,6 +295,96 @@ const cyberPetMiniGames = {
         prompt: "letmein",
         answer: 0,
         explanation: "This is one of the top 10 most common passwords worldwide.",
+      },
+      {
+        id: "ps_16",
+        prompt: "qwerty",
+        answer: 0,
+        explanation: "Keyboard patterns are among the first things attackers try."
+      },
+      {
+        id: "ps_17",
+        prompt: "Liverpool2024",
+        answer: 0,
+        explanation: "A team name and a year are easy to guess."
+      },
+      {
+        id: "ps_18",
+        prompt: "purple-kettle-moon-river",
+        answer: 2,
+        explanation: "Four random words make a long passphrase that is hard to crack."
+      },
+      {
+        id: "ps_19",
+        prompt: "abc12345",
+        answer: 0,
+        explanation: "Simple sequences get guessed in seconds."
+      },
+      {
+        id: "ps_20",
+        prompt: "Tr33house!",
+        answer: 1,
+        explanation: "Mixed characters help, but it is short and based on one word."
+      },
+      {
+        id: "ps_21",
+        prompt: "sunny-otter-plays-drums-42",
+        answer: 2,
+        explanation: "Long, random and easy for you to picture."
+      },
+      {
+        id: "ps_22",
+        prompt: "iloveyou",
+        answer: 0,
+        explanation: "Common phrases are on every attacker's list."
+      },
+      {
+        id: "ps_23",
+        prompt: "Dublin#7",
+        answer: 1,
+        explanation: "A place name with a symbol is better than nothing, but still short and guessable."
+      },
+      {
+        id: "ps_24",
+        prompt: "xK9$mPq2vL7w",
+        answer: 2,
+        explanation: "Twelve random characters is strong. A password manager can remember it for you."
+      },
+      {
+        id: "ps_25",
+        prompt: "11111111",
+        answer: 0,
+        explanation: "Repeating one character gives almost no protection."
+      },
+      {
+        id: "ps_26",
+        prompt: "MyDogMax",
+        answer: 0,
+        explanation: "Pet names are easy to find out."
+      },
+      {
+        id: "ps_27",
+        prompt: "frozen-pizza-jumps-high",
+        answer: 2,
+        explanation: "Random words together are long and hard to guess."
+      },
+      {
+        id: "ps_28",
+        prompt: "Summer!23",
+        answer: 1,
+        explanation: "Season plus year is a common pattern, even with a symbol."
+      },
+      {
+        id: "ps_29",
+        prompt: "letmein",
+        answer: 0,
+        explanation: "One of the most used passwords in the world."
+      },
+      {
+        id: "ps_30",
+        prompt: "giraffe.cloud.sock.piano",
+        answer: 2,
+        explanation: "Unrelated words make a strong passphrase."
       },
     ],
   },
@@ -326,6 +506,171 @@ const cyberPetMiniGames = {
         options: ["username", "email subject", "profile picture"],
         answer: 0,
         explanation: "Using your real name in usernames makes it easier for strangers to find you.",
+      },
+      {
+        id: "fb_16",
+        prompt: "A code sent to your phone when you log in is called two-factor _____.",
+        options: [
+          "authentication",
+          "advertising",
+          "animation"
+        ],
+        answer: 0,
+        explanation: "It adds a second check on top of your password."
+      },
+      {
+        id: "fb_17",
+        prompt: "If an offer sounds too good to be _____, it probably is.",
+        options: [
+          "cheap",
+          "true",
+          "late"
+        ],
+        answer: 1,
+        explanation: "Unbelievable deals are bait."
+      },
+      {
+        id: "fb_18",
+        prompt: "Keep your apps and device up to _____.",
+        options: [
+          "date",
+          "speed",
+          "volume"
+        ],
+        answer: 0,
+        explanation: "Updates fix security problems."
+      },
+      {
+        id: "fb_19",
+        prompt: "A fake message that tries to trick you is called _____.",
+        options: [
+          "phishing",
+          "surfing",
+          "streaming"
+        ],
+        answer: 0,
+        explanation: "Phishing messages pretend to be someone you trust."
+      },
+      {
+        id: "fb_20",
+        prompt: "Use a password _____ to remember lots of strong passwords.",
+        options: [
+          "notebook",
+          "manager",
+          "sticker"
+        ],
+        answer: 1,
+        explanation: "A password manager stores them safely for you."
+      },
+      {
+        id: "fb_21",
+        prompt: "Set your social media profile to _____.",
+        options: [
+          "public",
+          "private",
+          "famous"
+        ],
+        answer: 1,
+        explanation: "Private profiles keep strangers from seeing your posts."
+      },
+      {
+        id: "fb_22",
+        prompt: "Think before you _____ a photo online.",
+        options: [
+          "post",
+          "print",
+          "paint"
+        ],
+        answer: 0,
+        explanation: "Once it is shared, you cannot fully take it back."
+      },
+      {
+        id: "fb_23",
+        prompt: "Never pay a stranger with gift _____.",
+        options: [
+          "wrap",
+          "cards",
+          "bags"
+        ],
+        answer: 1,
+        explanation: "Gift card payments are a scammer favourite."
+      },
+      {
+        id: "fb_24",
+        prompt: "Hover over or long-press a _____ to see where it really goes.",
+        options: [
+          "link",
+          "photo",
+          "emoji"
+        ],
+        answer: 0,
+        explanation: "The real address can be different from the text you see."
+      },
+      {
+        id: "fb_25",
+        prompt: "Lock your phone with a PIN or your _____.",
+        options: [
+          "fingerprint",
+          "nickname",
+          "birthday"
+        ],
+        answer: 0,
+        explanation: "A fingerprint or PIN keeps other people out."
+      },
+      {
+        id: "fb_26",
+        prompt: "If you are not sure about a message, ask a trusted _____.",
+        options: [
+          "adult",
+          "advert",
+          "app"
+        ],
+        answer: 0,
+        explanation: "A second opinion stops a lot of scams."
+      },
+      {
+        id: "fb_27",
+        prompt: "Log _____ of shared computers when you finish.",
+        options: [
+          "into",
+          "out",
+          "over"
+        ],
+        answer: 1,
+        explanation: "Otherwise the next person can use your account."
+      },
+      {
+        id: "fb_28",
+        prompt: "A program that harms your device is called _____.",
+        options: [
+          "hardware",
+          "malware",
+          "homeware"
+        ],
+        answer: 1,
+        explanation: "Malware is short for malicious software."
+      },
+      {
+        id: "fb_29",
+        prompt: "Only accept friend requests from people you _____.",
+        options: [
+          "know",
+          "like the look of",
+          "have never met"
+        ],
+        answer: 0,
+        explanation: "Strangers online may not be who they say."
+      },
+      {
+        id: "fb_30",
+        prompt: "Scammers create a feeling of _____ so you act without thinking.",
+        options: [
+          "urgency",
+          "boredom",
+          "calm"
+        ],
+        answer: 0,
+        explanation: "Pressure is the oldest trick in the book."
       },
     ],
   },

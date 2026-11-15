@@ -117,6 +117,42 @@ const COMMENT_SCENARIOS = [
     ],
     tip: "Bots in comment sections often offer fake subscribers or views. These services can get your account banned and are never real.",
   },
+  {
+    order: 5,
+    post: { author: "User 21", handle: "@user21", text: "Lost my dog Biscuit near the park this evening. He is a small brown terrier with a red collar. Please share if you are in the area!", likes: 302, time: "1 hour ago" },
+    comments: [
+      { author: "User 22",        handle: "@user22",           text: "Sharing now. I walk there every morning so I will keep an eye out.", isBot: false },
+      { author: "Pet Finder Pro",  handle: "@petfinder_pro_ie", text: "We can locate your pet by GPS in 10 minutes! Pay a small search fee here: find-my-pet-fast.net", isBot: true },
+      { author: "User 23",        handle: "@user23",           text: "Try the vet on Main Street, people often bring found dogs there.", isBot: false },
+      { author: "User 24",        handle: "@user24_x8821",     text: "I have your dog. Send me a 50 voucher code first and I will tell you where he is.", isBot: true },
+      { author: "User 25",        handle: "@user25",           text: "Hope you find him soon. I will put it in the estate group chat.", isBot: false },
+    ],
+    tip: "Scammers target lost pet posts because the owner is upset and will try anything. Never pay before you see proof, like a new photo of your pet.",
+  },
+  {
+    order: 6,
+    post: { author: "User 26", handle: "@user26", text: "Selling two tickets for the concert on Saturday because I cannot go any more. Face value. Message me if you want them.", likes: 57, time: "4 hours ago" },
+    comments: [
+      { author: "User 27",       handle: "@user27",          text: "Gutted you cannot go! Are they standing or seated?", isBot: false },
+      { author: "TicketSwap Help", handle: "@ticketswap_helpdesk", text: "Verify your tickets with our agent before selling. Log in with your ticket account here: ticket-verify-desk.com", isBot: true },
+      { author: "User 28",       handle: "@user28",          text: "My sister is looking for two. I will tell her to message you.", isBot: false },
+      { author: "User 29",       handle: "@user29_real_buyer", text: "I will pay double! Just send me the ticket barcodes first so I can check them.", isBot: true },
+      { author: "User 30",       handle: "@user30",          text: "Use the official resale page so you are both protected.", isBot: false },
+    ],
+    tip: "A barcode is the ticket. Anyone who gets it first can use it. Fake 'verification' pages steal your login. Use the official resale service.",
+  },
+  {
+    order: 7,
+    post: { author: "User 31", handle: "@user31", text: "Finally hit level 100 in BlockQuest after two years. Here is my base tour!", likes: 811, time: "5 hours ago" },
+    comments: [
+      { author: "User 32",      handle: "@user32",         text: "That castle is unreal. How long did the roof take?", isBot: false },
+      { author: "BlockQuest Mods", handle: "@blockquest_m0ds", text: "Congrats! You qualify for moderator rank. Confirm your password here to activate: blockquest-staff-login.net", isBot: true },
+      { author: "User 33",      handle: "@user33",         text: "Two years! Respect. I am still stuck on level 40.", isBot: false },
+      { author: "Free Gems",     handle: "@free_gems_daily", text: "Get 10,000 gems free. Works on every account. No ban! gems-generator-free.xyz", isBot: true },
+      { author: "User 34",      handle: "@user34",         text: "Can you share the seed for that world?", isBot: false },
+    ],
+    tip: "Fake staff accounts and free currency generators are after your login. Game staff never ask for your password in a comment.",
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -130,6 +166,10 @@ const SETTINGS = [
   { order: 4, label: "Who can add me as a friend", desc: "Friend requests can be sent by...",     dangerous: true,  current: "Everyone",  safe: "Friends of friends", tip: "If anyone can add you, strangers can send you friend requests without you knowing them at all." },
   { order: 5, label: "Notification sounds",      desc: "Play a sound for new notifications",      dangerous: false, current: "On",        safe: null,           tip: "" },
   { order: 6, label: "Dark mode",                desc: "Switch the app to a dark colour theme",   dangerous: false, current: "Off",       safe: null,           tip: "" },
+  { order: 7, label: "Who can tag me in photos",  desc: "Tags on photos can be added by...",        dangerous: true,  current: "Everyone",  safe: "Friends only", tip: "If anyone can tag you, strangers can link your name to photos you never agreed to." },
+  { order: 8, label: "Show when I am online",     desc: "Others can see when you are active",        dangerous: true,  current: "On",        safe: "Off",          tip: "Showing when you are online tells strangers your routine and when you are on your own." },
+  { order: 9, label: "Two-step login",            desc: "Ask for a code when logging in on a new device", dangerous: true, current: "Off",   safe: "On",           tip: "With two-step login off, a stolen password is all someone needs to take your account." },
+  { order: 10, label: "Language",                 desc: "The language used in menus",                dangerous: false, current: "English",   safe: null,           tip: "" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -139,15 +179,18 @@ async function seed() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log(" Connected to MongoDB");
 
-  await SocialAiImage.deleteMany({});
-  await SocialCommentScenario.deleteMany({});
-  await SocialSetting.deleteMany({});
-  console.log(" Cleared existing social game data");
+  // Add or update by "order". Nothing is deleted.
+  const upsertAll = (Model, items) =>
+    Model.bulkWrite(
+      items.map((item) => ({
+        updateOne: { filter: { order: item.order }, update: { $set: item }, upsert: true },
+      }))
+    );
 
-  await SocialAiImage.insertMany(AI_IMAGES);
-  await SocialCommentScenario.insertMany(COMMENT_SCENARIOS);
-  await SocialSetting.insertMany(SETTINGS);
-  console.log(` Inserted ${AI_IMAGES.length} AI images, ${COMMENT_SCENARIOS.length} comment scenarios, ${SETTINGS.length} settings`);
+  await upsertAll(SocialAiImage, AI_IMAGES);
+  await upsertAll(SocialCommentScenario, COMMENT_SCENARIOS);
+  await upsertAll(SocialSetting, SETTINGS);
+  console.log(` Upserted ${AI_IMAGES.length} AI images, ${COMMENT_SCENARIOS.length} comment scenarios, ${SETTINGS.length} settings`);
 
   await mongoose.disconnect();
   console.log(" Done");

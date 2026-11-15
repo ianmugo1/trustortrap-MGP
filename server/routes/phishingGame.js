@@ -4,6 +4,9 @@ import User from "../models/User.js";
 import authMiddleware from "../middleware/auth.js"; // must set req.user.id from JWT
 import { applyMasteryResult } from "../lib/progress.js";
 import { applyXpReward } from "../lib/xp.js";
+import { pickHuntEmails, toPublicEmail, scoreHunt } from "../lib/hunt.js";
+
+const QUESTIONS_PER_RUN = 10;
 
 const router = express.Router();
 
@@ -47,15 +50,22 @@ function isValidSubmittedAnswer(question, answerGiven) {
 
 /**
  * GET /api/phishing/questions
- * - Returns all phishing questions
+ * - Returns 10 random phishing questions for one run
  * - Protected by auth so we know which user is playing
  */
 router.get("/questions", authMiddleware, async (req, res) => {
   try {
     // Only return MCQ questions (ones with options array that has at least 1 item)
-    const questions = await PhishingQuestion.find({
+    const all = await PhishingQuestion.find({
       "options.0": { $exists: true },
     }).lean();
+
+    // Shuffle, then keep one run's worth
+    for (let i = all.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    const questions = all.slice(0, QUESTIONS_PER_RUN);
 
     return res.json({
       success: true,
@@ -253,6 +263,58 @@ router.post("/complete", authMiddleware, async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Server error" });
+  }
+});
+
+/**
+ * GET /api/phishing/hunt
+ * - Returns 5 emails for a red flag hunt run, with the answers removed
+ */
+router.get("/hunt", authMiddleware, (_req, res) => {
+  return res.json({ success: true, emails: pickHuntEmails().map(toPublicEmail) });
+});
+
+/**
+ * POST /api/phishing/hunt/complete
+ * Body: { submissions: [{ emailId, tapped: [segmentId] }] }
+ * - Scores the run on the server and awards coins and XP
+ */
+router.post("/hunt/complete", authMiddleware, async (req, res) => {
+  try {
+    const result = scoreHunt(req.body?.submissions);
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const completionBonus = result.emails.length > 0 ? 20 : 0;
+    const xpReward =
+      result.emails.length === 0 ? 0 : result.score * 2 >= result.maxScore ? 25 : 15;
+
+    user.coins = (user.coins || 0) + completionBonus;
+    const xpInfo = applyXpReward(user, xpReward);
+    applyMasteryResult(user, "phishing", {
+      answered: result.flagsTotal,
+      correct: result.flagsFound,
+    });
+    user.markModified("mastery");
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      ...result,
+      completionBonus,
+      xpAwarded: xpReward,
+      leveledUp: xpInfo.leveledUp,
+      level: xpInfo.level,
+      totalXp: user.xp,
+      totalCoins: user.coins,
+    });
+  } catch (err) {
+    console.error("Complete red flag hunt error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
