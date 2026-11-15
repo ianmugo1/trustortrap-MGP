@@ -115,7 +115,7 @@ Steps: client build, server tests, browser check of every screen at both widths 
 Accept: CI green; bundle growth at most 60 kB gzipped.
 
 ## T13. Bright theme for younger children
-Status: done
+Status: reverted on 2026-11-15 23:15 at Dylan's request. Dark theme restored
 
 Files: `client/src/app/bright-theme.css`, `client/src/app/globals.css`, `client/src/app/layout.js`, stories pages (`tt-original`).
 Accept: every screen has a light background with readable text; stories pages keep their own colours.

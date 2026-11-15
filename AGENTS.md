@@ -10,7 +10,6 @@ Rules for any AI agent or new contributor working in this repo.
 | `client/src/components/` | Shared UI. `motion/index.jsx` holds every shared animation piece. |
 | `client/src/lib/` | Client helpers: API calls, XP maths, story chapters, shop data. |
 | `client/src/app/globals.css` | Colour, surface and motion tokens (`.tt-card`, `.tt-btn`, `.tt-aurora`). |
-| `client/src/app/bright-theme.css` | The bright theme. Swaps Tailwind colour variables so dark-theme classes render light. Read the comment at the top before changing colours. |
 | `server/routes/` | Express routes. Every game route needs the auth middleware. |
 | `server/lib/` | Pure logic with tests (`hunt.js`, `xp.js`, `progress.js`). |
 | `server/data/` | Game content kept in code: red flag emails, Cyber Pet questions, phishing questions. |

@@ -1,17 +1,18 @@
 /* Enable Tailwind v4 */
 @import "tailwindcss";
-@import "./bright-theme.css";
 
 :root {
-  --tt-bg: #eaf4ff;
-  --tt-border: rgba(99, 102, 241, 0.18);
-  --tt-accent: #10b981;
-  --tt-accent-strong: #06b6d4;
-  --tt-highlight: #f59e0b;
-  --tt-text-soft: #475569;
-  --tt-radius: 1.75rem;
-  --tt-shadow: 0 14px 0 -8px rgba(99, 102, 241, 0.16), 0 24px 50px -24px rgba(79, 70, 229, 0.35);
-  --tt-glow: 0 0 0 3px rgba(167, 139, 250, 0.45), 0 20px 44px -18px rgba(124, 58, 237, 0.5);
+  --tt-bg: #020617;
+  --tt-panel: rgba(15, 23, 42, 0.78);
+  --tt-panel-strong: rgba(15, 23, 42, 0.94);
+  --tt-border: rgba(148, 163, 184, 0.16);
+  --tt-accent: #34d399;
+  --tt-accent-strong: #22d3ee;
+  --tt-highlight: #facc15;
+  --tt-text-soft: #94a3b8;
+  --tt-radius: 1.5rem;
+  --tt-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.7);
+  --tt-glow: 0 0 0 1px rgba(52, 211, 153, 0.25), 0 12px 40px -12px rgba(52, 211, 153, 0.35);
 }
 
 html,
@@ -21,18 +22,16 @@ body {
 
 body {
   background:
-    radial-gradient(circle at 12% 8%, rgba(253, 224, 71, 0.35), transparent 30%),
-    radial-gradient(circle at 88% 12%, rgba(244, 114, 182, 0.28), transparent 32%),
-    radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.3), transparent 40%),
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.12), transparent 28%),
+    radial-gradient(circle at 20% 20%, rgba(52, 211, 153, 0.12), transparent 22%),
     var(--tt-bg);
-  background-attachment: fixed;
-  color: #1e1b4b;
+  color: #e2e8f0;
   font-family: "Inter Variable", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 ::selection {
-  background: rgba(167, 139, 250, 0.4);
-  color: #1e1b4b;
+  background: rgba(52, 211, 153, 0.3);
+  color: #f8fafc;
 }
 
 .font-display {
@@ -98,7 +97,7 @@ h3 {
 .tt-card {
   border: 1px solid var(--tt-border);
   border-radius: var(--tt-radius);
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.82));
   box-shadow: var(--tt-shadow);
   backdrop-filter: blur(14px);
 }
@@ -108,7 +107,7 @@ h3 {
 }
 
 .tt-card-glow:hover {
-  border-color: rgba(167, 139, 250, 0.7);
+  border-color: rgba(52, 211, 153, 0.4);
   box-shadow: var(--tt-glow);
 }
 
@@ -121,28 +120,21 @@ h3 {
   border-radius: 0.9rem;
   padding: 0.65rem 1.4rem;
   font-weight: 700;
-  color: #ffffff;
-  background: linear-gradient(90deg, #7c3aed, #ec4899);
-  box-shadow: 0 6px 0 0 #5b21b6, 0 16px 30px -12px rgba(124, 58, 237, 0.6);
-  transition: transform 150ms ease, filter 150ms ease, box-shadow 150ms ease;
+  color: #0f172a;
+  background: linear-gradient(90deg, #34d399, #22d3ee);
+  box-shadow: 0 10px 30px -12px rgba(34, 211, 238, 0.6);
+  transition: transform 150ms ease, filter 150ms ease;
 }
 
 .tt-btn:hover {
   filter: brightness(1.08);
-  transform: translateY(-2px);
-}
-
-/* Chunky button that squashes down when pressed */
-.tt-btn:not(:disabled):active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 0 #5b21b6;
 }
 
 .tt-btn-ghost {
-  color: #4c1d95;
-  background: #ffffff;
-  border: 2px solid #c4b5fd;
-  box-shadow: 0 5px 0 0 #c4b5fd;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--tt-border);
+  box-shadow: none;
 }
 
 /* Every button and link gives a small press response */
@@ -158,7 +150,7 @@ a:active {
 }
 
 .tt-gradient-text {
-  background: linear-gradient(90deg, #7c3aed, #ec4899, #f59e0b);
+  background: linear-gradient(90deg, #a7f3d0, #67e8f9, #fde68a);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -170,9 +162,9 @@ a:active {
   inset: -20%;
   pointer-events: none;
   background:
-    radial-gradient(40% 35% at 20% 25%, rgba(253, 224, 71, 0.45), transparent 70%),
-    radial-gradient(35% 30% at 80% 15%, rgba(244, 114, 182, 0.35), transparent 70%),
-    radial-gradient(45% 40% at 60% 85%, rgba(56, 189, 248, 0.4), transparent 70%);
+    radial-gradient(40% 35% at 20% 25%, rgba(52, 211, 153, 0.16), transparent 70%),
+    radial-gradient(35% 30% at 80% 15%, rgba(34, 211, 238, 0.14), transparent 70%),
+    radial-gradient(45% 40% at 60% 85%, rgba(167, 139, 250, 0.12), transparent 70%);
   animation: aurora-shift 26s ease-in-out infinite alternate;
 }
 
@@ -182,7 +174,7 @@ a:active {
 
 /* Decorative background shapes */
 .tt-shape {
-  opacity: 0.22;
+  opacity: 0.14;
   animation: shape-bob 7s ease-in-out infinite;
 }
 
@@ -191,14 +183,10 @@ a:active {
   animation: card-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* Icons inside a hovered or focused card give a little wiggle */
+/* Icons inside a hovered card give a little wiggle */
 .tt-card:hover .tt-float,
 .tt-wiggle:hover {
   animation: wiggle 500ms ease-in-out;
-}
-
-.tt-btn-ghost:not(:disabled):active {
-  box-shadow: 0 1px 0 0 #c4b5fd;
 }
 
 @keyframes shape-bob {

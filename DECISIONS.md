@@ -24,3 +24,4 @@ Every decision, newest last. Times are Europe/Dublin.
 | 2026-11-15 23:20 | Phishing submit accepts answer `0`. | Option A is index 0 and the old check treated it as missing, so picking A always failed with a 400. |
 | 2026-11-15 23:20 | Seeds connect with `dbName: "trustortrap"`. | The API always uses that database name. Without it the seeds could write to a different database than the API reads. |
 | 2026-11-15 23:20 | `/api/users/me` converts mastery sub-documents to plain objects. | Spreading the Mongoose sub-documents returned zeros for every topic. |
+| 2026-11-15 23:15 | Bright theme removed. Back to the dark theme. Animations, social game work and bug fixes stay. `bright-theme.css` deleted; it is in git history at commit `40715d9`. | Dylan asked to go back to the original theme. |
