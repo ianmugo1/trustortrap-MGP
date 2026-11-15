@@ -1,5 +1,7 @@
 // Results screen shown after all 3 acts are complete
 import { ActBar } from "./_components";
+import { motion } from "motion/react";
+import { Confetti, CountUp, ProgressBar } from "@/components/motion";
 
 // Pick a grade based on percentage score
 function getGrade(pct) {
@@ -23,8 +25,13 @@ export default function ResultsScreen({
   const grade = getGrade(pct);
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10">
-      <div className="max-w-md w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-700 p-8 text-center">
+    <main className="min-h-screen flex items-center justify-center px-4 py-10">
+      <Confetti fire={pct >= 70} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="tt-card max-w-md w-full p-8 text-center"
+      >
         <ActBar current={3} />
 
         <h1 className="text-3xl font-black text-white mb-1">{grade.label}</h1>
@@ -33,7 +40,7 @@ export default function ResultsScreen({
         {/* Coins earned badge */}
         {coinsEarned !== null && (
           <div className="rounded-2xl bg-amber-500/15 border border-amber-500/30 px-4 py-3 mb-5 flex items-center justify-center gap-2">
-            <span className="text-amber-300 font-black text-xl">+{coinsEarned}</span>
+            <span className="text-amber-300 font-black text-xl">+<CountUp value={coinsEarned} /></span>
             <span className="text-amber-400 font-semibold text-sm">coins earned</span>
           </div>
         )}
@@ -66,18 +73,9 @@ export default function ResultsScreen({
         <div className="rounded-xl bg-slate-800 border border-slate-700 p-4 mb-5 text-left">
           <div className="flex justify-between text-sm mb-2">
             <span className="text-slate-500">Overall score</span>
-            <span className="font-bold text-white">{totalScore} / {totalMax}</span>
+            <span className="font-bold text-white"><CountUp value={totalScore} /> / {totalMax}</span>
           </div>
-          <div className="h-2.5 bg-slate-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-600 rounded-full transition-all duration-500"
-              style={{ width: `${pct}%` }}
-              role="progressbar"
-              aria-valuenow={pct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-          </div>
+          <ProgressBar percent={pct} />
         </div>
 
         <p className="text-slate-500 text-xs mb-6">
@@ -98,7 +96,7 @@ export default function ResultsScreen({
             Play Again
           </button>
         </div>
-      </div>
+      </motion.div>
     </main>
   );
 }

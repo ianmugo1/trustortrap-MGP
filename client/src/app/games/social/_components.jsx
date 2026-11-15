@@ -1,4 +1,5 @@
 // Shared UI components for the social media game
+import { motion } from "motion/react";
 
 export function Toggle({ on, onChange, disabled }) {
   return (
@@ -11,10 +12,12 @@ export function Toggle({ on, onChange, disabled }) {
         on ? "bg-blue-600" : "bg-slate-600"
       } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
     >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          on ? "translate-x-6" : "translate-x-1"
-        }`}
+      {/* The knob springs across when switched. Fixed colour so it stays white in the bright theme. */}
+      <motion.span
+        className="inline-block h-4 w-4 rounded-full shadow"
+        style={{ backgroundColor: "#ffffff" }}
+        animate={{ x: on ? 24 : 4 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />
     </button>
   );
@@ -25,8 +28,9 @@ export function ActBar({ current }) {
   return (
     <div className="flex gap-2 mb-6">
       {labels.map((label, i) => (
-        <div
+        <motion.div
           key={i}
+          animate={{ scale: i === current ? 1.04 : 1 }}
           className={`flex-1 rounded-lg py-2 text-xs font-semibold text-center transition-colors ${
             i === current
               ? "bg-blue-600 text-white"
@@ -37,7 +41,7 @@ export function ActBar({ current }) {
         >
           {i < current ? "✓ " : `${i + 1}. `}
           {label}
-        </div>
+        </motion.div>
       ))}
     </div>
   );

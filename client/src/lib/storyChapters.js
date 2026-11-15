@@ -241,6 +241,136 @@ export const STORY_CHAPTERS = [
       },
     ],
   },
+  {
+    slug: "job-offer",
+    chapterNumber: 5,
+    title: "The Too-Good Job Offer",
+    subtitle: "A story about fake jobs and easy money",
+    icon: "message",
+    accent: "from-amber-500 via-orange-500 to-rose-400",
+    softAccent: "border-amber-200 bg-amber-50 text-amber-900",
+    definitionTitle: "What is a fake job scam?",
+    definition:
+      "A fake job scam promises easy money for very little work, then asks you to pay a fee or hand over private details first.",
+    relatedTopic: "socialScams",
+    whyItMatters:
+      "Teenagers looking for a first job or pocket money are a favourite target, because the offer looks like a lucky break.",
+    relatedGame: {
+      href: "/games/phishing/hunt",
+      label: "Try Red Flag Hunt",
+    },
+    clueTitle: "Clues Aoife notices",
+    clues: [
+      "The pay is huge for a job that takes ten minutes a day.",
+      "Nobody asks what she can do. They just say she is hired.",
+      "She has to pay a 'starter fee' before she can earn anything.",
+      "They want her bank login 'so wages can be paid in'.",
+    ],
+    safetyRules: [
+      "A real job never charges you to start.",
+      "Nobody needs your bank login to pay you.",
+      "Look the company up yourself before you reply.",
+      "Show the offer to a parent or teacher first.",
+    ],
+    slides: [
+      {
+        scene: "Saturday morning",
+        title: "Aoife gets a message",
+        body:
+          "Aoife wants to save for new football boots. A message arrives: 'Earn 300 a week liking videos. No experience needed!'",
+        visual: "A phone glowing with gold coins and a big thumbs-up.",
+      },
+      {
+        scene: "The hook",
+        title: "You are hired already",
+        body:
+          "She replies with one word and the answer comes back at once: 'Congratulations, you got the job!' Nobody asked a single question about her.",
+        visual: "A contract appearing far too quickly, still wet with ink.",
+      },
+      {
+        scene: "The catch",
+        title: "First, a small fee",
+        body:
+          "Then comes the catch. To unlock her first tasks she must pay 20 and send her bank login. 'Hurry, only two places left.'",
+        visual: "A padlock with a price tag hanging from it.",
+      },
+      {
+        scene: "The smart move",
+        title: "Aoife checks first",
+        body:
+          "Aoife searches the company name and finds warnings from other people. She shows her mum, blocks the sender and reports the message.",
+        visual: "A search bar, a warning triangle and a block button.",
+      },
+      {
+        scene: "Lesson learned",
+        title: "Money flows one way in a real job",
+        body:
+          "In a real job the employer pays you. If you have to pay them, or share a login, it is a scam dressed up as a job.",
+        visual: "An arrow of coins going from a company to a worker, never back.",
+      },
+    ],
+  },
+  {
+    slug: "wifi-trap",
+    chapterNumber: 6,
+    title: "The Wi-Fi Trap",
+    subtitle: "A story about free Wi-Fi and privacy",
+    icon: "bot",
+    accent: "from-violet-500 via-purple-500 to-fuchsia-400",
+    softAccent: "border-violet-200 bg-violet-50 text-violet-900",
+    definitionTitle: "What is a fake hotspot?",
+    definition:
+      "A fake hotspot is a Wi-Fi network set up to look like a real one, so the person who made it can watch what you do or steal your logins.",
+    relatedTopic: "privacy",
+    whyItMatters:
+      "Free Wi-Fi is everywhere: cafes, buses, shopping centres. Knowing which networks to trust keeps your accounts private.",
+    relatedGame: {
+      href: "/games/cyberpet",
+      label: "Protect Your Cyber Pet",
+    },
+    clueTitle: "Clues Noah notices",
+    clues: [
+      "Two networks have almost the same name.",
+      "One of them asks for his email password before it will connect.",
+      "The cafe's sign shows a different network name.",
+    ],
+    safetyRules: [
+      "Ask staff for the real network name.",
+      "Wi-Fi never needs the password for your email or social accounts.",
+      "Use mobile data for banking and private logins.",
+      "Turn off auto-join for networks you do not know.",
+    ],
+    slides: [
+      {
+        scene: "At the shopping centre",
+        title: "Noah is out of data",
+        body:
+          "Noah wants to send his friends a clip. His phone lists two networks: 'CentreFreeWiFi' and 'Centre_Free_WiFi_FAST'.",
+        visual: "Two Wi-Fi symbols side by side, one a little too shiny.",
+      },
+      {
+        scene: "The trap",
+        title: "A strange login page",
+        body:
+          "He picks the fast one. A page pops up: 'Sign in with your email and password to connect.'",
+        visual: "A login box floating in front of a shadowy figure with a laptop.",
+      },
+      {
+        scene: "The smart move",
+        title: "Noah checks the sign",
+        body:
+          "That feels wrong. Noah looks at the sign by the info desk. The real network is the first one, and it needs no password at all.",
+        visual: "A sign on the wall with the real network name circled in green.",
+      },
+      {
+        scene: "Lesson learned",
+        title: "Free does not mean safe",
+        body:
+          "Noah forgets the fake network and sends his clip on the real one. He saves anything private for his home Wi-Fi or mobile data.",
+        visual: "A shield over a phone, with a house and a mobile mast behind it.",
+      },
+    ],
+  },
 ];
 
 export function getStoryChapter(slug) {

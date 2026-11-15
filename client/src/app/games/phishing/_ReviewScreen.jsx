@@ -37,7 +37,7 @@ export default function ReviewScreen({ answers, onBack, onPlayAgain }) {
   const wrongAnswers = answers.filter((item) => !item.isCorrect);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-4 py-8">
+    <main className="min-h-screen text-white px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-5">
         <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
           <p className="text-sm font-medium text-cyan-300">Review your run</p>

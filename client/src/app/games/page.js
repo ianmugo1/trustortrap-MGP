@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldAlert, Dog, ScanFace, BookOpenText } from "lucide-react";
+import { ShieldAlert, Dog, ScanFace, BookOpenText, Flag } from "lucide-react";
+import { Reveal, RevealItem } from "@/components/motion";
 import { useAuth } from "@/context/AuthContext";
 import { getStoryChapterByGameHref } from "@/lib/storyChapters";
 
@@ -9,6 +10,7 @@ import { getStoryChapterByGameHref } from "@/lib/storyChapters";
 const games = [
   {
     href: "/games/phishing",
+    time: "4 min",
     icon: ShieldAlert,
     title: "Phishing Detection",
     description: "Identify fake emails and dangerous messages.",
@@ -17,7 +19,19 @@ const games = [
     border: "hover:border-blue-500/50",
   },
   {
+    href: "/games/phishing/hunt",
+    icon: Flag,
+    title: "Red Flag Hunt",
+    description: "Tap every warning sign hidden in an email.",
+    colour: "from-rose-500 to-amber-400",
+    iconColour: "text-rose-400",
+    border: "hover:border-rose-500/50",
+    time: "3 min",
+    isNew: true,
+  },
+  {
     href: "/games/cyberpet",
+    time: "Daily",
     icon: Dog,
     title: "Protect Your Cyber Pet",
     description: "Complete the daily objective to protect your cyber pet.",
@@ -27,6 +41,7 @@ const games = [
   },
   {
     href: "/games/social",
+    time: "5 min",
     icon: ScanFace,
     title: "Social Media Safety",
     description: "Make the safest choice in online scenarios.",
@@ -36,6 +51,7 @@ const games = [
   },
   {
     href: "/stories",
+    time: "2 min each",
     icon: BookOpenText,
     title: "Story Mode",
     description: "Learn phishing, AI fraud, and passwords through short stories.",
@@ -50,9 +66,9 @@ export default function GamesPage() {
   const completedStories = user?.storyProgress?.completedSlugs || [];
 
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6 py-12">
+    <main className="min-h-full flex flex-col items-center justify-center px-6 py-12">
       {/* page heading */}
-      <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 text-center">
+      <h1 className="tt-gradient-text text-4xl md:text-5xl font-extrabold mb-4 text-center">
         Choose a Training Scenario
       </h1>
       <p className="text-slate-400 text-lg mb-12 text-center max-w-md">
@@ -60,7 +76,7 @@ export default function GamesPage() {
       </p>
 
       {/* game cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 w-full max-w-6xl">
+      <Reveal className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full max-w-6xl">
         {games.map((game) => (
           (() => {
             const relatedStory = getStoryChapterByGameHref(game.href);
@@ -69,14 +85,20 @@ export default function GamesPage() {
               : true;
 
             return (
+              <RevealItem key={game.href} className="h-full">
               <div
-                key={game.href}
-                className={`group relative bg-slate-900 rounded-2xl border border-slate-800 p-8
+                className={`tt-card group relative h-full p-8
                   text-center transition-all duration-300 hover:-translate-y-1
                   hover:shadow-2xl ${game.border}`}
               >
+                <div className="absolute right-4 top-4 flex gap-2 text-[11px] font-bold">
+                  {game.isNew && (
+                    <span className="rounded-full bg-rose-500 px-2 py-0.5 text-white">NEW</span>
+                  )}
+                  <span className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-300">{game.time}</span>
+                </div>
                 <div
-                  className={`mx-auto w-20 h-20 rounded-full bg-gradient-to-br ${game.colour}
+                  className={`tt-float mx-auto w-20 h-20 rounded-full bg-gradient-to-br ${game.colour}
                     p-[2px] mb-6 shadow-lg group-hover:shadow-xl transition-shadow`}
                 >
                   <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
@@ -117,7 +139,7 @@ export default function GamesPage() {
                             ? `${game.href}?fromStory=${relatedStory.slug}`
                             : game.href
                         }
-                        className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                        className="tt-btn !min-h-0 px-3 py-2 text-sm"
                       >
                         Start game
                       </Link>
@@ -128,7 +150,7 @@ export default function GamesPage() {
                 {!relatedStory && (
                   <Link
                     href={game.href}
-                    className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                    className="tt-btn mt-5 !min-h-0 px-4 py-2 text-sm"
                   >
                     Open
                   </Link>
@@ -139,10 +161,11 @@ export default function GamesPage() {
                     ${game.colour} opacity-0 group-hover:opacity-100 transition-opacity`}
                 />
               </div>
+              </RevealItem>
             );
           })()
         ))}
-      </div>
+      </Reveal>
     </main>
   );
 }

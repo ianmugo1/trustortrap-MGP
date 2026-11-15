@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Settings, ShieldCheck } from "lucide-react";
+import { Coins, Menu, Settings, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { getXpProgress } from "../lib/xp";
+import { CountUp, ProgressBar } from "./motion";
 
 const quickLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -55,6 +57,9 @@ export default function Topbar() {
     .slice(0, 2)
     .toUpperCase();
 
+  const xpProgress = getXpProgress(Number(user?.xp ?? 0));
+  const coins = Number(user?.coins ?? 0);
+
   const rootSegment = pathname?.split("/")[1] || "dashboard";
   const pageMeta =
     PAGE_META[rootSegment] || {
@@ -64,7 +69,7 @@ export default function Topbar() {
 
   return (
     <>
-      <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3 md:px-6">
+      <header className="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/80 px-4 py-3 backdrop-blur md:px-6">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -92,6 +97,16 @@ export default function Topbar() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Level, XP bar and coins. They animate whenever a game pays out. */}
+          <div className="flex items-center gap-3 rounded-full border border-slate-700/70 bg-slate-800/70 px-3 py-1.5">
+            <span className="text-xs font-bold text-emerald-300">Lv {xpProgress.level}</span>
+            <ProgressBar percent={xpProgress.progressPercent} className="hidden !h-1.5 !w-20 sm:block" />
+            <span className="flex items-center gap-1 text-xs font-bold text-amber-300">
+              <Coins className="h-3.5 w-3.5" />
+              <CountUp value={coins} />
+            </span>
+          </div>
+
           <Link
             href="/settings"
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-100 transition hover:bg-slate-700"

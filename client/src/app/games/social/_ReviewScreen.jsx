@@ -16,7 +16,7 @@ function ChoiceCard({ title, value, tone = "neutral" }) {
 
 export default function ReviewScreen({ review, onBack, onRestart }) {
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-4 py-8">
+    <main className="min-h-screen text-white px-4 py-8">
       <div className="mx-auto max-w-5xl space-y-5">
         <section className="rounded-3xl border border-slate-700 bg-slate-900 p-6">
           <p className="text-sm font-medium text-blue-300">Review your run</p>

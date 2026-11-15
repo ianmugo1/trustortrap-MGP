@@ -16,6 +16,7 @@ import {
   Sparkles,
   ShieldAlert,
 } from "lucide-react";
+import { CountUp, ProgressBar, Reveal, RevealItem } from "@/components/motion";
 
 const DAILY_QUESTION_TARGET = 5;
 const TOPIC_LABELS = {
@@ -28,7 +29,7 @@ const TOPIC_LABELS = {
 
 function StatCard({ label, value, note, Icon }) {
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4">
+    <RevealItem className="tt-card tt-card-glow p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -41,7 +42,7 @@ function StatCard({ label, value, note, Icon }) {
           <Icon className="h-5 w-5" />
         </div>
       </div>
-    </div>
+    </RevealItem>
   );
 }
 
@@ -300,7 +301,7 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 md:px-8 md:py-8">
-      <section className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95">
+      <section className="overflow-hidden tt-card">
         <div className="grid gap-5 p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-7">
           <div>
             <div className="flex items-center gap-4">
@@ -463,7 +464,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <Reveal className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Level"
           value={`Lv ${level}`}
@@ -492,13 +493,13 @@ export default function DashboardPage() {
         />
         <StatCard
           label="Coins"
-          value={`${coins}`}
+          value={<CountUp value={coins} />}
           note={`${currentStreak} day${currentStreak === 1 ? "" : "s"} streak`}
           Icon={Coins}
         />
-      </section>
+      </Reveal>
 
-      <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+      <section className="tt-card p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -511,7 +512,7 @@ export default function DashboardPage() {
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-right">
             <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Total XP</p>
-            <p className="mt-2 text-2xl font-bold text-white">{xp}</p>
+            <p className="mt-2 text-2xl font-bold text-white"><CountUp value={xp} /></p>
           </div>
         </div>
 
@@ -520,17 +521,12 @@ export default function DashboardPage() {
             <span>{xpProgress.progressPercent}% through this level</span>
             <span>{xpProgress.xpToNextLevel} XP left</span>
           </div>
-          <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-sky-400"
-              style={{ width: `${xpProgress.progressPercent}%` }}
-            />
-          </div>
+          <ProgressBar percent={xpProgress.progressPercent} className="!h-3" />
         </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+        <div className="tt-card p-5">
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Learning mastery
           </p>
@@ -563,7 +559,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+        <div className="tt-card p-5">
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Progress snapshot
           </p>
@@ -597,7 +593,7 @@ export default function DashboardPage() {
       </section>
 
       {weakestTopic && weakestPracticePlan && (
-        <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+        <section className="tt-card p-5">
           <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
             Practice weakest topic
           </p>

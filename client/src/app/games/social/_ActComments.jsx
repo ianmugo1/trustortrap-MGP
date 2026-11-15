@@ -1,4 +1,7 @@
 import { ActBar } from "./_components";
+import { AnimatePresence, motion } from "motion/react";
+import { AnswerFeedback, Confetti, CountUp, ProgressBar, Reveal, RevealItem } from "@/components/motion";
+
 
 function BotIcon() {
   return (
@@ -57,7 +60,7 @@ export default function ActComments({ scenario, step, totalScenarios, selectedCo
   const foundCount = [...selectedComments].filter((i) => botIndices.has(i)).length;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-4 py-6">
+    <main className="min-h-screen text-white px-4 py-6">
       <div className="max-w-xl mx-auto">
         <ActBar current={1} />
 
@@ -103,7 +106,8 @@ export default function ActComments({ scenario, step, totalScenarios, selectedCo
 
         {/* Comments */}
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">Comments — tap the fake ones</p>
-        <div className="space-y-2 mb-5">
+        {/* Comments drop in one after another for each new post */}
+        <Reveal key={step} className="space-y-2 mb-5">
           {scenario.comments.map((comment, index) => {
             const selected = selectedComments.has(index);
             let bg = "bg-slate-800/60";
@@ -120,8 +124,9 @@ export default function ActComments({ scenario, step, totalScenarios, selectedCo
             }
 
             return (
-              <button
-                key={index}
+              <RevealItem key={index}>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
                 onClick={() => onToggle(index)}
                 disabled={submitted}
                 aria-pressed={selected}
@@ -141,10 +146,11 @@ export default function ActComments({ scenario, step, totalScenarios, selectedCo
                     <p className="text-slate-300 text-sm leading-relaxed">{comment.text}</p>
                   </div>
                 </div>
-              </button>
+              </motion.button>
+              </RevealItem>
             );
           })}
-        </div>
+        </Reveal>
 
         {/* Submit / results */}
         {!submitted ? (
@@ -157,7 +163,9 @@ export default function ActComments({ scenario, step, totalScenarios, selectedCo
           </button>
         ) : (
           <div className="space-y-3">
-            <div className={`rounded-xl px-4 py-3 font-bold text-sm border flex items-center gap-2 ${
+            <AnswerFeedback
+              state={foundCount === botCount ? "correct" : "wrong"}
+              className={`rounded-xl px-4 py-3 font-bold text-sm border flex items-center gap-2 ${
               foundCount === botCount
                 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
                 : "bg-amber-500/15 border-amber-500/40 text-amber-300"
@@ -166,7 +174,7 @@ export default function ActComments({ scenario, step, totalScenarios, selectedCo
               {foundCount === botCount
                 ? `You caught all ${botCount} bot${botCount !== 1 ? "s" : ""}!`
                 : `You got ${foundCount} of ${botCount}. The orange ones are the ones you missed.`}
-            </div>
+            </AnswerFeedback>
 
             <div className="bg-slate-800 border border-slate-700/40 rounded-xl p-4 flex gap-3">
               <div className="text-yellow-400 shrink-0 mt-0.5"><LightbulbIcon /></div>
