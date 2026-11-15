@@ -1,3 +1,5 @@
+import "@fontsource-variable/inter";
+import "@fontsource-variable/sora";
 import "./globals.css";
 import { Providers } from "./providers";
 import { AuthGuard } from "../components/AuthGuard";

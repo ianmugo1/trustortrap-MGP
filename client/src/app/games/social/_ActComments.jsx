@@ -57,7 +57,7 @@ export default function ActComments({ scenario, step, totalScenarios, selectedCo
   const foundCount = [...selectedComments].filter((i) => botIndices.has(i)).length;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-4 py-6">
+    <main className="min-h-screen text-white px-4 py-6">
       <div className="max-w-xl mx-auto">
         <ActBar current={1} />
 

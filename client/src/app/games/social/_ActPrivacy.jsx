@@ -53,7 +53,7 @@ export default function ActPrivacy({ settings, toggles, submitted, onToggle, onS
   const fixedCount = dangerous.filter((s) => toggles[s._id]).length;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-4 py-6">
+    <main className="min-h-screen text-white px-4 py-6">
       <div className="max-w-xl mx-auto">
         <ActBar current={2} />
 

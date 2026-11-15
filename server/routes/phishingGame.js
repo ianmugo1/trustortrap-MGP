@@ -275,6 +275,20 @@ router.get("/hunt", authMiddleware, (_req, res) => {
 });
 
 /**
+ * POST /api/phishing/hunt/check
+ * Body: { emailId, tapped: [segmentId] }
+ * - Marks one email so the player can see what they found and missed
+ * - No rewards here. Rewards come from /hunt/complete
+ */
+router.post("/hunt/check", authMiddleware, (req, res) => {
+  const result = scoreHunt([{ emailId: req.body?.emailId, tapped: req.body?.tapped }]);
+  if (!result.emails.length) {
+    return res.status(404).json({ success: false, message: "Email not found" });
+  }
+  return res.json({ success: true, email: result.emails[0] });
+});
+
+/**
  * POST /api/phishing/hunt/complete
  * Body: { submissions: [{ emailId, tapped: [segmentId] }] }
  * - Scores the run on the server and awards coins and XP

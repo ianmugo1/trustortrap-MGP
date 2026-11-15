@@ -15,6 +15,8 @@ import {
 import { STORY_CHAPTERS } from "@/lib/storyChapters";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
+import { AnimatePresence, motion } from "motion/react";
+import { Confetti } from "@/components/motion";
 
 const ICON_MAP = {
   message: MessageSquareWarning,
@@ -30,6 +32,9 @@ export default function StoryChapterPage({ chapter }) {
     completed: false,
     error: "",
   });
+
+  // Confetti only when the chapter is finished for the first time
+  const [celebrate, setCelebrate] = useState(false);
 
   const Icon = ICON_MAP[chapter.icon] || Sparkles;
   const slide = chapter.slides[slideIndex];
@@ -85,6 +90,7 @@ export default function StoryChapterPage({ chapter }) {
 
         if (!cancelled) {
           setCompletionState({ saving: false, completed: true, error: "" });
+          setCelebrate(true);
         }
 
         if (typeof refreshUser === "function") {
@@ -118,6 +124,7 @@ export default function StoryChapterPage({ chapter }) {
 
   return (
     <main className="min-h-screen bg-transparent px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
+      <Confetti fire={celebrate} />
       <div className="mx-auto max-w-5xl space-y-6">
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_30px_90px_-55px_rgba(15,23,42,0.35)] sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -160,7 +167,7 @@ export default function StoryChapterPage({ chapter }) {
             </div>
             <div className="mt-4 h-2 rounded-full bg-white/20">
               <div
-                className="h-2 rounded-full bg-white transition-all"
+                className="h-2 rounded-full bg-white transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -168,6 +175,15 @@ export default function StoryChapterPage({ chapter }) {
 
           <div className="grid gap-0 lg:grid-cols-[1.08fr_0.92fr]">
             <div className={`min-h-[340px] bg-gradient-to-br ${chapter.accent} p-6 text-white sm:p-8`}>
+              {/* Each scene slides in as the reader moves on */}
+              <AnimatePresence mode="wait">
+              <motion.div
+                key={slideIndex}
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.22 }}
+              >
               <div className="rounded-[1.8rem] border border-white/20 bg-black/15 p-5 backdrop-blur">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
                   {slide.scene}
@@ -180,6 +196,8 @@ export default function StoryChapterPage({ chapter }) {
                 <p className="font-semibold text-white">Picture it like this</p>
                 <p className="mt-2">{slide.visual}</p>
               </div>
+              </motion.div>
+              </AnimatePresence>
             </div>
 
             <div className="space-y-5 p-5 sm:p-6">

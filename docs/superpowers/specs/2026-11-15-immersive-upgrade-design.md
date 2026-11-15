@@ -112,14 +112,16 @@ A new mode at `/games/phishing/hunt`, linked from the games hub and the phishing
 
 ### 5. Content
 
-| Area | Now | After | Needs database seed |
+| Area | Before | After | Needs database seed |
 |---|---|---|---|
-| Phishing quiz questions | 6 in seed | 30, each with an explanation and difficulty | Yes |
+| Phishing quiz questions | 6 in seed | 30, each with an explanation and difficulty. 10 random per run. | Yes |
 | Red flag hunt emails | 0 | 15 | No |
-| Cyber Pet questions | about 30 | 60 | No |
-| Password incidents | 16 | 30 | No |
-| Social scenarios (comments, privacy) | about 30 items | about 50, text-based only | Yes |
+| Cyber Pet mini-game questions | 45 (15 per game) | 90 (30 per game) | No |
+| Social comment scenarios | 5 | 8 | Yes |
+| Social privacy settings | 7 | 11 | Yes |
 | Story chapters | 4 | 6 (new: "The Too-Good Job Offer", "The Wi-Fi Trap") | No |
+
+Corrected on 2026-11-15 after building: the first version of this table counted `cyberPetQuestions.js` and `passwordIncidents.js`, which no code imports, and overstated the social content.
 
 AI-image items in the social game are not expanded, because they need image assets.
 

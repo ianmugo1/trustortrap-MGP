@@ -12,6 +12,7 @@ import {
   Settings,
   Trophy,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { useAuth } from "../context/AuthContext";
 
 const navItems = [
@@ -37,7 +38,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="hidden w-64 flex-col border-r border-slate-800 bg-slate-950 text-slate-50 md:flex">
+    <aside className="hidden w-64 flex-col border-r border-slate-800/80 bg-slate-950/90 text-slate-50 backdrop-blur md:flex">
       <div className="flex items-center gap-3 border-b border-slate-800 px-6 py-5">
         <div className="relative h-10 w-10 overflow-hidden rounded-2xl">
           <Image
@@ -64,14 +65,21 @@ export default function Sidebar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+              className={`relative flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${
                 active
-                  ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-900 shadow-md shadow-emerald-500/20"
+                  ? "font-semibold text-slate-900"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              <Icon className="h-4 w-4" />
-              <span>{label}</span>
+              {active && (
+                <motion.span
+                  layoutId="sidebar-active"
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 shadow-md shadow-emerald-500/20"
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                />
+              )}
+              <Icon className="relative h-4 w-4" />
+              <span className="relative">{label}</span>
             </Link>
           );
         })}

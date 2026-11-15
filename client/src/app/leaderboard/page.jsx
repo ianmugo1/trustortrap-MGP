@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Trophy, Star, Zap, Medal } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
+import { CountUp, Reveal, RevealItem } from "@/components/motion";
 
 export default function LeaderboardPage() {
   const { token, user } = useAuth();
@@ -41,7 +42,7 @@ export default function LeaderboardPage() {
     <main className="mx-auto max-w-2xl space-y-6 px-4 py-8">
 
       {/* Header */}
-      <section className="rounded-[2rem] border border-slate-800 bg-slate-900 p-6">
+      <section className="tt-card p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800">
             <Trophy className="h-5 w-5 text-amber-400" />
@@ -57,7 +58,7 @@ export default function LeaderboardPage() {
       </section>
 
       {/* Player list */}
-      <section className="rounded-[2rem] border border-slate-800 bg-slate-900 p-4">
+      <section className="tt-card p-4">
 
         {loading && (
           <p className="py-8 text-center text-sm text-slate-500">Loading...</p>
@@ -70,15 +71,15 @@ export default function LeaderboardPage() {
         )}
 
         {!loading && !error && users.length > 0 && (
-          <ul className="space-y-2">
+          <Reveal className="space-y-2">
             {users.map((u, i) => {
               const rank = i + 1;
               const isMe = String(u._id) === String(user?.id);
               const top = rankStyle[i]; // only defined for top 3
 
               return (
-                <li
-                  key={u._id}
+                <RevealItem key={u._id}>
+                <div
                   className={`flex items-center gap-4 rounded-2xl border px-4 py-3 transition ${
                     isMe
                       ? "border-emerald-700/50 bg-emerald-500/10"
@@ -113,13 +114,14 @@ export default function LeaderboardPage() {
                   {/* XP */}
                   <div className="flex items-center gap-1">
                     <Zap className="h-3.5 w-3.5 text-amber-400" />
-                    <span className="text-sm font-bold text-white">{u.xp ?? 0}</span>
+                    <CountUp value={u.xp ?? 0} className="text-sm font-bold text-white" />
                     <span className="text-xs text-slate-500">XP</span>
                   </div>
-                </li>
+                </div>
+                </RevealItem>
               );
             })}
-          </ul>
+          </Reveal>
         )}
       </section>
     </main>

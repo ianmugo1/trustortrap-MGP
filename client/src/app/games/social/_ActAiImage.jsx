@@ -5,7 +5,7 @@ export default function ActAiImage({ image, storyStep, totalImages, storyAnswer,
   const isSideBySide = image.type === "side-by-side";
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-4 py-6 flex flex-col">
+    <main className="min-h-screen text-white px-4 py-6 flex flex-col">
       <div className="max-w-4xl w-full mx-auto flex-1 flex flex-col">
         <ActBar current={0} />
 

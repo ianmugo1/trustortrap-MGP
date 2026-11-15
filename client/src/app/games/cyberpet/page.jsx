@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
 import { getStoryChapter } from "@/lib/storyChapters";
 import ReviewScreen from "./_ReviewScreen";
+import { AnswerFeedback } from "@/components/motion";
 import { BADGE_STYLES, ROOM_THEMES, SHOP_APPEARANCE } from "@/lib/shop";
 
 function toPercent(value) {
@@ -325,7 +326,7 @@ export default function CyberPetPage() {
 
   if (!token) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <p>Please log in to play.</p>
       </main>
     );
@@ -333,7 +334,7 @@ export default function CyberPetPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <p className="text-slate-300 text-sm">Loading cyber pet...</p>
       </main>
     );
@@ -341,7 +342,7 @@ export default function CyberPetPage() {
 
   if (loadError) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <div className="max-w-md w-full rounded-2xl border border-slate-700 bg-slate-900 p-6 text-center">
           <h1 className="text-xl font-semibold mb-2">Could not load Cyber Pet</h1>
           <p className="text-slate-300 text-sm mb-4">{loadError}</p>
@@ -358,14 +359,14 @@ export default function CyberPetPage() {
 
   if (!pet) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <p className="text-slate-300 text-sm">No cyber pet data available.</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-4 md:p-6">
+    <main className="min-h-screen text-white p-4 md:p-6">
       <div className="mx-auto w-full max-w-6xl space-y-5">
 
         {/* Pet status */}
@@ -380,10 +381,14 @@ export default function CyberPetPage() {
           {/* Pet character + name */}
           <div className="mt-3 flex items-center gap-5">
             <div className={`rounded-[1.75rem] border p-3 ${roomTheme.panel}`}>
-              <PetCharacter
-                mood={petStatus.mood}
-                palette={petPalette}
-              />
+              {/* The pet bobs when idle, hops on a correct answer and shakes on a wrong one */}
+              <AnswerFeedback
+                state={mgFeedback && !mgFeedback.isError ? (mgFeedback.isCorrect ? "correct" : "wrong") : null}
+              >
+                <div className="tt-float">
+                  <PetCharacter mood={petStatus.mood} palette={petPalette} />
+                </div>
+              </AnswerFeedback>
             </div>
 
             <div>
@@ -454,7 +459,7 @@ export default function CyberPetPage() {
                 <p>{petStatus.health ?? 0}/100</p>
               </div>
               <div className="mt-2 h-2 rounded-full bg-slate-700 overflow-hidden">
-                <div className="h-full bg-emerald-400" style={{ width: toPercent(petStatus.health) }} />
+                <div className="h-full bg-emerald-400 transition-all duration-500" style={{ width: toPercent(petStatus.health) }} />
               </div>
             </div>
 
@@ -464,7 +469,7 @@ export default function CyberPetPage() {
                 <p>{petStatus.mood ?? 0}/100</p>
               </div>
               <div className="mt-2 h-2 rounded-full bg-slate-700 overflow-hidden">
-                <div className="h-full bg-cyan-400" style={{ width: toPercent(petStatus.mood) }} />
+                <div className="h-full bg-cyan-400 transition-all duration-500" style={{ width: toPercent(petStatus.mood) }} />
               </div>
             </div>
 
@@ -678,7 +683,8 @@ export default function CyberPetPage() {
 
                 {/* Feedback after answering */}
                 {mgFeedback && (
-                  <div
+                  <AnswerFeedback
+                    state={mgFeedback.isCorrect ? "correct" : "wrong"}
                     className={`rounded-xl border px-4 py-3 text-sm ${
                       mgFeedback.isError
                         ? "border-rose-500/40 bg-rose-500/10 text-rose-200"
@@ -693,7 +699,7 @@ export default function CyberPetPage() {
                     {mgFeedback.explanation && (
                       <p className="mt-1 text-xs opacity-80">{mgFeedback.explanation}</p>
                     )}
-                  </div>
+                  </AnswerFeedback>
                 )}
               </div>
             );

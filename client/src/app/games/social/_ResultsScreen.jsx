@@ -23,7 +23,7 @@ export default function ResultsScreen({
   const grade = getGrade(pct);
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10">
+    <main className="min-h-screen flex items-center justify-center px-4 py-10">
       <div className="max-w-md w-full bg-slate-900 rounded-3xl shadow-2xl border border-slate-700 p-8 text-center">
         <ActBar current={3} />
 

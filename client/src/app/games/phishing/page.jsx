@@ -4,6 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
 import { getStoryChapter } from "@/lib/storyChapters";
+import Link from "next/link";
+import { AnimatePresence, motion } from "motion/react";
+import { Check, Flame, Search, X } from "lucide-react";
+import { AnswerFeedback, Confetti, CountUp, ProgressBar } from "@/components/motion";
 import ReviewScreen from "./_ReviewScreen";
 
 function formatGameMessage(message, fallback) {
@@ -43,6 +47,7 @@ export default function PhishingPage() {
   const [storyPrompt, setStoryPrompt] = useState("");
   const [showReview, setShowReview] = useState(false);
   const [answerHistory, setAnswerHistory] = useState([]);
+  const [combo, setCombo] = useState(0);
 
   const total = questions.length;
   const isFinished = total > 0 && step >= total;
@@ -58,6 +63,7 @@ export default function PhishingPage() {
     setGameStarted(false);
     setShowReview(false);
     setAnswerHistory([]);
+    setCombo(0);
   }, []);
 
   const loadQuestions = useCallback(async () => {
@@ -208,6 +214,7 @@ export default function PhishingPage() {
           if (data.correct) {
             setScore((prev) => prev + (data.pointsAwarded || 0));
           }
+          setCombo((prev) => (isCorrect ? prev + 1 : 0));
           setFeedback({
             isCorrect,
             explanation: q.explanation || "",
@@ -233,17 +240,18 @@ export default function PhishingPage() {
           explanation: "Network error. Please try again.",
         });
       } finally {
-        // move on
-        setTimeout(() => {
-          setStep((s) => s + 1);
-          setAnswer(null);
-          setFeedback(null);
-          setSubmitting(false);
-        }, 1200);
+        setSubmitting(false);
       }
     },
     [answer, questions, step, submitting, token]
   );
+
+  // The player reads the explanation, then moves on when ready
+  const nextQuestion = useCallback(() => {
+    setStep((s) => s + 1);
+    setAnswer(null);
+    setFeedback(null);
+  }, []);
 
   if (showReview) {
     return (
@@ -262,7 +270,7 @@ export default function PhishingPage() {
 
   if (!token) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <p className="rounded-2xl border border-slate-700 bg-slate-900 px-6 py-4">
           Please log in to play.
         </p>
@@ -272,7 +280,7 @@ export default function PhishingPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <p className="rounded-2xl border border-slate-700 bg-slate-900 px-6 py-4 text-slate-400 text-sm">
           Loading questions...
         </p>
@@ -282,7 +290,7 @@ export default function PhishingPage() {
 
   if (loadError) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <div className="max-w-md w-full rounded-3xl border border-slate-700 bg-slate-900 p-6 text-center shadow-2xl">
           <h1 className="text-xl font-semibold mb-2 text-rose-400">Couldn’t load the game</h1>
           <p className="text-slate-400 text-sm mb-4">{loadError}</p>
@@ -302,7 +310,7 @@ export default function PhishingPage() {
 
   if (!questions.length) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
+      <main className="min-h-screen flex items-center justify-center text-white px-4">
         <p className="rounded-2xl border border-slate-700 bg-slate-900 px-6 py-4 text-slate-400 text-sm">
           No questions found.
         </p>
@@ -312,14 +320,14 @@ export default function PhishingPage() {
 
   if (!gameStarted) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
-        <div className="max-w-lg w-full rounded-3xl border border-slate-700 bg-slate-900 p-8 text-center shadow-2xl">
-          <h1 className="text-3xl md:text-4xl font-black mb-4 bg-gradient-to-r from-cyan-200 via-sky-300 to-indigo-200 bg-clip-text text-transparent">
+      <main className="min-h-full flex items-center justify-center text-white px-4 py-10">
+        <div className="tt-card max-w-lg w-full p-8 text-center">
+          <h1 className="tt-gradient-text text-3xl md:text-4xl font-black mb-4">
             Phishing Awareness
           </h1>
           <p className="text-slate-200 mb-6">
-            Test your ability to spot phishing attempts. You'll be presented with {total} scenarios
-            and asked to identify the safest response.
+            Test your ability to spot phishing attempts. You get {total} scenarios and pick the
+            safest response for each one.
           </p>
           {storyPrompt && (
             <div className="mb-6 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
@@ -327,55 +335,62 @@ export default function PhishingPage() {
             </div>
           )}
           <div className="text-sky-100/90 text-sm mb-6 space-y-1">
-            <p>{total} questions</p>
+            <p>{total} questions, picked fresh each run</p>
             <p>+10 coins per correct answer</p>
             <p>+20 bonus coins on completion</p>
           </div>
-          <button
-            onClick={() => setGameStarted(true)}
-            className="px-9 py-3 bg-gradient-to-r from-cyan-300 via-emerald-300 to-lime-300 text-slate-900 rounded-xl font-bold text-lg hover:scale-[1.02] transition-transform"
-          >
-            Start
-          </button>
+          <div className="flex flex-col items-center gap-3">
+            <button onClick={() => setGameStarted(true)} className="tt-btn px-9 text-lg">
+              Start
+            </button>
+            <Link href="/games/phishing/hunt" className="tt-btn tt-btn-ghost text-sm">
+              <Search className="h-4 w-4" /> Try red flag hunt
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
   if (isFinished) {
+    const perfect = score === total * 10;
+
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-white px-4">
-        <div className="bg-slate-900 p-8 rounded-3xl text-center border border-slate-700 max-w-md w-full shadow-2xl">
-          <h1 className="text-3xl font-black mb-3 bg-gradient-to-r from-cyan-200 to-lime-200 bg-clip-text text-transparent">
-            Training Complete
+      <main className="min-h-full flex items-center justify-center text-white px-4 py-10">
+        <Confetti fire={perfect} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="tt-card p-8 text-center max-w-md w-full"
+        >
+          <h1 className="tt-gradient-text text-3xl font-black mb-3">
+            {perfect ? "Perfect run!" : "Training complete"}
           </h1>
 
-          <p className="mb-2 text-slate-100">Score: {score}</p>
+          <p className="text-6xl font-black text-white">
+            <CountUp value={score} />
+          </p>
+          <p className="mb-4 text-sm text-slate-400">out of {total * 10}</p>
 
           {completionInfo?.success ? (
-            <>
-              <p className="text-lime-300 font-semibold">
+            <div className="mb-6 flex justify-center gap-3 text-sm font-semibold">
+              <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-300">
                 +{completionInfo.completionBonus} coins
-              </p>
-              <p className="text-slate-200 mb-6">
-                Total coins: {completionInfo.totalCoins}
-              </p>
-            </>
+              </span>
+              <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-300">
+                +{completionInfo.xpAwarded} XP
+              </span>
+            </div>
           ) : (
             <p className="text-slate-300 mb-6">Finalising your rewards...</p>
           )}
 
           {completionInfo?.success === false && completionInfo?.message && (
-            <p className="text-rose-300 text-sm mb-4">
-              {completionInfo.message}
-            </p>
+            <p className="text-rose-300 text-sm mb-4">{completionInfo.message}</p>
           )}
 
           <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setShowReview(true)}
-              className="px-6 py-3 rounded-xl border border-slate-600 bg-slate-950 text-white font-semibold"
-            >
+            <button onClick={() => setShowReview(true)} className="tt-btn tt-btn-ghost">
               Review answers
             </button>
             <button
@@ -383,39 +398,47 @@ export default function PhishingPage() {
                 resetLocal();
                 loadQuestions();
               }}
-              className="px-6 py-3 bg-gradient-to-r from-cyan-300 to-emerald-300 text-slate-900 rounded-xl font-semibold"
+              className="tt-btn"
             >
               Play again
             </button>
           </div>
-        </div>
+        </motion.div>
       </main>
     );
   }
 
   // ====== Game render ======
   const q = questions[step];
-  const progress = total ? Math.round(((step + 1) / total) * 100) : 0;
+  const progress = total ? Math.round((step / total) * 100) : 0;
   const options = q?.options || [];
   const optionLabels = ["A", "B", "C", "D"];
-  const optionBadgeColors = [
-    "bg-cyan-400 text-slate-900",
-    "bg-emerald-400 text-slate-900",
-    "bg-amber-300 text-slate-900",
-    "bg-fuchsia-400 text-slate-900",
-  ];
-
   const isLocked = submitting || answer !== null;
+  const correctIndex = typeof q?.correctOption === "number" ? q.correctOption : null;
+
+  // Colour each option once the answer is in
+  const optionStyle = (index) => {
+    if (!feedback) {
+      return answer === index
+        ? "border-cyan-300 bg-cyan-500/15"
+        : "border-slate-700 bg-slate-800/70 hover:border-cyan-400/50 hover:bg-slate-700/70";
+    }
+    if (index === correctIndex || (feedback.isCorrect && index === answer)) {
+      return "border-emerald-400 bg-emerald-500/15";
+    }
+    if (index === answer) return "border-rose-400 bg-rose-500/15";
+    return "border-slate-800 bg-slate-800/40 opacity-50";
+  };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <div className="w-full grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-4 md:gap-6 pl-0 pr-3 sm:pr-4 md:pr-6 py-3 sm:py-4 md:py-6">
-        <section className="bg-slate-900 rounded-3xl border border-slate-700 p-4 sm:p-6 md:p-8 shadow-2xl">
+    <main className="min-h-full text-white">
+      <div className="mx-auto w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-4 md:gap-6 px-3 sm:px-4 md:px-6 py-4 md:py-6">
+        <section className="tt-card p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
-                <h1 className="text-xl md:text-3xl font-black bg-gradient-to-r from-cyan-100 via-sky-200 to-indigo-100 bg-clip-text text-transparent">
+                <h1 className="tt-gradient-text text-xl md:text-3xl font-black">
                   Phishing Awareness
                 </h1>
                 <p className="mt-1 text-xs sm:text-sm text-sky-100/80">
@@ -423,111 +446,101 @@ export default function PhishingPage() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs uppercase tracking-wider text-slate-300">Progress</p>
+                <p className="text-xs uppercase tracking-wider text-slate-300">Question</p>
                 <p className="text-sm font-bold text-cyan-100">
                   {step + 1} / {total}
                 </p>
               </div>
             </div>
-
-            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+            <ProgressBar percent={progress} />
           </div>
 
-          {/* Question */}
-          <div className="mb-6 bg-slate-800/70 p-4 sm:p-5 rounded-2xl border border-slate-700/70">
-            <p className="text-base md:text-lg leading-relaxed text-slate-100">{q?.text}</p>
-          </div>
-
-          {/* Answer Options */}
-          {options.length > 0 ? (
-            <div className="space-y-3 mb-4">
-              {options.map((option, index) => (
-                <button
-                  key={index}
-                  disabled={isLocked}
-                  onClick={() => submitAnswer(index)}
-                  className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-200
-                    ${
-                      answer === index
-                        ? "border-cyan-300 bg-cyan-500/15 shadow-[0_0_0_1px_rgba(103,232,249,0.2)]"
-                        : "border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 hover:border-sky-400/40"
-                    }
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                  `}
-                >
-                  <span
-                    className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold mr-3 ${
-                      optionBadgeColors[index % optionBadgeColors.length]
-                    }`}
-                  >
-                    {optionLabels[index]}
-                  </span>
-                  <span className="text-sm sm:text-base text-slate-100">{option}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <button
-                disabled={isLocked}
-                onClick={() => submitAnswer("Safe")}
-                className="py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-emerald-400 to-lime-300 hover:brightness-105 text-slate-900 font-bold text-base sm:text-lg disabled:opacity-50"
-              >
-                Safe
-              </button>
-              <button
-                disabled={isLocked}
-                onClick={() => submitAnswer("Phishing")}
-                className="py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-rose-500 to-orange-400 hover:brightness-105 text-white font-bold text-base sm:text-lg disabled:opacity-50"
-              >
-                Phishing
-              </button>
-            </div>
-          )}
-
-          {/* Feedback */}
-          {feedback && (
-            <div
-              className={`rounded-2xl border px-4 py-3 text-sm ${
-                feedback.isCorrect
-                  ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-100"
-                  : "border-rose-300/40 bg-rose-400/10 text-rose-100"
-              }`}
+          {/* The question slides out and the next one slides in */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.22 }}
             >
-              <p className="font-semibold">{feedback.isCorrect ? "Correct!" : "Not quite."}</p>
-              {feedback.explanation && (
-                <p className="mt-1 text-xs text-slate-100/85">{feedback.explanation}</p>
+              <div className="mb-6 bg-slate-800/60 p-4 sm:p-5 rounded-2xl border border-slate-700/70">
+                <p className="text-base md:text-lg leading-relaxed text-slate-100">{q?.text}</p>
+              </div>
+
+              <AnswerFeedback
+                state={feedback ? (feedback.isCorrect ? "correct" : "wrong") : null}
+                className="space-y-3 mb-4"
+              >
+                {options.map((option, index) => (
+                  <button
+                    key={index}
+                    disabled={isLocked}
+                    onClick={() => submitAnswer(index)}
+                    className={`flex w-full min-h-[52px] items-center text-left p-3.5 sm:p-4 rounded-2xl border ${optionStyle(index)}`}
+                  >
+                    <span className="inline-flex shrink-0 items-center justify-center w-8 h-8 rounded-lg text-sm font-bold mr-3 bg-slate-950/70 text-cyan-200">
+                      {optionLabels[index]}
+                    </span>
+                    <span className="flex-1 text-sm sm:text-base text-slate-100">{option}</span>
+                    {feedback && (index === correctIndex || (feedback.isCorrect && index === answer)) && (
+                      <Check className="h-5 w-5 text-emerald-300" />
+                    )}
+                    {feedback && !feedback.isCorrect && index === answer && (
+                      <X className="h-5 w-5 text-rose-300" />
+                    )}
+                  </button>
+                ))}
+              </AnswerFeedback>
+
+              {/* Feedback, with the reason, then the player chooses when to go on */}
+              {feedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`rounded-2xl border px-4 py-3 text-sm ${
+                    feedback.isCorrect
+                      ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-100"
+                      : "border-rose-300/40 bg-rose-400/10 text-rose-100"
+                  }`}
+                >
+                  <p className="font-semibold">{feedback.isCorrect ? "Correct! +10 coins" : "Not quite."}</p>
+                  {feedback.explanation && (
+                    <p className="mt-1 text-sm text-slate-100/90">{feedback.explanation}</p>
+                  )}
+                  <button onClick={nextQuestion} autoFocus className="tt-btn mt-3 w-full sm:w-auto">
+                    {step + 1 === total ? "See results" : "Next question"}
+                  </button>
+                </motion.div>
               )}
-            </div>
-          )}
+            </motion.div>
+          </AnimatePresence>
         </section>
 
-        <aside className="bg-slate-900 rounded-3xl border border-slate-700 p-4 sm:p-6 shadow-xl h-fit">
-          <h2 className="text-lg font-extrabold text-indigo-100 mb-4">Game Stats</h2>
+        <aside className="tt-card p-4 sm:p-6 h-fit">
+          <h2 className="text-lg font-extrabold text-indigo-100 mb-4">This run</h2>
           <div className="space-y-3 text-sm">
-            <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3">
+            <div className="rounded-xl bg-slate-800/70 border border-slate-700 p-3">
               <p className="text-slate-300 text-xs uppercase tracking-wide">Coins</p>
-              <p className="text-2xl font-black text-amber-300">{score}</p>
-            </div>
-            <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3">
-              <p className="text-slate-300 text-xs uppercase tracking-wide">Current Step</p>
-              <p className="text-base font-semibold text-cyan-100">
-                Question {step + 1} of {total}
+              <p className="text-2xl font-black text-amber-300">
+                <CountUp value={score} duration={0.4} />
               </p>
             </div>
-            <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3">
-              <p className="text-slate-300 text-xs uppercase tracking-wide">Pro Tip</p>
-              <p className="text-slate-100">Check sender details and avoid urgent links.</p>
+            <div className="rounded-xl bg-slate-800/70 border border-slate-700 p-3">
+              <p className="text-slate-300 text-xs uppercase tracking-wide">Streak</p>
+              <p className="flex items-center gap-2 text-2xl font-black text-orange-300">
+                <Flame className={`h-6 w-6 ${combo >= 2 ? "tt-flame" : "opacity-40"}`} />
+                {combo}
+                <span className="text-xs font-semibold text-slate-400">in a row</span>
+              </p>
+            </div>
+            <div className="rounded-xl bg-slate-800/70 border border-slate-700 p-3">
+              <p className="text-slate-300 text-xs uppercase tracking-wide">Tip</p>
+              <p className="text-slate-100">Check who sent it, and never rush because a message says so.</p>
             </div>
           </div>
         </aside>
       </div>
     </main>
   );
-
 }

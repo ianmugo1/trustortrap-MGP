@@ -245,13 +245,13 @@ export default function SocialGamePage() {
 
   // Loading
   if (!gameData.loaded) return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <main className="min-h-screen flex items-center justify-center">
       <p className="text-slate-400 text-sm">Loading game...</p>
     </main>
   );
 
   if (!token) return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-center">
         <p className="text-lg font-semibold text-white">Please sign in to play.</p>
         <p className="mt-2 text-sm text-slate-400">
@@ -263,7 +263,7 @@ export default function SocialGamePage() {
 
   // Error
   if (gameData.error) return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-center">
         <p className="text-rose-400 font-semibold mb-2">Could not load game content.</p>
         <p className="text-slate-400 text-sm mb-4">{gameData.error}</p>

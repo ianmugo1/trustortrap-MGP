@@ -67,13 +67,13 @@ Steps: move questions to `server/data/phishingQuestions.js` and grow to 30, each
 Accept: no `deleteMany` in `server/seed/`; a test asserts 30 questions, 4 options each, valid `correctOption`, non-empty `explanation`.
 
 ## T5. Mockup for sign-off
-Status: done (waiting for Dylan's sign-off)
+Status: dropped. Dylan asked to build straight into the app (2026-11-15 22:38)
 
 One HTML page showing the restyled dashboard, phishing answer feedback and red flag hunt. No product code depends on it.
 Accept: Dylan approves the look or lists changes.
 
 ## T6. Motion kit and look
-Status: blocked on T5
+Status: done. Fonts come from `@fontsource-variable`. Topbar has level, XP bar and coins, no streak flame
 
 Files: `client/src/components/motion/*`, `client/src/app/globals.css`, `client/src/app/layout.js`, `client/src/components/AppFrame.jsx`, `Sidebar.js`, `Topbar.js`.
 
@@ -81,35 +81,35 @@ Steps: install `motion`; add Sora and Inter through `next/font`; add surface, ra
 Accept: client build passes; with reduced motion on, state changes are instant.
 
 ## T7. Red flag hunt screen
-Status: blocked on T5, T6
+Status: done. Flags are revealed after "I'm done" through `POST /api/phishing/hunt/check`
 
 Files: `client/src/app/games/phishing/hunt/page.jsx`, link from `client/src/app/games/page.js` and the phishing start screen.
 Accept: a full run of 5 emails can be played at 390 px wide; results show found, missed and wrong taps from the server response.
 
 ## T8. Phishing quiz, social game, Cyber Pet
-Status: blocked on T6
+Status: in progress. Phishing quiz and Cyber Pet done. Social game has the global look only, no answer animation yet
 
 Steps: card transitions, `AnswerFeedback`, combo counter, explanation after each answer, count-up results, confetti on a perfect run, pet idle/happy/sad states.
 Accept: each game plays start to finish with no behaviour change to scoring.
 
 ## T9. Dashboard, games hub, stories, leaderboard, shop, landing
-Status: blocked on T6
+Status: in progress. Dashboard, games hub, stories and leaderboard done. Shop and landing have the global look only. No podium yet
 
 Accept: each screen matches the spec section "Screens" at 390 px and 1280 px.
 
 ## T10. Login, register, settings restyle
-Status: blocked on T6
+Status: in progress. New fonts and press feedback apply. Cards not yet moved to the new tokens
 
 Accept: new tokens applied, no behaviour change.
 
 ## T11. Remaining content
-Status: todo
+Status: done, to the corrected counts in the spec. Cyber Pet 45 to 90, social scenarios 5 to 8, settings 7 to 11, stories 4 to 6
 
 Cyber Pet questions 30 to 60, password incidents 16 to 30, social text scenarios to about 50, two story chapters ("The Too-Good Job Offer", "The Wi-Fi Trap") with their page files.
 Accept: counts match the spec table; new chapters appear on the stories page.
 
 ## T12. Verify and ship
-Status: todo
+Status: in progress. Client build and server tests pass. Browser check done at 1280 px and 390 px for hub, dashboard, leaderboard, quiz, hunt and one story. Not done: reduced-motion check in a browser, bundle size comparison, shop, settings, social game, Cyber Pet against a real database
 
 Steps: client build, server tests, browser check of every screen at both widths with reduced motion on and off, bundle size before and after, mark the pull request ready.
 Accept: CI green; bundle growth at most 60 kB gzipped.
