@@ -24,7 +24,7 @@ const DEFAULT_SETTINGS = {
 
 function SectionCard({ title, description, icon: Icon, children }) {
   return (
-    <section className="rounded-[1.75rem] border border-slate-800 bg-slate-900/90 p-5">
+    <section className="tt-card p-5">
       <div className="flex items-start gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-300">
           <Icon className="h-5 w-5" />
@@ -355,7 +355,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-8">
-      <section className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95">
+      <section className="overflow-hidden tt-card">
         <div className="grid gap-6 p-6 lg:grid-cols-[1.15fr_0.85fr] lg:p-8">
           <div>
             <p className="text-sm font-medium text-emerald-300">Settings</p>

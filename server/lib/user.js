@@ -14,6 +14,9 @@ const DEFAULT_SETTINGS = {
   },
 };
 
+// Mongoose sub-documents do not spread cleanly, so turn them into plain objects first.
+const plain = (value) => (value?.toObject ? value.toObject() : value || {});
+
 const DEFAULT_MASTERY = {
   phishing: { answered: 0, correct: 0, accuracy: 0, level: "new", lastPracticedAt: null },
   passwords: { answered: 0, correct: 0, accuracy: 0, level: "new", lastPracticedAt: null },
@@ -54,23 +57,23 @@ export function sanitizeUser(user) {
     mastery: {
       phishing: {
         ...DEFAULT_MASTERY.phishing,
-        ...(user.mastery?.phishing || {}),
+        ...plain(user.mastery?.phishing),
       },
       passwords: {
         ...DEFAULT_MASTERY.passwords,
-        ...(user.mastery?.passwords || {}),
+        ...plain(user.mastery?.passwords),
       },
       privacy: {
         ...DEFAULT_MASTERY.privacy,
-        ...(user.mastery?.privacy || {}),
+        ...plain(user.mastery?.privacy),
       },
       aiSafety: {
         ...DEFAULT_MASTERY.aiSafety,
-        ...(user.mastery?.aiSafety || {}),
+        ...plain(user.mastery?.aiSafety),
       },
       socialScams: {
         ...DEFAULT_MASTERY.socialScams,
-        ...(user.mastery?.socialScams || {}),
+        ...plain(user.mastery?.socialScams),
       },
     },
     storyProgress: {

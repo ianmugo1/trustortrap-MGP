@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { isPublicPathname } from "../lib/routes";
-import { PageTransition } from "./motion";
+import { FloatingShapes, PageTransition } from "./motion";
 
 export default function AppFrame({ children }) {
   const pathname = usePathname();
@@ -23,6 +23,7 @@ export default function AppFrame({ children }) {
 
         <main className="relative flex-1 min-h-0 overflow-auto bg-slate-950">
           <div className="tt-aurora" aria-hidden="true" />
+          <FloatingShapes />
           <PageTransition key={pathname} className="relative">
             {children}
           </PageTransition>

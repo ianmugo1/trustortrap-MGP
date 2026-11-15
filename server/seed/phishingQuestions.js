@@ -16,7 +16,8 @@ async function seed() {
     process.exit(1);
   }
 
-  await mongoose.connect(process.env.MONGODB_URI);
+  // Same database name the API uses in config/db.js
+  await mongoose.connect(process.env.MONGODB_URI, { dbName: "trustortrap" });
   console.log("Connected to MongoDB.");
 
   const result = await PhishingQuestion.bulkWrite(

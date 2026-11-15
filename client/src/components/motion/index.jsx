@@ -195,3 +195,35 @@ export function Confetti({ fire }) {
     />
   );
 }
+
+// Soft coloured shapes that drift behind the app. Purely decorative.
+const SHAPES = [
+  { left: "6%", top: "18%", size: 46, colour: "#fde047", delay: "0s", round: true },
+  { left: "88%", top: "12%", size: 34, colour: "#f472b6", delay: "1.2s", round: false },
+  { left: "78%", top: "62%", size: 58, colour: "#38bdf8", delay: "0.6s", round: true },
+  { left: "14%", top: "74%", size: 38, colour: "#a78bfa", delay: "2s", round: false },
+  { left: "48%", top: "88%", size: 30, colour: "#34d399", delay: "1.6s", round: true },
+  { left: "56%", top: "6%", size: 26, colour: "#fb923c", delay: "2.6s", round: false },
+];
+
+export function FloatingShapes() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+      {SHAPES.map((shape, index) => (
+        <span
+          key={index}
+          className="tt-shape absolute"
+          style={{
+            left: shape.left,
+            top: shape.top,
+            width: shape.size,
+            height: shape.size,
+            background: shape.colour,
+            borderRadius: shape.round ? "9999px" : "30%",
+            animationDelay: shape.delay,
+          }}
+        />
+      ))}
+    </div>
+  );
+}

@@ -123,7 +123,7 @@ export default function StoryChapterPage({ chapter }) {
   ]);
 
   return (
-    <main className="min-h-screen bg-transparent px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
+    <main className="tt-original min-h-screen bg-transparent px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
       <Confetti fire={celebrate} />
       <div className="mx-auto max-w-5xl space-y-6">
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_30px_90px_-55px_rgba(15,23,42,0.35)] sm:p-8">

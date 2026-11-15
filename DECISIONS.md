@@ -18,3 +18,9 @@ Every decision, newest last. Times are Europe/Dublin.
 | 2026-11-15 23:00 | Fonts are Sora and Inter from `@fontsource-variable`, not `next/font/google`. | Self-hosted files build without a network call to Google. |
 | 2026-11-15 23:00 | Phishing quiz waits for a "Next question" tap instead of moving on after 1.2 seconds. | Players need time to read the explanation. |
 | 2026-11-15 23:05 | Topbar shows level, XP bar and coins. The streak flame is in the phishing quiz only. | The daily streak comes from the pet API, which the topbar does not load. |
+| 2026-11-15 22:56 | Switch the whole app to a bright, light theme. | Dylan asked for a brighter look for younger children. |
+| 2026-11-15 23:10 | The bright theme is done by swapping Tailwind's colour variables in `client/src/app/bright-theme.css`, not by rewriting classes. `.tt-bright` on `<body>` turns it on, `.tt-original` turns it off for the stories pages. | The app has about 1,200 dark-theme colour classes. Swapping the variables changes all of them in one file and is easy to undo. |
+| 2026-11-15 23:10 | Primary buttons are violet to pink with a chunky pressed-down shadow. | Reads as playful and gives a clear press response on touch screens. |
+| 2026-11-15 23:20 | Phishing submit accepts answer `0`. | Option A is index 0 and the old check treated it as missing, so picking A always failed with a 400. |
+| 2026-11-15 23:20 | Seeds connect with `dbName: "trustortrap"`. | The API always uses that database name. Without it the seeds could write to a different database than the API reads. |
+| 2026-11-15 23:20 | `/api/users/me` converts mastery sub-documents to plain objects. | Spreading the Mongoose sub-documents returned zeros for every topic. |

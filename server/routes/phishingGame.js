@@ -91,7 +91,9 @@ router.post("/submit", authMiddleware, async (req, res) => {
     const { questionId, answerGiven } = req.body;
     const userId = req.user.id; // set by auth middleware
 
-    if (!questionId || !answerGiven) {
+    // Option A is index 0, so check for a missing answer, not a falsy one
+    const hasAnswer = answerGiven !== undefined && answerGiven !== null && answerGiven !== "";
+    if (!questionId || !hasAnswer) {
       return res.status(400).json({
         success: false,
         message: "questionId and answerGiven are required",

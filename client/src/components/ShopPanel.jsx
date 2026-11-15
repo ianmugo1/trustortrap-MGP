@@ -1,5 +1,6 @@
 "use client";
 
+import { CountUp, PressableCard, Reveal, RevealItem } from "@/components/motion";
 import { useEffect, useState } from "react";
 import { ShoppingBag, Sparkles, Home, Award, Lock } from "lucide-react";
 import { authFetch } from "@/lib/api";
@@ -69,7 +70,7 @@ export default function ShopPanel() {
     <div className="space-y-6">
 
       {/* Header */}
-      <section className="rounded-[2rem] border border-slate-800 bg-slate-900 p-6">
+      <section className="tt-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800">
@@ -86,7 +87,7 @@ export default function ShopPanel() {
           <div className="flex gap-3">
             <div className="rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-center">
               <p className="text-xs text-slate-400">Coins</p>
-              <p className="mt-1 text-xl font-black text-amber-300">{user?.coins ?? 0}</p>
+              <p className="mt-1 text-xl font-black text-amber-300"><CountUp value={user?.coins ?? 0} /></p>
             </div>
             <div className="rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3 text-center">
               <p className="text-xs text-slate-400">Level</p>
@@ -106,7 +107,7 @@ export default function ShopPanel() {
         if (items.length === 0) return null;
 
         return (
-          <section key={key} className="rounded-[2rem] border border-slate-800 bg-slate-900 p-5">
+          <section key={key} className="tt-card p-5">
 
             {/* Category heading */}
             <div className="mb-4 flex items-center gap-2">
@@ -115,14 +116,14 @@ export default function ShopPanel() {
               <span className="ml-1 rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{items.length}</span>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Reveal className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((item) => {
                 const isLoading = loadingKey === `buy:${item.id}` || loadingKey === `equip:${item.id}`;
 
                 return (
-                  <div
-                    key={item.id}
-                    className={`flex flex-col justify-between rounded-2xl border p-4 transition ${
+                  <RevealItem key={item.id} className="h-full">
+                  <PressableCard
+                    className={`flex h-full flex-col justify-between rounded-2xl border p-4 ${
                       item.equipped
                         ? "border-white/20 bg-white/5"
                         : item.locked
@@ -171,10 +172,11 @@ export default function ShopPanel() {
                         </button>
                       )}
                     </div>
-                  </div>
+                  </PressableCard>
+                  </RevealItem>
                 );
               })}
-            </div>
+            </Reveal>
           </section>
         );
       })}

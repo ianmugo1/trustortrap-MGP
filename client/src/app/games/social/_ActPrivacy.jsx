@@ -1,3 +1,4 @@
+import { Reveal, RevealItem } from "@/components/motion";
 import { ActBar } from "./_components";
 
 function LockIcon() {
@@ -39,6 +40,7 @@ function Toggle({ on, onChange, disabled }) {
       } ${disabled ? "cursor-default opacity-70" : "cursor-pointer"}`}
     >
       <span
+        style={{ backgroundColor: "#ffffff" }}
         className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
           on ? "translate-x-6" : "translate-x-1"
         }`}
@@ -74,7 +76,7 @@ export default function ActPrivacy({ settings, toggles, submitted, onToggle, onS
 
         {/* Dangerous settings */}
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">Settings to check</p>
-        <div className="space-y-2 mb-4">
+        <Reveal className="space-y-2 mb-4">
           {dangerous.map((setting) => {
             const isFixed = toggles[setting._id];
             let border = "border-slate-700/50";
@@ -89,7 +91,7 @@ export default function ActPrivacy({ settings, toggles, submitted, onToggle, onS
             }
 
             return (
-              <div key={setting._id} className={`rounded-xl border p-4 transition-colors ${bg} ${border}`}>
+              <RevealItem key={setting._id} className={`rounded-xl border p-4 transition-colors ${bg} ${border}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-white text-sm">{setting.label}</p>
@@ -115,10 +117,10 @@ export default function ActPrivacy({ settings, toggles, submitted, onToggle, onS
                     {setting.tip}
                   </p>
                 )}
-              </div>
+              </RevealItem>
             );
           })}
-        </div>
+        </Reveal>
 
         {/* Safe settings */}
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">These ones are fine</p>

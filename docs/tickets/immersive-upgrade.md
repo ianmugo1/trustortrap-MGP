@@ -87,18 +87,18 @@ Files: `client/src/app/games/phishing/hunt/page.jsx`, link from `client/src/app/
 Accept: a full run of 5 emails can be played at 390 px wide; results show found, missed and wrong taps from the server response.
 
 ## T8. Phishing quiz, social game, Cyber Pet
-Status: in progress. Phishing quiz and Cyber Pet done. Social game has the global look only, no answer animation yet
+Status: done. Phishing quiz, Cyber Pet and all three social acts animate
 
 Steps: card transitions, `AnswerFeedback`, combo counter, explanation after each answer, count-up results, confetti on a perfect run, pet idle/happy/sad states.
 Accept: each game plays start to finish with no behaviour change to scoring.
 
 ## T9. Dashboard, games hub, stories, leaderboard, shop, landing
-Status: in progress. Dashboard, games hub, stories and leaderboard done. Shop and landing have the global look only. No podium yet
+Status: done except landing. Dashboard, games hub, stories, leaderboard (with podium) and shop done. Landing has the bright theme only, no new sections
 
 Accept: each screen matches the spec section "Screens" at 390 px and 1280 px.
 
 ## T10. Login, register, settings restyle
-Status: in progress. New fonts and press feedback apply. Cards not yet moved to the new tokens
+Status: done through the bright theme and shared styles. No layout changes
 
 Accept: new tokens applied, no behaviour change.
 
@@ -109,7 +109,20 @@ Cyber Pet questions 30 to 60, password incidents 16 to 30, social text scenarios
 Accept: counts match the spec table; new chapters appear on the stories page.
 
 ## T12. Verify and ship
-Status: in progress. Client build and server tests pass. Browser check done at 1280 px and 390 px for hub, dashboard, leaderboard, quiz, hunt and one story. Not done: reduced-motion check in a browser, bundle size comparison, shop, settings, social game, Cyber Pet against a real database
+Status: in progress. Server tests and client build pass. Every screen opened at 1280 px and 390 px against the real API and a real MongoDB, plus a reduced-motion pass at 1280 px. Not done: bundle size comparison, Cyber Pet mini-game played to the end, shop purchase, check inside the iOS build
 
 Steps: client build, server tests, browser check of every screen at both widths with reduced motion on and off, bundle size before and after, mark the pull request ready.
 Accept: CI green; bundle growth at most 60 kB gzipped.
+
+## T13. Bright theme for younger children
+Status: done
+
+Files: `client/src/app/bright-theme.css`, `client/src/app/globals.css`, `client/src/app/layout.js`, stories pages (`tt-original`).
+Accept: every screen has a light background with readable text; stories pages keep their own colours.
+
+## T14. Bug fixes found while testing against a real database
+Status: done
+
+- Phishing submit rejected option A (index 0).
+- Seeds did not set the database name the API uses.
+- `/api/users/me` returned zeros for mastery.

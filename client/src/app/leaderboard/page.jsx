@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Trophy, Star, Zap, Medal } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/api";
+import { motion } from "motion/react";
 import { CountUp, Reveal, RevealItem } from "@/components/motion";
 
 export default function LeaderboardPage() {
@@ -56,6 +57,35 @@ export default function LeaderboardPage() {
           Ranked by total XP earned across all games. Keep playing to climb the board!
         </p>
       </section>
+
+      {/* Podium for the top three. Bars grow from the floor. */}
+      {!loading && !error && users.length >= 3 && (
+        <section className="tt-card flex items-end justify-center gap-3 p-6">
+          {[
+            { place: 2, height: 84, colour: "#94a3b8" },
+            { place: 1, height: 120, colour: "#f59e0b" },
+            { place: 3, height: 60, colour: "#fb923c" },
+          ].map(({ place, height, colour }) => {
+            const player = users[place - 1];
+            return (
+              <div key={place} className="flex w-24 flex-col items-center">
+                <p className="mb-2 w-full truncate text-center text-sm font-bold text-white">
+                  {player.displayName}
+                </p>
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height }}
+                  transition={{ type: "spring", stiffness: 120, damping: 14, delay: 0.15 * (3 - place) }}
+                  className="flex w-full items-start justify-center rounded-t-2xl pt-2 text-2xl font-black"
+                  style={{ background: colour, color: "#ffffff" }}
+                >
+                  {place}
+                </motion.div>
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       {/* Player list */}
       <section className="tt-card p-4">

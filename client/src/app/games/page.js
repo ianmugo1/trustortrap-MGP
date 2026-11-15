@@ -139,7 +139,7 @@ export default function GamesPage() {
                             ? `${game.href}?fromStory=${relatedStory.slug}`
                             : game.href
                         }
-                        className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                        className="tt-btn !min-h-0 px-3 py-2 text-sm"
                       >
                         Start game
                       </Link>
@@ -150,7 +150,7 @@ export default function GamesPage() {
                 {!relatedStory && (
                   <Link
                     href={game.href}
-                    className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                    className="tt-btn mt-5 !min-h-0 px-4 py-2 text-sm"
                   >
                     Open
                   </Link>
